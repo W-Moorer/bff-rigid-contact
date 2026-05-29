@@ -1,0 +1,8 @@
+study,case,method,resolution,faces_a,faces_b,expected_gap,min_gap,abs_error,elapsed_s,contacts,candidate_pairs,notes
+equal_accuracy_cost,shifted_paraboloid_plane,calg_curved_graph_coarse,4,32,32,0.05,0.05,0.0,1.723654015999955,92,350,target_error_for_linear=1e-05; fast_path_ratio=0.351429; curved_attempted=74; interval_attempted=0
+equal_accuracy_cost,shifted_paraboloid_plane,linear_triangle_bvh_refined,4,32,32,0.05,0.080056,0.030056,0.10784566500001347,50,230,target_error=1e-05; reached=False
+equal_accuracy_cost,shifted_paraboloid_plane,linear_triangle_bvh_refined,5,50,50,0.05,0.05530944,0.005309439999999999,0.20029767200003334,97,426,target_error=1e-05; reached=False
+equal_accuracy_cost,shifted_paraboloid_plane,linear_triangle_bvh_refined,6,72,72,0.05,0.0633582222222222,0.013358222222222202,0.31836844300005396,126,684,target_error=1e-05; reached=False
+equal_accuracy_cost,shifted_paraboloid_plane,linear_triangle_bvh_refined,8,128,128,0.05,0.057514,0.007514,0.8050456299999951,202,1856,target_error=1e-05; reached=False
+equal_accuracy_cost,shifted_paraboloid_plane,linear_triangle_bvh_refined,10,200,200,0.05,0.054808960000000004,0.004808960000000001,1.4742991719999736,305,3520,target_error=1e-05; reached=False
+equal_accuracy_cost,shifted_paraboloid_plane,linear_triangle_bvh_refined,12,288,288,0.05,0.05333955555555556,0.003339555555555554,2.5645459380000375,460,6080,target_error=1e-05; reached=False

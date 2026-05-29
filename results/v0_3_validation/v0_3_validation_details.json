@@ -1,0 +1,41 @@
+[
+  {
+    "case": "gpu_vectorized_broadphase",
+    "backend": "numpy",
+    "gpu_used": false,
+    "reason": "gpu_not_requested_or_unavailable",
+    "pairs": 1,
+    "passed": true
+  },
+  {
+    "case": "tdi_ccd_moving_plane",
+    "backend": "cpu_conservative_inclusion",
+    "gpu_used": false,
+    "impact": true,
+    "certified_no_impact": false,
+    "uncertain": false,
+    "toi_lower": 0.712890625,
+    "toi_upper": 0.71484375,
+    "expected_toi": 0.7142857142857143,
+    "nodes_visited": 61,
+    "pairs_checked": 4,
+    "passed": true,
+    "reason": "endpoint_threshold_contact"
+  },
+  {
+    "case": "implicit_global_step_with_tdi_gate",
+    "backend": "cpu_global_implicit",
+    "gpu_used": false,
+    "converged": false,
+    "iterations": 10,
+    "initial_energy": 1.9999999999999998,
+    "final_energy": 0.39847156828590935,
+    "max_gradient_norm": 1.529826794081153,
+    "ccd_clamped": true,
+    "final_min_gap": Infinity,
+    "explicit_mean_z_gap": 0.08385267444887946,
+    "d_hat": 0.08,
+    "passed": true,
+    "reason": "ccd_clamped:terminal_uncertain_interval"
+  }
+]

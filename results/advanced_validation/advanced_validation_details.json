@@ -1,0 +1,40 @@
+{
+  "rows": [
+    {
+      "case": "curved4d_newton_plane_pair",
+      "metric": "gap",
+      "value": 0.08,
+      "expected": 0.08,
+      "passed": true
+    },
+    {
+      "case": "interval_bezier_plane_pair",
+      "metric": "gap",
+      "value": 0.08,
+      "expected": 0.08,
+      "passed": true
+    },
+    {
+      "case": "threshold_ccd_moving_plane",
+      "metric": "toi",
+      "value": 0.6669921875,
+      "expected": 0.6666666666666666,
+      "passed": true
+    },
+    {
+      "case": "ipc_barrier_response",
+      "metric": "energy",
+      "value": 0.019462325189191877,
+      "expected": ">0",
+      "passed": true
+    },
+    {
+      "case": "force_assembly_balance",
+      "metric": "net_force_norm",
+      "value": 0.0,
+      "expected": 0.0,
+      "passed": true
+    }
+  ],
+  "ccd_reason": "threshold_toi_bisection"
+}

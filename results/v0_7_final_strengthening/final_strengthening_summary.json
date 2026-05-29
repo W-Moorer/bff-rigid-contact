@@ -1,0 +1,63 @@
+{
+  "randomized_subcell_cases": 80,
+  "randomized_calg_better_ratio": 1.0,
+  "randomized_median_error_ratio_linear_over_calg": 1038802533211.6035,
+  "force_total_variation_ratio_linear_over_calg": 0.9410986106572313,
+  "force_max_jump_ratio_linear_over_calg": 55.89966319050003,
+  "friction_variation_ratio_linear_over_calg": 1.1917899224110264,
+  "fallback_suite_passed": true,
+  "fallback_cases": [
+    {
+      "case": "forced_graphability_fail_cylinder_plane",
+      "detector_setting": "mu_min=0.995; complete_curved_solver=True",
+      "expected_behavior": "graph rejects many pairs; curved 4D fallback recovers contacts",
+      "candidate_pairs": 48,
+      "graph_passed": 0,
+      "graph_attempted": 36,
+      "curved_attempted": 36,
+      "curved_contacts": 36,
+      "interval_attempted": 0,
+      "interval_contacts": 0,
+      "contacts": 36,
+      "min_gap": 0.044818514459077446,
+      "status": "passed",
+      "notes": "strict graphability threshold intentionally stresses 4D fallback"
+    },
+    {
+      "case": "direct_interval_bezier_subcell_pair",
+      "detector_setting": "direct bezier_interval_fallback; max_depth=3; max_nodes=300",
+      "expected_behavior": "interval fallback returns a conservative near-contact sample or certificate",
+      "candidate_pairs": 64,
+      "graph_passed": 0,
+      "graph_attempted": 0,
+      "curved_attempted": 0,
+      "curved_contacts": 0,
+      "interval_attempted": 1,
+      "interval_contacts": 1,
+      "contacts": 1,
+      "min_gap": 0.06271355520432526,
+      "status": "passed",
+      "notes": "reason=contact_found; nodes_visited=85; lower_bound=0; pair=(3,3)"
+    },
+    {
+      "case": "graph_fast_path_control_plane_plane",
+      "detector_setting": "mu_min=0.20",
+      "expected_behavior": "graph fast path dominates; fallback is unnecessary",
+      "candidate_pairs": 4,
+      "graph_passed": 4,
+      "graph_attempted": 4,
+      "curved_attempted": 0,
+      "curved_contacts": 0,
+      "interval_attempted": 0,
+      "interval_contacts": 0,
+      "contacts": 4,
+      "min_gap": 0.06000000000000001,
+      "status": "passed",
+      "notes": "control case for graph fast path"
+    }
+  ],
+  "randomized_median_linear_error": 0.01038802533211595,
+  "randomized_max_linear_error": 0.0748053328402429,
+  "randomized_max_calg_error": 0.0,
+  "randomized_mean_linear_error": 0.013871950609291394
+}

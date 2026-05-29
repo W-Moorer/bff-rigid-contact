@@ -1,0 +1,26 @@
+[
+  {
+    "n_a": 256,
+    "n_b": 256,
+    "tile_size": 256,
+    "backend": "numpy",
+    "is_true_cuda": false,
+    "backend_reason": "gpu_not_requested_or_unavailable",
+    "pairs": 3,
+    "elapsed_s": 0.006831732000136981,
+    "throughput_mtests_s": 9.59288215619201,
+    "notes": "CPU/NumPy fallback; run this script on a CUDA workstation for true GPU acceleration data"
+  },
+  {
+    "n_a": 512,
+    "n_b": 512,
+    "tile_size": 512,
+    "backend": "numpy",
+    "is_true_cuda": false,
+    "backend_reason": "gpu_not_requested_or_unavailable",
+    "pairs": 5,
+    "elapsed_s": 0.02020649499991123,
+    "throughput_mtests_s": 12.973254391776093,
+    "notes": "CPU/NumPy fallback; run this script on a CUDA workstation for true GPU acceleration data"
+  }
+]

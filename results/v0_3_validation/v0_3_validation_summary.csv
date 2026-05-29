@@ -1,0 +1,4 @@
+backend,case,ccd_clamped,certified_no_impact,converged,d_hat,expected_toi,explicit_mean_z_gap,final_energy,final_min_gap,gpu_used,impact,initial_energy,iterations,max_gradient_norm,nodes_visited,pairs,pairs_checked,passed,reason,toi_lower,toi_upper,uncertain
+numpy,gpu_vectorized_broadphase,,,,,,,,,False,,,,,,1,,True,gpu_not_requested_or_unavailable,,,
+cpu_conservative_inclusion,tdi_ccd_moving_plane,,False,,,0.7142857142857143,,,,False,True,,,,61,,4,True,endpoint_threshold_contact,0.712890625,0.71484375,False
+cpu_global_implicit,implicit_global_step_with_tdi_gate,True,,False,0.08,,0.08385267444887946,0.39847156828590935,inf,False,,1.9999999999999998,10,1.529826794081153,,,,True,ccd_clamped:terminal_uncertain_interval,,,

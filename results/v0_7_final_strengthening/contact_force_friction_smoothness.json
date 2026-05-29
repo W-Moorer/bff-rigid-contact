@@ -1,0 +1,26 @@
+[
+  {
+    "method": "linear_face_normal",
+    "samples": 260,
+    "normal_force_tv": 6.803857204424476,
+    "total_force_tv": 7.138570797299921,
+    "friction_force_tv": 0.506311051438078,
+    "max_total_force_jump": 2.8701586013133387,
+    "mean_total_force_jump": 0.027562049410424404,
+    "friction_mode_stick": 260,
+    "friction_mode_slip": 0,
+    "notes": "mu=0.35; d_hat=0.08; gap=0.045; stiffness=80.0; tangent_stiffness=25.0"
+  },
+  {
+    "method": "calg_smooth_normal_field",
+    "samples": 260,
+    "normal_force_tv": 7.553376938156305,
+    "total_force_tv": 7.585358979878405,
+    "friction_force_tv": 0.42483246578708744,
+    "max_total_force_jump": 0.05134482817064832,
+    "mean_total_force_jump": 0.02928710030841083,
+    "friction_mode_stick": 260,
+    "friction_mode_slip": 0,
+    "notes": "mu=0.35; d_hat=0.08; gap=0.045; stiffness=80.0; tangent_stiffness=25.0"
+  }
+]

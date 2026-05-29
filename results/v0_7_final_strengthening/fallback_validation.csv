@@ -1,0 +1,4 @@
+case,detector_setting,expected_behavior,candidate_pairs,graph_passed,graph_attempted,curved_attempted,curved_contacts,interval_attempted,interval_contacts,contacts,min_gap,status,notes
+forced_graphability_fail_cylinder_plane,mu_min=0.995; complete_curved_solver=True,graph rejects many pairs; curved 4D fallback recovers contacts,48,0,36,36,36,0,0,36,0.044818514459077446,passed,strict graphability threshold intentionally stresses 4D fallback
+direct_interval_bezier_subcell_pair,direct bezier_interval_fallback; max_depth=3; max_nodes=300,interval fallback returns a conservative near-contact sample or certificate,64,0,0,0,0,1,1,1,0.06271355520432526,passed,"reason=contact_found; nodes_visited=85; lower_bound=0; pair=(3,3)"
+graph_fast_path_control_plane_plane,mu_min=0.20,graph fast path dominates; fallback is unnecessary,4,4,4,0,0,0,0,4,0.06000000000000001,passed,control case for graph fast path

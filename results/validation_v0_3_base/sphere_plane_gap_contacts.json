@@ -1,0 +1,2986 @@
+{
+  "case": "sphere_plane_gap",
+  "description": "Sphere over a plane with analytic gap equal to center_z-radius.",
+  "d_hat": 0.11,
+  "expected_gap": 0.08,
+  "elapsed_s": 0.9318264210005509,
+  "stats": {
+    "candidate_pairs": 992,
+    "linear_rejected": 914,
+    "graph_attempted": 78,
+    "graph_passed": 78,
+    "graph_contacts": 20,
+    "curved_attempted": 58,
+    "curved_contacts": 58,
+    "interval_attempted": 0,
+    "interval_contacts": 0,
+    "fallback_contacts": 58,
+    "contacts": 78
+  },
+  "contacts": [
+    {
+      "face_a": 108,
+      "face_b": 72,
+      "point_a": [
+        0.021906865182716333,
+        0.0058699268344062396,
+        0.07941825058625568
+      ],
+      "point_b": [
+        0.021906865182716333,
+        0.0058699268344062396,
+        -4.163336342344337e-17
+      ],
+      "normal": [
+        4.44426712774313e-17,
+        6.2407915417371285e-18,
+        -1.0
+      ],
+      "gap": 0.07941825058625572,
+      "method": "graph2d",
+      "graph_mu_a": 0.8660254037844387,
+      "graph_mu_b": 1.0,
+      "feature": "surface-surface",
+      "overlap_area": 0.03536270398786459,
+      "bary_a": [
+        0.02164687586205748,
+        0.9567062482758857,
+        0.021646875862056835
+      ],
+      "bary_b": [
+        0.9374089566208105,
+        0.04581982385231453,
+        0.016771219526874978
+      ],
+      "solver_iterations": 0,
+      "residual": 0.0,
+      "certificate": "normal_cone_graphability"
+    },
+    {
+      "face_a": 108,
+      "face_b": 73,
+      "point_a": [
+        -5.548008895274872e-17,
+        6.535098279590633e-20,
+        0.08000000000000002
+      ],
+      "point_b": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "normal": [
+        6.935011119093589e-16,
+        -8.168872849488289e-19,
+        -1.0
+      ],
+      "gap": 0.08000000000000002,
+      "method": "curved4d_newton",
+      "graph_mu_a": 0.8660254037844387,
+      "graph_mu_b": 1.0,
+      "feature": "A_vertex-B_vertex",
+      "overlap_area": 0.0,
+      "bary_a": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "bary_b": [
+        1.0,
+        0.0,
+        0.0
+      ],
+      "solver_iterations": 1,
+      "residual": 8.317124274116213e-17,
+      "certificate": "converged_gradient"
+    },
+    {
+      "face_a": 109,
+      "face_b": 72,
+      "point_a": [
+        0.016036938348308404,
+        0.016036938348308202,
+        0.07941825058625446
+      ],
+      "point_b": [
+        0.016036938348308404,
+        0.016036938348308202,
+        -4.163336342344337e-17
+      ],
+      "normal": [
+        4.401275714301921e-17,
+        5.373359718275627e-18,
+        -1.0
+      ],
+      "gap": 0.0794182505862545,
+      "method": "graph2d",
+      "graph_mu_a": 0.8660254037844387,
+      "graph_mu_b": 1.0,
+      "feature": "surface-surface",
+      "overlap_area": 0.025815153937884784,
+      "bary_a": [
+        0.021646875862055073,
+        0.9567062482758907,
+        0.021646875862054247
+      ],
+      "bary_b": [
+        0.9541801761476904,
+        5.780003251901059e-16,
+        0.045819823852309136
+      ],
+      "solver_iterations": 0,
+      "residual": 0.0,
+      "certificate": "normal_cone_graphability"
+    },
+    {
+      "face_a": 109,
+      "face_b": 73,
+      "point_a": [
+        0.016036938348308372,
+        0.016036938348308237,
+        0.07941825058625446
+      ],
+      "point_b": [
+        0.016036938348308372,
+        0.016036938348308237,
+        -4.163336342344337e-17
+      ],
+      "normal": [
+        1.0711156695308851e-17,
+        4.6042414890116823e-17,
+        -1.0
+      ],
+      "gap": 0.0794182505862545,
+      "method": "graph2d",
+      "graph_mu_a": 0.8660254037844387,
+      "graph_mu_b": 1.0,
+      "feature": "surface-surface",
+      "overlap_area": 0.02581515393788477,
+      "bary_a": [
+        0.02164687586205497,
+        0.9567062482758907,
+        0.02164687586205435
+      ],
+      "bary_b": [
+        0.9541801761476905,
+        0.0458198238523096,
+        0.0
+      ],
+      "solver_iterations": 0,
+      "residual": 0.0,
+      "certificate": "normal_cone_graphability"
+    },
+    {
+      "face_a": 110,
+      "face_b": 72,
+      "point_a": [
+        -3.937039723619422e-17,
+        -3.371320016150016e-17,
+        0.08000000000000004
+      ],
+      "point_b": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "normal": [
+        4.921299654524275e-16,
+        4.2141500201875177e-16,
+        -1.0
+      ],
+      "gap": 0.08000000000000004,
+      "method": "curved4d_newton",
+      "graph_mu_a": 0.8660254037844387,
+      "graph_mu_b": 1.0,
+      "feature": "A_vertex-B_vertex",
+      "overlap_area": 0.0,
+      "bary_a": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "bary_b": [
+        1.0,
+        0.0,
+        0.0
+      ],
+      "solver_iterations": 1,
+      "residual": 7.923269906831806e-17,
+      "certificate": "converged_gradient"
+    },
+    {
+      "face_a": 110,
+      "face_b": 73,
+      "point_a": [
+        0.005869926834406337,
+        0.021906865182716298,
+        0.07941825058625568
+      ],
+      "point_b": [
+        0.005869926834406337,
+        0.021906865182716298,
+        -4.163336342344337e-17
+      ],
+      "normal": [
+        9.72661714556263e-18,
+        4.797674495059106e-17,
+        -1.0
+      ],
+      "gap": 0.07941825058625572,
+      "method": "graph2d",
+      "graph_mu_a": 0.8660254037844387,
+      "graph_mu_b": 1.0,
+      "feature": "surface-surface",
+      "overlap_area": 0.0353627039878646,
+      "bary_a": [
+        0.021646875862057154,
+        0.9567062482758859,
+        0.02164687586205694
+      ],
+      "bary_b": [
+        0.9374089566208106,
+        0.01677121952687524,
+        0.045819823852314166
+      ],
+      "solver_iterations": 0,
+      "residual": 0.0,
+      "certificate": "normal_cone_graphability"
+    },
+    {
+      "face_a": 117,
+      "face_b": 72,
+      "point_a": [
+        -2.1115931953912235e-18,
+        7.135396529739656e-18,
+        0.0800000000000001
+      ],
+      "point_b": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "normal": [
+        2.639491494239026e-17,
+        -8.919245662174559e-17,
+        -1.0
+      ],
+      "gap": 0.0800000000000001,
+      "method": "curved4d_newton",
+      "graph_mu_a": 0.8660254037844387,
+      "graph_mu_b": 1.0,
+      "feature": "A_vertex-B_vertex",
+      "overlap_area": 0.0,
+      "bary_a": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "bary_b": [
+        1.0,
+        0.0,
+        0.0
+      ],
+      "solver_iterations": 1,
+      "residual": 1.8492750603402798e-17,
+      "certificate": "converged_gradient"
+    },
+    {
+      "face_a": 117,
+      "face_b": 73,
+      "point_a": [
+        -2.1115931953912235e-18,
+        7.135396529739656e-18,
+        0.0800000000000001
+      ],
+      "point_b": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "normal": [
+        2.639491494239026e-17,
+        -8.919245662174559e-17,
+        -1.0
+      ],
+      "gap": 0.0800000000000001,
+      "method": "curved4d_newton",
+      "graph_mu_a": 0.8660254037844387,
+      "graph_mu_b": 1.0,
+      "feature": "A_vertex-B_vertex",
+      "overlap_area": 0.0,
+      "bary_a": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "bary_b": [
+        1.0,
+        0.0,
+        0.0
+      ],
+      "solver_iterations": 1,
+      "residual": 1.8492750603402798e-17,
+      "certificate": "converged_gradient"
+    },
+    {
+      "face_a": 118,
+      "face_b": 72,
+      "point_a": [
+        -9.56672505279695e-17,
+        2.1469334528042958e-16,
+        0.08000000000000007
+      ],
+      "point_b": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "normal": [
+        1.1958406315996176e-15,
+        -2.6836668160053676e-15,
+        -1.0
+      ],
+      "gap": 0.08000000000000007,
+      "method": "curved4d_newton",
+      "graph_mu_a": 0.8660254037844387,
+      "graph_mu_b": 1.0,
+      "feature": "A_vertex-B_vertex",
+      "overlap_area": 0.0,
+      "bary_a": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "bary_b": [
+        1.0,
+        0.0,
+        0.0
+      ],
+      "solver_iterations": 1,
+      "residual": 3.541429889419444e-16,
+      "certificate": "converged_gradient"
+    },
+    {
+      "face_a": 118,
+      "face_b": 73,
+      "point_a": [
+        -9.56672505279695e-17,
+        2.1469334528042958e-16,
+        0.08000000000000007
+      ],
+      "point_b": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "normal": [
+        1.1958406315996176e-15,
+        -2.6836668160053676e-15,
+        -1.0
+      ],
+      "gap": 0.08000000000000007,
+      "method": "curved4d_newton",
+      "graph_mu_a": 0.8660254037844387,
+      "graph_mu_b": 1.0,
+      "feature": "A_vertex-B_vertex",
+      "overlap_area": 0.0,
+      "bary_a": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "bary_b": [
+        1.0,
+        0.0,
+        0.0
+      ],
+      "solver_iterations": 1,
+      "residual": 3.541429889419444e-16,
+      "certificate": "converged_gradient"
+    },
+    {
+      "face_a": 119,
+      "face_b": 72,
+      "point_a": [
+        -6.565215518049426e-17,
+        6.692287516950981e-17,
+        0.0800000000000001
+      ],
+      "point_b": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "normal": [
+        8.206519397561772e-16,
+        -8.365359396188716e-16,
+        -1.0
+      ],
+      "gap": 0.0800000000000001,
+      "method": "curved4d_newton",
+      "graph_mu_a": 0.8660254037844387,
+      "graph_mu_b": 1.0,
+      "feature": "A_vertex-B_vertex",
+      "overlap_area": 0.0,
+      "bary_a": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "bary_b": [
+        1.0,
+        0.0,
+        0.0
+      ],
+      "solver_iterations": 1,
+      "residual": 1.3931015936759872e-16,
+      "certificate": "converged_gradient"
+    },
+    {
+      "face_a": 119,
+      "face_b": 73,
+      "point_a": [
+        -6.565215518049426e-17,
+        6.692287516950981e-17,
+        0.0800000000000001
+      ],
+      "point_b": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "normal": [
+        8.206519397561772e-16,
+        -8.365359396188716e-16,
+        -1.0
+      ],
+      "gap": 0.0800000000000001,
+      "method": "curved4d_newton",
+      "graph_mu_a": 0.8660254037844387,
+      "graph_mu_b": 1.0,
+      "feature": "A_vertex-B_vertex",
+      "overlap_area": 0.0,
+      "bary_a": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "bary_b": [
+        1.0,
+        0.0,
+        0.0
+      ],
+      "solver_iterations": 1,
+      "residual": 1.3931015936759872e-16,
+      "certificate": "converged_gradient"
+    },
+    {
+      "face_a": 108,
+      "face_b": 57,
+      "point_a": [
+        -5.548008895274872e-17,
+        6.535098279590633e-20,
+        0.08000000000000002
+      ],
+      "point_b": [
+        0.0,
+        5.551115123125783e-17,
+        0.0
+      ],
+      "normal": [
+        6.935011119093589e-16,
+        6.930725031057739e-16,
+        -1.0
+      ],
+      "gap": 0.08000000000000002,
+      "method": "curved4d_newton",
+      "graph_mu_a": 0.8660254037844387,
+      "graph_mu_b": 1.0,
+      "feature": "A_vertex-B_vertex",
+      "overlap_area": 0.0,
+      "bary_a": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "bary_b": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "solver_iterations": 1,
+      "residual": 1.1653365347601628e-16,
+      "certificate": "converged_gradient"
+    },
+    {
+      "face_a": 109,
+      "face_b": 57,
+      "point_a": [
+        -8.473944288583882e-17,
+        -7.101140381830802e-18,
+        0.0800000000000001
+      ],
+      "point_b": [
+        0.0,
+        5.551115123125783e-17,
+        0.0
+      ],
+      "normal": [
+        1.059243036072984e-15,
+        7.826536451636069e-16,
+        -1.0
+      ],
+      "gap": 0.0800000000000001,
+      "method": "curved4d_newton",
+      "graph_mu_a": 0.8660254037844387,
+      "graph_mu_b": 1.0,
+      "feature": "A_vertex-B_vertex",
+      "overlap_area": 0.0,
+      "bary_a": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "bary_b": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "solver_iterations": 1,
+      "residual": 1.5714640273526133e-16,
+      "certificate": "converged_gradient"
+    },
+    {
+      "face_a": 110,
+      "face_b": 57,
+      "point_a": [
+        -3.937039723619422e-17,
+        -3.371320016150016e-17,
+        0.08000000000000004
+      ],
+      "point_b": [
+        0.0,
+        5.551115123125783e-17,
+        0.0
+      ],
+      "normal": [
+        4.921299654524275e-16,
+        1.1153043924094743e-15,
+        -1.0
+      ],
+      "gap": 0.08000000000000004,
+      "method": "curved4d_newton",
+      "graph_mu_a": 0.8660254037844387,
+      "graph_mu_b": 1.0,
+      "feature": "A_vertex-B_vertex",
+      "overlap_area": 0.0,
+      "bary_a": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "bary_b": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "solver_iterations": 1,
+      "residual": 1.4773756291592448e-16,
+      "certificate": "converged_gradient"
+    },
+    {
+      "face_a": 117,
+      "face_b": 56,
+      "point_a": [
+        0.11481118529702417,
+        -0.19408382885956327,
+        0.10477817524815858
+      ],
+      "point_b": [
+        0.13536367821873052,
+        -0.2146363217812696,
+        -2.7755575615628914e-17
+      ],
+      "normal": [
+        0.05617513007956268,
+        -0.09533052074336114,
+        -0.9938593696169211
+      ],
+      "gap": 0.10873488832443529,
+      "method": "graph2d",
+      "graph_mu_a": 0.9290192829970981,
+      "graph_mu_b": 0.9636113749942803,
+      "feature": "surface-surface",
+      "overlap_area": 0.013657487709510582,
+      "bary_a": [
+        0.0,
+        0.5586040623874127,
+        0.44139593761258733
+      ],
+      "bary_b": [
+        0.61324663366077,
+        0.0,
+        0.38675336633922996
+      ],
+      "solver_iterations": 0,
+      "residual": 0.0,
+      "certificate": "normal_cone_graphability"
+    },
+    {
+      "face_a": 117,
+      "face_b": 57,
+      "point_a": [
+        0.005869926834406303,
+        -0.021906865182716225,
+        0.07941825058625569
+      ],
+      "point_b": [
+        0.005869926834406303,
+        -0.021906865182716225,
+        -6.938893903907228e-18
+      ],
+      "normal": [
+        -5.182703794499302e-18,
+        4.204468999210144e-17,
+        -1.0
+      ],
+      "gap": 0.0794182505862557,
+      "method": "graph2d",
+      "graph_mu_a": 0.8660254037844387,
+      "graph_mu_b": 1.0,
+      "feature": "surface-surface",
+      "overlap_area": 0.022419055981796897,
+      "bary_a": [
+        0.021646875862056984,
+        0.9567062482758858,
+        0.02164687586205722
+      ],
+      "bary_b": [
+        0.0625910433791893,
+        0.01677121952687523,
+        0.9206377370939355
+      ],
+      "solver_iterations": 0,
+      "residual": 0.0,
+      "certificate": "normal_cone_graphability"
+    },
+    {
+      "face_a": 118,
+      "face_b": 56,
+      "point_a": [
+        0.1546853625227128,
+        -0.1546853625227126,
+        0.10356557006522524
+      ],
+      "point_b": [
+        0.17500000000000016,
+        -0.17499999999999993,
+        1.3877787807814457e-17
+      ],
+      "normal": [
+        0.07573442853139269,
+        -0.0757344285313925,
+        -0.994247752157402
+      ],
+      "gap": 0.10747649182310655,
+      "method": "graph2d",
+      "graph_mu_a": 0.9636113749942803,
+      "graph_mu_b": 0.9636113749942803,
+      "feature": "surface-surface",
+      "overlap_area": 0.03074362324903956,
+      "bary_a": [
+        0.2165768898631542,
+        0.5668462202736904,
+        0.21657688986315543
+      ],
+      "bary_b": [
+        0.49999999999999967,
+        0.0,
+        0.5000000000000003
+      ],
+      "solver_iterations": 0,
+      "residual": 0.0,
+      "certificate": "normal_cone_graphability"
+    },
+    {
+      "face_a": 118,
+      "face_b": 57,
+      "point_a": [
+        0.01603693834830762,
+        -0.016036938348307907,
+        0.07941825058625442
+      ],
+      "point_b": [
+        0.01603693834830762,
+        -0.016036938348307907,
+        -6.938893903907228e-18
+      ],
+      "normal": [
+        -5.976850117676324e-18,
+        4.154280667996932e-17,
+        -1.0
+      ],
+      "gap": 0.07941825058625442,
+      "method": "graph2d",
+      "graph_mu_a": 0.8660254037844387,
+      "graph_mu_b": 1.0,
+      "feature": "surface-surface",
+      "overlap_area": 0.016411888036406252,
+      "bary_a": [
+        0.021646875862054462,
+        0.9567062482758927,
+        0.02164687586205286
+      ],
+      "bary_b": [
+        0.045819823852308206,
+        0.045819823852307345,
+        0.9083603522953845
+      ],
+      "solver_iterations": 0,
+      "residual": 0.0,
+      "certificate": "normal_cone_graphability"
+    },
+    {
+      "face_a": 119,
+      "face_b": 56,
+      "point_a": [
+        0.19408382885956318,
+        -0.11481118529702421,
+        0.10477817524815851
+      ],
+      "point_b": [
+        0.21463632178126954,
+        -0.13536367821873055,
+        5.551115123125783e-17
+      ],
+      "normal": [
+        0.0953305207433609,
+        -0.05617513007956248,
+        -0.9938593696169211
+      ],
+      "gap": 0.10873488832443516,
+      "method": "graph2d",
+      "graph_mu_a": 0.929019282997098,
+      "graph_mu_b": 0.9636113749942801,
+      "feature": "surface-surface",
+      "overlap_area": 0.013657487709510599,
+      "bary_a": [
+        0.4413959376125871,
+        0.5586040623874128,
+        0.0
+      ],
+      "bary_b": [
+        0.3867533663392301,
+        0.0,
+        0.6132466336607699
+      ],
+      "solver_iterations": 0,
+      "residual": 0.0,
+      "certificate": "normal_cone_graphability"
+    },
+    {
+      "face_a": 119,
+      "face_b": 57,
+      "point_a": [
+        0.021906865182716263,
+        -0.005869926834406166,
+        0.07941825058625562
+      ],
+      "point_b": [
+        0.021906865182716263,
+        -0.005869926834406166,
+        -6.938893903907228e-18
+      ],
+      "normal": [
+        -6.038361486998711e-18,
+        4.0217019044964094e-17,
+        -1.0
+      ],
+      "gap": 0.07941825058625562,
+      "method": "graph2d",
+      "graph_mu_a": 0.8660254037844387,
+      "graph_mu_b": 1.0,
+      "feature": "surface-surface",
+      "overlap_area": 0.022419055981796897,
+      "bary_a": [
+        0.021646875862056363,
+        0.956706248275886,
+        0.02164687586205762
+      ],
+      "bary_b": [
+        0.01677121952687477,
+        0.06259104337918929,
+        0.9206377370939359
+      ],
+      "solver_iterations": 0,
+      "residual": 0.0,
+      "certificate": "normal_cone_graphability"
+    },
+    {
+      "face_a": 113,
+      "face_b": 72,
+      "point_a": [
+        1.2196755208962071e-17,
+        -4.83459217962434e-17,
+        0.08000000000000007
+      ],
+      "point_b": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "normal": [
+        -1.5245944011202576e-16,
+        6.04324022453042e-16,
+        -1.0
+      ],
+      "gap": 0.08000000000000007,
+      "method": "curved4d_newton",
+      "graph_mu_a": 0.8660254037844387,
+      "graph_mu_b": 1.0,
+      "feature": "A_vertex-B_vertex",
+      "overlap_area": 0.0,
+      "bary_a": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "bary_b": [
+        1.0,
+        0.0,
+        0.0
+      ],
+      "solver_iterations": 1,
+      "residual": 6.550535165389086e-17,
+      "certificate": "converged_gradient"
+    },
+    {
+      "face_a": 113,
+      "face_b": 73,
+      "point_a": [
+        1.2196755208962071e-17,
+        -4.83459217962434e-17,
+        0.08000000000000007
+      ],
+      "point_b": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "normal": [
+        -1.5245944011202576e-16,
+        6.04324022453042e-16,
+        -1.0
+      ],
+      "gap": 0.08000000000000007,
+      "method": "curved4d_newton",
+      "graph_mu_a": 0.8660254037844387,
+      "graph_mu_b": 1.0,
+      "feature": "A_vertex-B_vertex",
+      "overlap_area": 0.0,
+      "bary_a": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "bary_b": [
+        1.0,
+        0.0,
+        0.0
+      ],
+      "solver_iterations": 1,
+      "residual": 6.550535165389086e-17,
+      "certificate": "converged_gradient"
+    },
+    {
+      "face_a": 112,
+      "face_b": 72,
+      "point_a": [
+        5.185826057502448e-17,
+        -1.2162161948867633e-16,
+        0.08000000000000007
+      ],
+      "point_b": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "normal": [
+        -6.482282571878053e-16,
+        1.5202702436084528e-15,
+        -1.0
+      ],
+      "gap": 0.08000000000000007,
+      "method": "curved4d_newton",
+      "graph_mu_a": 0.8660254037844387,
+      "graph_mu_b": 1.0,
+      "feature": "A_vertex-B_vertex",
+      "overlap_area": 0.0,
+      "bary_a": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "bary_b": [
+        1.0,
+        0.0,
+        0.0
+      ],
+      "solver_iterations": 1,
+      "residual": 2.029458021251132e-16,
+      "certificate": "converged_gradient"
+    },
+    {
+      "face_a": 112,
+      "face_b": 73,
+      "point_a": [
+        5.185826057502448e-17,
+        -1.2162161948867633e-16,
+        0.08000000000000007
+      ],
+      "point_b": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "normal": [
+        -6.482282571878053e-16,
+        1.5202702436084528e-15,
+        -1.0
+      ],
+      "gap": 0.08000000000000007,
+      "method": "curved4d_newton",
+      "graph_mu_a": 0.8660254037844387,
+      "graph_mu_b": 1.0,
+      "feature": "A_vertex-B_vertex",
+      "overlap_area": 0.0,
+      "bary_a": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "bary_b": [
+        1.0,
+        0.0,
+        0.0
+      ],
+      "solver_iterations": 1,
+      "residual": 2.029458021251132e-16,
+      "certificate": "converged_gradient"
+    },
+    {
+      "face_a": 111,
+      "face_b": 72,
+      "point_a": [
+        -1.9000320570817475e-18,
+        7.19752108675787e-18,
+        0.08000000000000002
+      ],
+      "point_b": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "normal": [
+        2.375040071352184e-17,
+        -8.996901358447336e-17,
+        -1.0
+      ],
+      "gap": 0.08000000000000002,
+      "method": "curved4d_newton",
+      "graph_mu_a": 0.8660254037844387,
+      "graph_mu_b": 1.0,
+      "feature": "A_vertex-B_vertex",
+      "overlap_area": 0.0,
+      "bary_a": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "bary_b": [
+        1.0,
+        0.0,
+        0.0
+      ],
+      "solver_iterations": 1,
+      "residual": 1.6654544269964916e-17,
+      "certificate": "converged_gradient"
+    },
+    {
+      "face_a": 111,
+      "face_b": 73,
+      "point_a": [
+        -1.9000320570817475e-18,
+        7.19752108675787e-18,
+        0.08000000000000002
+      ],
+      "point_b": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "normal": [
+        2.375040071352184e-17,
+        -8.996901358447336e-17,
+        -1.0
+      ],
+      "gap": 0.08000000000000002,
+      "method": "curved4d_newton",
+      "graph_mu_a": 0.8660254037844387,
+      "graph_mu_b": 1.0,
+      "feature": "A_vertex-B_vertex",
+      "overlap_area": 0.0,
+      "bary_a": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "bary_b": [
+        1.0,
+        0.0,
+        0.0
+      ],
+      "solver_iterations": 1,
+      "residual": 1.6654544269964916e-17,
+      "certificate": "converged_gradient"
+    },
+    {
+      "face_a": 116,
+      "face_b": 72,
+      "point_a": [
+        -4.0664934395198743e-17,
+        -9.455322243848267e-17,
+        0.08000000000000018
+      ],
+      "point_b": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "normal": [
+        5.083116799399831e-16,
+        1.1819152804810308e-15,
+        -1.0
+      ],
+      "gap": 0.08000000000000018,
+      "method": "curved4d_newton",
+      "graph_mu_a": 0.8660254037844387,
+      "graph_mu_b": 1.0,
+      "feature": "A_vertex-B_vertex",
+      "overlap_area": 0.0,
+      "bary_a": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "bary_b": [
+        1.0,
+        0.0,
+        0.0
+      ],
+      "solver_iterations": 1,
+      "residual": 1.332073619200771e-16,
+      "certificate": "converged_gradient"
+    },
+    {
+      "face_a": 116,
+      "face_b": 73,
+      "point_a": [
+        -4.0664934395198743e-17,
+        -9.455322243848267e-17,
+        0.08000000000000018
+      ],
+      "point_b": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "normal": [
+        5.083116799399831e-16,
+        1.1819152804810308e-15,
+        -1.0
+      ],
+      "gap": 0.08000000000000018,
+      "method": "curved4d_newton",
+      "graph_mu_a": 0.8660254037844387,
+      "graph_mu_b": 1.0,
+      "feature": "A_vertex-B_vertex",
+      "overlap_area": 0.0,
+      "bary_a": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "bary_b": [
+        1.0,
+        0.0,
+        0.0
+      ],
+      "solver_iterations": 1,
+      "residual": 1.3320736192007712e-16,
+      "certificate": "converged_gradient"
+    },
+    {
+      "face_a": 115,
+      "face_b": 72,
+      "point_a": [
+        7.60313873259213e-17,
+        -6.357651072218054e-18,
+        0.08000000000000007
+      ],
+      "point_b": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "normal": [
+        -9.503923415740154e-16,
+        7.94706384027256e-17,
+        -1.0
+      ],
+      "gap": 0.08000000000000007,
+      "method": "curved4d_newton",
+      "graph_mu_a": 0.8660254037844387,
+      "graph_mu_b": 1.0,
+      "feature": "A_vertex-B_vertex",
+      "overlap_area": 0.0,
+      "bary_a": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "bary_b": [
+        1.0,
+        0.0,
+        0.0
+      ],
+      "solver_iterations": 1,
+      "residual": 1.0190589062506262e-16,
+      "certificate": "converged_gradient"
+    },
+    {
+      "face_a": 115,
+      "face_b": 73,
+      "point_a": [
+        7.60313873259213e-17,
+        -6.357651072218054e-18,
+        0.08000000000000007
+      ],
+      "point_b": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "normal": [
+        -9.503923415740154e-16,
+        7.94706384027256e-17,
+        -1.0
+      ],
+      "gap": 0.08000000000000007,
+      "method": "curved4d_newton",
+      "graph_mu_a": 0.8660254037844387,
+      "graph_mu_b": 1.0,
+      "feature": "A_vertex-B_vertex",
+      "overlap_area": 0.0,
+      "bary_a": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "bary_b": [
+        1.0,
+        0.0,
+        0.0
+      ],
+      "solver_iterations": 1,
+      "residual": 1.0190589062506262e-16,
+      "certificate": "converged_gradient"
+    },
+    {
+      "face_a": 114,
+      "face_b": 72,
+      "point_a": [
+        5.551115123125783e-17,
+        1.7113155195062888e-19,
+        0.08000000000000004
+      ],
+      "point_b": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "normal": [
+        -6.938893903907224e-16,
+        -2.13914439938286e-18,
+        -1.0
+      ],
+      "gap": 0.08000000000000004,
+      "method": "curved4d_newton",
+      "graph_mu_a": 0.8660254037844387,
+      "graph_mu_b": 1.0,
+      "feature": "A_vertex-B_vertex",
+      "overlap_area": 0.0,
+      "bary_a": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "bary_b": [
+        1.0,
+        0.0,
+        0.0
+      ],
+      "solver_iterations": 1,
+      "residual": 8.328304984194828e-17,
+      "certificate": "converged_gradient"
+    },
+    {
+      "face_a": 114,
+      "face_b": 73,
+      "point_a": [
+        5.551115123125783e-17,
+        1.7113155195062888e-19,
+        0.08000000000000004
+      ],
+      "point_b": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "normal": [
+        -6.938893903907224e-16,
+        -2.13914439938286e-18,
+        -1.0
+      ],
+      "gap": 0.08000000000000004,
+      "method": "curved4d_newton",
+      "graph_mu_a": 0.8660254037844387,
+      "graph_mu_b": 1.0,
+      "feature": "A_vertex-B_vertex",
+      "overlap_area": 0.0,
+      "bary_a": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "bary_b": [
+        1.0,
+        0.0,
+        0.0
+      ],
+      "solver_iterations": 1,
+      "residual": 8.328304984194828e-17,
+      "certificate": "converged_gradient"
+    },
+    {
+      "face_a": 113,
+      "face_b": 57,
+      "point_a": [
+        1.2196755208962071e-17,
+        -4.83459217962434e-17,
+        0.08000000000000007
+      ],
+      "point_b": [
+        0.0,
+        5.551115123125783e-17,
+        0.0
+      ],
+      "normal": [
+        -1.5245944011202576e-16,
+        1.2982134128437641e-15,
+        -1.0
+      ],
+      "gap": 0.08000000000000007,
+      "method": "curved4d_newton",
+      "graph_mu_a": 0.8660254037844387,
+      "graph_mu_b": 1.0,
+      "feature": "A_vertex-B_vertex",
+      "overlap_area": 0.0,
+      "bary_a": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "bary_b": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "solver_iterations": 1,
+      "residual": 1.4170905378698331e-16,
+      "certificate": "converged_gradient"
+    },
+    {
+      "face_a": 112,
+      "face_b": 57,
+      "point_a": [
+        5.185826057502448e-17,
+        -1.2162161948867633e-16,
+        0.08000000000000007
+      ],
+      "point_b": [
+        0.0,
+        5.551115123125783e-17,
+        0.0
+      ],
+      "normal": [
+        -6.482282571878053e-16,
+        2.214159633999175e-15,
+        -1.0
+      ],
+      "gap": 0.08000000000000007,
+      "method": "curved4d_newton",
+      "graph_mu_a": 0.8660254037844387,
+      "graph_mu_b": 1.0,
+      "feature": "A_vertex-B_vertex",
+      "overlap_area": 0.0,
+      "bary_a": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "bary_b": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "solver_iterations": 1,
+      "residual": 2.772026591785267e-16,
+      "certificate": "converged_gradient"
+    },
+    {
+      "face_a": 111,
+      "face_b": 57,
+      "point_a": [
+        -1.9000320570817475e-18,
+        7.19752108675787e-18,
+        0.08000000000000002
+      ],
+      "point_b": [
+        0.0,
+        5.551115123125783e-17,
+        0.0
+      ],
+      "normal": [
+        2.375040071352184e-17,
+        6.039203768062493e-16,
+        -1.0
+      ],
+      "gap": 0.08000000000000002,
+      "method": "curved4d_newton",
+      "graph_mu_a": 0.8660254037844387,
+      "graph_mu_b": 1.0,
+      "feature": "A_vertex-B_vertex",
+      "overlap_area": 0.0,
+      "bary_a": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "bary_b": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "solver_iterations": 1,
+      "residual": 8.392682633723527e-17,
+      "certificate": "converged_gradient"
+    },
+    {
+      "face_a": 116,
+      "face_b": 57,
+      "point_a": [
+        -4.0664934395198743e-17,
+        -9.455322243848267e-17,
+        0.08000000000000018
+      ],
+      "point_b": [
+        0.0,
+        5.551115123125783e-17,
+        0.0
+      ],
+      "normal": [
+        5.083116799399831e-16,
+        1.875804670871752e-15,
+        -1.0
+      ],
+      "gap": 0.08000000000000018,
+      "method": "curved4d_newton",
+      "graph_mu_a": 0.8660254037844387,
+      "graph_mu_b": 1.0,
+      "feature": "A_vertex-B_vertex",
+      "overlap_area": 0.0,
+      "bary_a": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "bary_b": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "solver_iterations": 1,
+      "residual": 2.0897148303615262e-16,
+      "certificate": "converged_gradient"
+    },
+    {
+      "face_a": 115,
+      "face_b": 57,
+      "point_a": [
+        7.60313873259213e-17,
+        -6.357651072218054e-18,
+        0.08000000000000007
+      ],
+      "point_b": [
+        0.0,
+        5.551115123125783e-17,
+        0.0
+      ],
+      "normal": [
+        -9.503923415740154e-16,
+        7.733600287934478e-16,
+        -1.0
+      ],
+      "gap": 0.08000000000000007,
+      "method": "curved4d_newton",
+      "graph_mu_a": 0.8660254037844387,
+      "graph_mu_b": 1.0,
+      "feature": "A_vertex-B_vertex",
+      "overlap_area": 0.0,
+      "bary_a": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "bary_b": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "solver_iterations": 1,
+      "residual": 1.2506143601947965e-16,
+      "certificate": "converged_gradient"
+    },
+    {
+      "face_a": 114,
+      "face_b": 57,
+      "point_a": [
+        5.551115123125783e-17,
+        1.7113155195062888e-19,
+        0.08000000000000004
+      ],
+      "point_b": [
+        0.0,
+        5.551115123125783e-17,
+        0.0
+      ],
+      "normal": [
+        -6.938893903907224e-16,
+        6.917502459913396e-16,
+        -1.0
+      ],
+      "gap": 0.08000000000000004,
+      "method": "curved4d_newton",
+      "graph_mu_a": 0.8660254037844387,
+      "graph_mu_b": 1.0,
+      "feature": "A_vertex-B_vertex",
+      "overlap_area": 0.0,
+      "bary_a": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "bary_b": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "solver_iterations": 1,
+      "residual": 1.1160144758142836e-16,
+      "certificate": "converged_gradient"
+    },
+    {
+      "face_a": 108,
+      "face_b": 70,
+      "point_a": [
+        -5.548008895274872e-17,
+        6.535098279590633e-20,
+        0.08000000000000002
+      ],
+      "point_b": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "normal": [
+        6.935011119093589e-16,
+        -8.168872849488289e-19,
+        -1.0
+      ],
+      "gap": 0.08000000000000002,
+      "method": "curved4d_newton",
+      "graph_mu_a": 0.8660254037844387,
+      "graph_mu_b": 1.0,
+      "feature": "A_vertex-B_vertex",
+      "overlap_area": 0.0,
+      "bary_a": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "bary_b": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "solver_iterations": 1,
+      "residual": 8.317124274116213e-17,
+      "certificate": "converged_gradient"
+    },
+    {
+      "face_a": 109,
+      "face_b": 70,
+      "point_a": [
+        -8.473944288583882e-17,
+        -7.101140381830802e-18,
+        0.0800000000000001
+      ],
+      "point_b": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "normal": [
+        1.059243036072984e-15,
+        8.876425477288492e-17,
+        -1.0
+      ],
+      "gap": 0.0800000000000001,
+      "method": "curved4d_newton",
+      "graph_mu_a": 0.8660254037844387,
+      "graph_mu_b": 1.0,
+      "feature": "A_vertex-B_vertex",
+      "overlap_area": 0.0,
+      "bary_a": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "bary_b": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "solver_iterations": 1,
+      "residual": 1.2073188234987087e-16,
+      "certificate": "converged_gradient"
+    },
+    {
+      "face_a": 110,
+      "face_b": 70,
+      "point_a": [
+        -3.937039723619422e-17,
+        -3.371320016150016e-17,
+        0.08000000000000004
+      ],
+      "point_b": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "normal": [
+        4.921299654524275e-16,
+        4.2141500201875177e-16,
+        -1.0
+      ],
+      "gap": 0.08000000000000004,
+      "method": "curved4d_newton",
+      "graph_mu_a": 0.8660254037844387,
+      "graph_mu_b": 1.0,
+      "feature": "A_vertex-B_vertex",
+      "overlap_area": 0.0,
+      "bary_a": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "bary_b": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "solver_iterations": 1,
+      "residual": 7.923269906831806e-17,
+      "certificate": "converged_gradient"
+    },
+    {
+      "face_a": 117,
+      "face_b": 70,
+      "point_a": [
+        -2.1115931953912235e-18,
+        7.135396529739656e-18,
+        0.0800000000000001
+      ],
+      "point_b": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "normal": [
+        2.639491494239026e-17,
+        -8.919245662174559e-17,
+        -1.0
+      ],
+      "gap": 0.0800000000000001,
+      "method": "curved4d_newton",
+      "graph_mu_a": 0.8660254037844387,
+      "graph_mu_b": 1.0,
+      "feature": "A_vertex-B_vertex",
+      "overlap_area": 0.0,
+      "bary_a": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "bary_b": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "solver_iterations": 1,
+      "residual": 1.8492750603402798e-17,
+      "certificate": "converged_gradient"
+    },
+    {
+      "face_a": 118,
+      "face_b": 70,
+      "point_a": [
+        -9.56672505279695e-17,
+        2.1469334528042958e-16,
+        0.08000000000000007
+      ],
+      "point_b": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "normal": [
+        1.1958406315996176e-15,
+        -2.6836668160053676e-15,
+        -1.0
+      ],
+      "gap": 0.08000000000000007,
+      "method": "curved4d_newton",
+      "graph_mu_a": 0.8660254037844387,
+      "graph_mu_b": 1.0,
+      "feature": "A_vertex-B_vertex",
+      "overlap_area": 0.0,
+      "bary_a": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "bary_b": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "solver_iterations": 1,
+      "residual": 3.541429889419444e-16,
+      "certificate": "converged_gradient"
+    },
+    {
+      "face_a": 119,
+      "face_b": 70,
+      "point_a": [
+        -6.565215518049426e-17,
+        6.692287516950981e-17,
+        0.0800000000000001
+      ],
+      "point_b": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "normal": [
+        8.206519397561772e-16,
+        -8.365359396188716e-16,
+        -1.0
+      ],
+      "gap": 0.0800000000000001,
+      "method": "curved4d_newton",
+      "graph_mu_a": 0.8660254037844387,
+      "graph_mu_b": 1.0,
+      "feature": "A_vertex-B_vertex",
+      "overlap_area": 0.0,
+      "bary_a": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "bary_b": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "solver_iterations": 1,
+      "residual": 1.3931015936759872e-16,
+      "certificate": "converged_gradient"
+    },
+    {
+      "face_a": 108,
+      "face_b": 54,
+      "point_a": [
+        -5.548008895274872e-17,
+        6.535098279590633e-20,
+        0.08000000000000002
+      ],
+      "point_b": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "normal": [
+        6.935011119093589e-16,
+        -8.168872849488289e-19,
+        -1.0
+      ],
+      "gap": 0.08000000000000002,
+      "method": "curved4d_newton",
+      "graph_mu_a": 0.8660254037844387,
+      "graph_mu_b": 1.0,
+      "feature": "A_vertex-B_vertex",
+      "overlap_area": 0.0,
+      "bary_a": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "bary_b": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "solver_iterations": 1,
+      "residual": 8.317124274116213e-17,
+      "certificate": "converged_gradient"
+    },
+    {
+      "face_a": 108,
+      "face_b": 55,
+      "point_a": [
+        -5.548008895274872e-17,
+        6.535098279590633e-20,
+        0.08000000000000002
+      ],
+      "point_b": [
+        5.551115123125783e-17,
+        5.551115123125783e-17,
+        0.0
+      ],
+      "normal": [
+        1.3873905023000815e-15,
+        6.930725031057739e-16,
+        -1.0
+      ],
+      "gap": 0.08000000000000002,
+      "method": "curved4d_newton",
+      "graph_mu_a": 0.8660254037844387,
+      "graph_mu_b": 1.0,
+      "feature": "A_vertex-B_vertex",
+      "overlap_area": 0.0,
+      "bary_a": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "bary_b": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "solver_iterations": 1,
+      "residual": 1.8263201060643488e-16,
+      "certificate": "converged_gradient"
+    },
+    {
+      "face_a": 109,
+      "face_b": 54,
+      "point_a": [
+        -8.473944288583882e-17,
+        -7.101140381830802e-18,
+        0.0800000000000001
+      ],
+      "point_b": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "normal": [
+        1.059243036072984e-15,
+        8.876425477288492e-17,
+        -1.0
+      ],
+      "gap": 0.0800000000000001,
+      "method": "curved4d_newton",
+      "graph_mu_a": 0.8660254037844387,
+      "graph_mu_b": 1.0,
+      "feature": "A_vertex-B_vertex",
+      "overlap_area": 0.0,
+      "bary_a": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "bary_b": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "solver_iterations": 1,
+      "residual": 1.2073188234987087e-16,
+      "certificate": "converged_gradient"
+    },
+    {
+      "face_a": 109,
+      "face_b": 55,
+      "point_a": [
+        -8.473944288583882e-17,
+        -7.101140381830802e-18,
+        0.0800000000000001
+      ],
+      "point_b": [
+        5.551115123125783e-17,
+        5.551115123125783e-17,
+        0.0
+      ],
+      "normal": [
+        1.7531324264637059e-15,
+        7.826536451636069e-16,
+        -1.0
+      ],
+      "gap": 0.0800000000000001,
+      "method": "curved4d_newton",
+      "graph_mu_a": 0.8660254037844387,
+      "graph_mu_b": 1.0,
+      "feature": "A_vertex-B_vertex",
+      "overlap_area": 0.0,
+      "bary_a": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "bary_b": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "solver_iterations": 1,
+      "residual": 2.234562651950593e-16,
+      "certificate": "converged_gradient"
+    },
+    {
+      "face_a": 110,
+      "face_b": 54,
+      "point_a": [
+        -3.937039723619422e-17,
+        -3.371320016150016e-17,
+        0.08000000000000004
+      ],
+      "point_b": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "normal": [
+        4.921299654524275e-16,
+        4.2141500201875177e-16,
+        -1.0
+      ],
+      "gap": 0.08000000000000004,
+      "method": "curved4d_newton",
+      "graph_mu_a": 0.8660254037844387,
+      "graph_mu_b": 1.0,
+      "feature": "A_vertex-B_vertex",
+      "overlap_area": 0.0,
+      "bary_a": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "bary_b": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "solver_iterations": 1,
+      "residual": 7.923269906831806e-17,
+      "certificate": "converged_gradient"
+    },
+    {
+      "face_a": 110,
+      "face_b": 55,
+      "point_a": [
+        -3.937039723619422e-17,
+        -3.371320016150016e-17,
+        0.08000000000000004
+      ],
+      "point_b": [
+        5.551115123125783e-17,
+        5.551115123125783e-17,
+        0.0
+      ],
+      "normal": [
+        1.1860193558431501e-15,
+        1.1153043924094743e-15,
+        -1.0
+      ],
+      "gap": 0.08000000000000004,
+      "method": "curved4d_newton",
+      "graph_mu_a": 0.8660254037844387,
+      "graph_mu_b": 1.0,
+      "feature": "A_vertex-B_vertex",
+      "overlap_area": 0.0,
+      "bary_a": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "bary_b": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "solver_iterations": 1,
+      "residual": 1.9158778129302707e-16,
+      "certificate": "converged_gradient"
+    },
+    {
+      "face_a": 117,
+      "face_b": 54,
+      "point_a": [
+        -2.1115931953912235e-18,
+        7.135396529739656e-18,
+        0.0800000000000001
+      ],
+      "point_b": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "normal": [
+        2.639491494239026e-17,
+        -8.919245662174559e-17,
+        -1.0
+      ],
+      "gap": 0.0800000000000001,
+      "method": "curved4d_newton",
+      "graph_mu_a": 0.8660254037844387,
+      "graph_mu_b": 1.0,
+      "feature": "A_vertex-B_vertex",
+      "overlap_area": 0.0,
+      "bary_a": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "bary_b": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "solver_iterations": 1,
+      "residual": 1.8492750603402798e-17,
+      "certificate": "converged_gradient"
+    },
+    {
+      "face_a": 117,
+      "face_b": 55,
+      "point_a": [
+        -2.1115931953912235e-18,
+        7.135396529739656e-18,
+        0.0800000000000001
+      ],
+      "point_b": [
+        5.551115123125783e-17,
+        5.551115123125783e-17,
+        0.0
+      ],
+      "normal": [
+        7.2028430533311225e-16,
+        6.046969337689764e-16,
+        -1.0
+      ],
+      "gap": 0.0800000000000001,
+      "method": "curved4d_newton",
+      "graph_mu_a": 0.8660254037844387,
+      "graph_mu_b": 1.0,
+      "feature": "A_vertex-B_vertex",
+      "overlap_area": 0.0,
+      "bary_a": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "bary_b": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "solver_iterations": 1,
+      "residual": 9.940914789342767e-17,
+      "certificate": "converged_gradient"
+    },
+    {
+      "face_a": 118,
+      "face_b": 54,
+      "point_a": [
+        -9.56672505279695e-17,
+        2.1469334528042958e-16,
+        0.08000000000000007
+      ],
+      "point_b": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "normal": [
+        1.1958406315996176e-15,
+        -2.6836668160053676e-15,
+        -1.0
+      ],
+      "gap": 0.08000000000000007,
+      "method": "curved4d_newton",
+      "graph_mu_a": 0.8660254037844387,
+      "graph_mu_b": 1.0,
+      "feature": "A_vertex-B_vertex",
+      "overlap_area": 0.0,
+      "bary_a": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "bary_b": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "solver_iterations": 1,
+      "residual": 3.541429889419444e-16,
+      "certificate": "converged_gradient"
+    },
+    {
+      "face_a": 118,
+      "face_b": 55,
+      "point_a": [
+        -9.56672505279695e-17,
+        2.1469334528042958e-16,
+        0.08000000000000007
+      ],
+      "point_b": [
+        5.551115123125783e-17,
+        5.551115123125783e-17,
+        0.0
+      ],
+      "normal": [
+        1.88973002199034e-15,
+        -1.989777425614645e-15,
+        -1.0
+      ],
+      "gap": 0.08000000000000007,
+      "method": "curved4d_newton",
+      "graph_mu_a": 0.8660254037844387,
+      "graph_mu_b": 1.0,
+      "feature": "A_vertex-B_vertex",
+      "overlap_area": 0.0,
+      "bary_a": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "bary_b": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "solver_iterations": 1,
+      "residual": 3.323289479965935e-16,
+      "certificate": "converged_gradient"
+    },
+    {
+      "face_a": 119,
+      "face_b": 54,
+      "point_a": [
+        -6.565215518049426e-17,
+        6.692287516950981e-17,
+        0.0800000000000001
+      ],
+      "point_b": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "normal": [
+        8.206519397561772e-16,
+        -8.365359396188716e-16,
+        -1.0
+      ],
+      "gap": 0.0800000000000001,
+      "method": "curved4d_newton",
+      "graph_mu_a": 0.8660254037844387,
+      "graph_mu_b": 1.0,
+      "feature": "A_vertex-B_vertex",
+      "overlap_area": 0.0,
+      "bary_a": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "bary_b": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "solver_iterations": 1,
+      "residual": 1.3931015936759872e-16,
+      "certificate": "converged_gradient"
+    },
+    {
+      "face_a": 119,
+      "face_b": 55,
+      "point_a": [
+        -6.565215518049426e-17,
+        6.692287516950981e-17,
+        0.0800000000000001
+      ],
+      "point_b": [
+        5.551115123125783e-17,
+        5.551115123125783e-17,
+        0.0
+      ],
+      "normal": [
+        1.5145413301468992e-15,
+        -1.4264654922814966e-16,
+        -1.0
+      ],
+      "gap": 0.0800000000000001,
+      "method": "curved4d_newton",
+      "graph_mu_a": 0.8660254037844387,
+      "graph_mu_b": 1.0,
+      "feature": "A_vertex-B_vertex",
+      "overlap_area": 0.0,
+      "bary_a": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "bary_b": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "solver_iterations": 1,
+      "residual": 1.8432341374281203e-16,
+      "certificate": "converged_gradient"
+    },
+    {
+      "face_a": 113,
+      "face_b": 70,
+      "point_a": [
+        -0.021906865182716076,
+        0.005869926834406457,
+        0.0794182505862557
+      ],
+      "point_b": [
+        -0.021906865182716076,
+        0.005869926834406457,
+        -6.938893903907228e-18
+      ],
+      "normal": [
+        4.0907817369073415e-17,
+        -2.6902768093840138e-18,
+        -1.0
+      ],
+      "gap": 0.07941825058625572,
+      "method": "graph2d",
+      "graph_mu_a": 0.8660254037844387,
+      "graph_mu_b": 1.0,
+      "feature": "surface-surface",
+      "overlap_area": 0.02241905598179687,
+      "bary_a": [
+        0.021646875862057647,
+        0.9567062482758861,
+        0.021646875862056224
+      ],
+      "bary_b": [
+        0.06259104337918883,
+        0.9206377370939356,
+        0.01677121952687558
+      ],
+      "solver_iterations": 0,
+      "residual": 0.0,
+      "certificate": "normal_cone_graphability"
+    },
+    {
+      "face_a": 113,
+      "face_b": 71,
+      "point_a": [
+        -0.19408382885956318,
+        0.1148111852970241,
+        0.10477817524815855
+      ],
+      "point_b": [
+        -0.21463632178126957,
+        0.13536367821873047,
+        2.7755575615628914e-17
+      ],
+      "normal": [
+        -0.09533052074336085,
+        0.05617513007956224,
+        -0.9938593696169211
+      ],
+      "gap": 0.10873488832443522,
+      "method": "graph2d",
+      "graph_mu_a": 0.9290192829970981,
+      "graph_mu_b": 0.9636113749942801,
+      "feature": "surface-surface",
+      "overlap_area": 0.01365748770951057,
+      "bary_a": [
+        0.4413959376125868,
+        0.5586040623874131,
+        0.0
+      ],
+      "bary_b": [
+        0.6132466336607701,
+        0.3867533663392299,
+        0.0
+      ],
+      "solver_iterations": 0,
+      "residual": 0.0,
+      "certificate": "normal_cone_graphability"
+    },
+    {
+      "face_a": 112,
+      "face_b": 70,
+      "point_a": [
+        -0.016036938348308175,
+        0.016036938348307987,
+        0.07941825058625447
+      ],
+      "point_b": [
+        -0.016036938348308175,
+        0.016036938348307987,
+        -6.938893903907228e-18
+      ],
+      "normal": [
+        4.08031002122874e-17,
+        -6.97401951342766e-18,
+        -1.0
+      ],
+      "gap": 0.07941825058625447,
+      "method": "graph2d",
+      "graph_mu_a": 0.8660254037844387,
+      "graph_mu_b": 1.0,
+      "feature": "surface-surface",
+      "overlap_area": 0.016411888036406284,
+      "bary_a": [
+        0.021646875862053803,
+        0.9567062482758913,
+        0.02164687586205485
+      ],
+      "bary_b": [
+        0.045819823852309025,
+        0.9083603522953826,
+        0.045819823852308386
+      ],
+      "solver_iterations": 0,
+      "residual": 0.0,
+      "certificate": "normal_cone_graphability"
+    },
+    {
+      "face_a": 112,
+      "face_b": 71,
+      "point_a": [
+        -0.1546853625227127,
+        0.1546853625227127,
+        0.10356557006522518
+      ],
+      "point_b": [
+        -0.1750000000000001,
+        0.17500000000000002,
+        0.0
+      ],
+      "normal": [
+        -0.0757344285313926,
+        0.07573442853139267,
+        -0.994247752157402
+      ],
+      "gap": 0.10747649182310652,
+      "method": "graph2d",
+      "graph_mu_a": 0.9636113749942801,
+      "graph_mu_b": 0.9636113749942801,
+      "feature": "surface-surface",
+      "overlap_area": 0.0307436232490396,
+      "bary_a": [
+        0.21657688986315476,
+        0.5668462202736904,
+        0.21657688986315488
+      ],
+      "bary_b": [
+        0.5000000000000001,
+        0.4999999999999998,
+        1.1560006503802118e-16
+      ],
+      "solver_iterations": 0,
+      "residual": 0.0,
+      "certificate": "normal_cone_graphability"
+    },
+    {
+      "face_a": 111,
+      "face_b": 70,
+      "point_a": [
+        -0.005869926834406401,
+        0.02190686518271611,
+        0.07941825058625562
+      ],
+      "point_b": [
+        -0.005869926834406401,
+        0.02190686518271611,
+        -6.938893903907228e-18
+      ],
+      "normal": [
+        3.8481396146271965e-17,
+        -1.9763040189155506e-18,
+        -1.0
+      ],
+      "gap": 0.07941825058625565,
+      "method": "graph2d",
+      "graph_mu_a": 0.8660254037844387,
+      "graph_mu_b": 1.0,
+      "feature": "surface-surface",
+      "overlap_area": 0.022419055981796884,
+      "bary_a": [
+        0.021646875862056204,
+        0.9567062482758861,
+        0.021646875862057668
+      ],
+      "bary_b": [
+        0.016771219526875478,
+        0.9206377370939357,
+        0.06259104337918882
+      ],
+      "solver_iterations": 0,
+      "residual": 0.0,
+      "certificate": "normal_cone_graphability"
+    },
+    {
+      "face_a": 111,
+      "face_b": 71,
+      "point_a": [
+        -0.11481118529702411,
+        0.19408382885956332,
+        0.10477817524815858
+      ],
+      "point_b": [
+        -0.13536367821873044,
+        0.21463632178126962,
+        0.0
+      ],
+      "normal": [
+        -0.05617513007956268,
+        0.0953305207433612,
+        -0.9938593696169211
+      ],
+      "gap": 0.10873488832443526,
+      "method": "graph2d",
+      "graph_mu_a": 0.929019282997098,
+      "graph_mu_b": 0.9636113749942803,
+      "feature": "surface-surface",
+      "overlap_area": 0.013657487709510568,
+      "bary_a": [
+        0.0,
+        0.5586040623874127,
+        0.44139593761258716
+      ],
+      "bary_b": [
+        0.38675336633922985,
+        0.6132466336607701,
+        0.0
+      ],
+      "solver_iterations": 0,
+      "residual": 0.0,
+      "certificate": "normal_cone_graphability"
+    },
+    {
+      "face_a": 116,
+      "face_b": 70,
+      "point_a": [
+        -4.0664934395198743e-17,
+        -9.455322243848267e-17,
+        0.08000000000000018
+      ],
+      "point_b": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "normal": [
+        5.083116799399831e-16,
+        1.1819152804810308e-15,
+        -1.0
+      ],
+      "gap": 0.08000000000000018,
+      "method": "curved4d_newton",
+      "graph_mu_a": 0.8660254037844387,
+      "graph_mu_b": 1.0,
+      "feature": "A_vertex-B_vertex",
+      "overlap_area": 0.0,
+      "bary_a": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "bary_b": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "solver_iterations": 1,
+      "residual": 1.332073619200771e-16,
+      "certificate": "converged_gradient"
+    },
+    {
+      "face_a": 115,
+      "face_b": 70,
+      "point_a": [
+        7.60313873259213e-17,
+        -6.357651072218054e-18,
+        0.08000000000000007
+      ],
+      "point_b": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "normal": [
+        -9.503923415740154e-16,
+        7.94706384027256e-17,
+        -1.0
+      ],
+      "gap": 0.08000000000000007,
+      "method": "curved4d_newton",
+      "graph_mu_a": 0.8660254037844387,
+      "graph_mu_b": 1.0,
+      "feature": "A_vertex-B_vertex",
+      "overlap_area": 0.0,
+      "bary_a": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "bary_b": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "solver_iterations": 1,
+      "residual": 1.0190589062506262e-16,
+      "certificate": "converged_gradient"
+    },
+    {
+      "face_a": 114,
+      "face_b": 70,
+      "point_a": [
+        5.551115123125783e-17,
+        1.7113155195062888e-19,
+        0.08000000000000004
+      ],
+      "point_b": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "normal": [
+        -6.938893903907224e-16,
+        -2.13914439938286e-18,
+        -1.0
+      ],
+      "gap": 0.08000000000000004,
+      "method": "curved4d_newton",
+      "graph_mu_a": 0.8660254037844387,
+      "graph_mu_b": 1.0,
+      "feature": "A_vertex-B_vertex",
+      "overlap_area": 0.0,
+      "bary_a": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "bary_b": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "solver_iterations": 1,
+      "residual": 8.328304984194828e-17,
+      "certificate": "converged_gradient"
+    },
+    {
+      "face_a": 113,
+      "face_b": 54,
+      "point_a": [
+        1.2196755208962071e-17,
+        -4.83459217962434e-17,
+        0.08000000000000007
+      ],
+      "point_b": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "normal": [
+        -1.5245944011202576e-16,
+        6.04324022453042e-16,
+        -1.0
+      ],
+      "gap": 0.08000000000000007,
+      "method": "curved4d_newton",
+      "graph_mu_a": 0.8660254037844387,
+      "graph_mu_b": 1.0,
+      "feature": "A_vertex-B_vertex",
+      "overlap_area": 0.0,
+      "bary_a": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "bary_b": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "solver_iterations": 1,
+      "residual": 6.550535165389086e-17,
+      "certificate": "converged_gradient"
+    },
+    {
+      "face_a": 113,
+      "face_b": 55,
+      "point_a": [
+        1.2196755208962071e-17,
+        -4.83459217962434e-17,
+        0.08000000000000007
+      ],
+      "point_b": [
+        5.551115123125783e-17,
+        5.551115123125783e-17,
+        0.0
+      ],
+      "normal": [
+        5.414299502786965e-16,
+        1.2982134128437641e-15,
+        -1.0
+      ],
+      "gap": 0.08000000000000007,
+      "method": "curved4d_newton",
+      "graph_mu_a": 0.8660254037844387,
+      "graph_mu_b": 1.0,
+      "feature": "A_vertex-B_vertex",
+      "overlap_area": 0.0,
+      "bary_a": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "bary_b": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "solver_iterations": 1,
+      "residual": 1.5086036902212342e-16,
+      "certificate": "converged_gradient"
+    },
+    {
+      "face_a": 112,
+      "face_b": 54,
+      "point_a": [
+        5.185826057502448e-17,
+        -1.2162161948867633e-16,
+        0.08000000000000007
+      ],
+      "point_b": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "normal": [
+        -6.482282571878053e-16,
+        1.5202702436084528e-15,
+        -1.0
+      ],
+      "gap": 0.08000000000000007,
+      "method": "curved4d_newton",
+      "graph_mu_a": 0.8660254037844387,
+      "graph_mu_b": 1.0,
+      "feature": "A_vertex-B_vertex",
+      "overlap_area": 0.0,
+      "bary_a": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "bary_b": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "solver_iterations": 1,
+      "residual": 2.029458021251132e-16,
+      "certificate": "converged_gradient"
+    },
+    {
+      "face_a": 112,
+      "face_b": 55,
+      "point_a": [
+        5.185826057502448e-17,
+        -1.2162161948867633e-16,
+        0.08000000000000007
+      ],
+      "point_b": [
+        5.551115123125783e-17,
+        5.551115123125783e-17,
+        0.0
+      ],
+      "normal": [
+        4.566113320291683e-17,
+        2.214159633999175e-15,
+        -1.0
+      ],
+      "gap": 0.08000000000000007,
+      "method": "curved4d_newton",
+      "graph_mu_a": 0.8660254037844387,
+      "graph_mu_b": 1.0,
+      "feature": "A_vertex-B_vertex",
+      "overlap_area": 0.0,
+      "bary_a": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "bary_b": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "solver_iterations": 1,
+      "residual": 2.633689973097979e-16,
+      "certificate": "converged_gradient"
+    },
+    {
+      "face_a": 111,
+      "face_b": 54,
+      "point_a": [
+        -1.9000320570817475e-18,
+        7.19752108675787e-18,
+        0.08000000000000002
+      ],
+      "point_b": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "normal": [
+        2.375040071352184e-17,
+        -8.996901358447336e-17,
+        -1.0
+      ],
+      "gap": 0.08000000000000002,
+      "method": "curved4d_newton",
+      "graph_mu_a": 0.8660254037844387,
+      "graph_mu_b": 1.0,
+      "feature": "A_vertex-B_vertex",
+      "overlap_area": 0.0,
+      "bary_a": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "bary_b": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "solver_iterations": 1,
+      "residual": 1.6654544269964916e-17,
+      "certificate": "converged_gradient"
+    },
+    {
+      "face_a": 111,
+      "face_b": 55,
+      "point_a": [
+        -1.9000320570817475e-18,
+        7.19752108675787e-18,
+        0.08000000000000002
+      ],
+      "point_b": [
+        5.551115123125783e-17,
+        5.551115123125783e-17,
+        0.0
+      ],
+      "normal": [
+        7.176397911042446e-16,
+        6.039203768062493e-16,
+        -1.0
+      ],
+      "gap": 0.08000000000000002,
+      "method": "curved4d_newton",
+      "graph_mu_a": 0.8660254037844387,
+      "graph_mu_b": 1.0,
+      "feature": "A_vertex-B_vertex",
+      "overlap_area": 0.0,
+      "bary_a": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "bary_b": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "solver_iterations": 1,
+      "residual": 1.2039168985589558e-16,
+      "certificate": "converged_gradient"
+    },
+    {
+      "face_a": 116,
+      "face_b": 54,
+      "point_a": [
+        -0.005869926834406312,
+        -0.021906865182716295,
+        0.07941825058625568
+      ],
+      "point_b": [
+        -0.005869926834406312,
+        -0.021906865182716295,
+        -2.0816681711721685e-17
+      ],
+      "normal": [
+        2.4257024710949995e-17,
+        1.8839922473782615e-17,
+        -1.0
+      ],
+      "gap": 0.07941825058625569,
+      "method": "graph2d",
+      "graph_mu_a": 0.8660254037844387,
+      "graph_mu_b": 1.0,
+      "feature": "surface-surface",
+      "overlap_area": 0.035362703987864626,
+      "bary_a": [
+        0.02164687586205709,
+        0.9567062482758858,
+        0.021646875862057116
+      ],
+      "bary_b": [
+        0.016771219526875103,
+        0.045819823852314284,
+        0.9374089566208106
+      ],
+      "solver_iterations": 0,
+      "residual": 0.0,
+      "certificate": "normal_cone_graphability"
+    },
+    {
+      "face_a": 116,
+      "face_b": 55,
+      "point_a": [
+        -4.0664934395198743e-17,
+        -9.455322243848267e-17,
+        0.08000000000000018
+      ],
+      "point_b": [
+        5.551115123125783e-17,
+        5.551115123125783e-17,
+        0.0
+      ],
+      "normal": [
+        1.2022010703307044e-15,
+        1.875804670871752e-15,
+        -1.0
+      ],
+      "gap": 0.08000000000000018,
+      "method": "curved4d_newton",
+      "graph_mu_a": 0.8660254037844387,
+      "graph_mu_b": 1.0,
+      "feature": "A_vertex-B_vertex",
+      "overlap_area": 0.0,
+      "bary_a": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "bary_b": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "solver_iterations": 1,
+      "residual": 2.4102230787733973e-16,
+      "certificate": "converged_gradient"
+    },
+    {
+      "face_a": 115,
+      "face_b": 54,
+      "point_a": [
+        -0.016036938348307668,
+        -0.016036938348307717,
+        0.07941825058625437
+      ],
+      "point_b": [
+        -0.016036938348307668,
+        -0.016036938348307717,
+        -2.0816681711721685e-17
+      ],
+      "normal": [
+        2.4018240258816058e-17,
+        2.1062841800756295e-17,
+        -1.0
+      ],
+      "gap": 0.07941825058625439,
+      "method": "graph2d",
+      "graph_mu_a": 0.8660254037844387,
+      "graph_mu_b": 1.0,
+      "feature": "surface-surface",
+      "overlap_area": 0.025815153937884725,
+      "bary_a": [
+        0.021646875862053366,
+        0.9567062482758927,
+        0.021646875862053955
+      ],
+      "bary_b": [
+        0.04581982385230765,
+        2.3120013007604236e-16,
+        0.9541801761476921
+      ],
+      "solver_iterations": 0,
+      "residual": 0.0,
+      "certificate": "normal_cone_graphability"
+    },
+    {
+      "face_a": 115,
+      "face_b": 55,
+      "point_a": [
+        -0.016036938348307668,
+        -0.016036938348307713,
+        0.07941825058625437
+      ],
+      "point_b": [
+        -0.016036938348307668,
+        -0.016036938348307713,
+        -2.0816681711721685e-17
+      ],
+      "normal": [
+        2.361071923395775e-17,
+        2.5586947573305012e-17,
+        -1.0
+      ],
+      "gap": 0.07941825058625439,
+      "method": "graph2d",
+      "graph_mu_a": 0.8660254037844387,
+      "graph_mu_b": 1.0,
+      "feature": "surface-surface",
+      "overlap_area": 0.025815153937884798,
+      "bary_a": [
+        0.021646875862053366,
+        0.9567062482758927,
+        0.021646875862053955
+      ],
+      "bary_b": [
+        0.04581982385230776,
+        0.9541801761476922,
+        0.0
+      ],
+      "solver_iterations": 0,
+      "residual": 0.0,
+      "certificate": "normal_cone_graphability"
+    },
+    {
+      "face_a": 114,
+      "face_b": 54,
+      "point_a": [
+        5.551115123125783e-17,
+        1.7113155195062888e-19,
+        0.08000000000000004
+      ],
+      "point_b": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "normal": [
+        -6.938893903907224e-16,
+        -2.13914439938286e-18,
+        -1.0
+      ],
+      "gap": 0.08000000000000004,
+      "method": "curved4d_newton",
+      "graph_mu_a": 0.8660254037844387,
+      "graph_mu_b": 1.0,
+      "feature": "A_vertex-B_vertex",
+      "overlap_area": 0.0,
+      "bary_a": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "bary_b": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "solver_iterations": 1,
+      "residual": 8.328304984194828e-17,
+      "certificate": "converged_gradient"
+    },
+    {
+      "face_a": 114,
+      "face_b": 55,
+      "point_a": [
+        -0.021906865182716187,
+        -0.005869926834406124,
+        0.07941825058625569
+      ],
+      "point_b": [
+        -0.021906865182716187,
+        -0.005869926834406124,
+        -2.0816681711721685e-17
+      ],
+      "normal": [
+        2.3081669234302265e-17,
+        2.6822039949816832e-17,
+        -1.0
+      ],
+      "gap": 0.07941825058625572,
+      "method": "graph2d",
+      "graph_mu_a": 0.8660254037844387,
+      "graph_mu_b": 1.0,
+      "feature": "surface-surface",
+      "overlap_area": 0.035362703987864584,
+      "bary_a": [
+        0.02164687586205733,
+        0.9567062482758861,
+        0.02164687586205654
+      ],
+      "bary_b": [
+        0.01677121952687468,
+        0.9374089566208108,
+        0.04581982385231451
+      ],
+      "solver_iterations": 0,
+      "residual": 0.0,
+      "certificate": "normal_cone_graphability"
+    }
+  ]
+}

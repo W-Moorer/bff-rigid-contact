@@ -1,0 +1,4 @@
+n_a,n_b,tile_size,backend,is_true_cuda,backend_reason,pairs,elapsed_s,throughput_mtests_s,notes
+512,512,512,numpy,False,gpu_not_requested_or_unavailable,11,0.016799426000034146,15.604342672152441,CPU/NumPy fallback; run this script on a CUDA workstation for true GPU acceleration data
+1024,1024,1024,numpy,False,gpu_not_requested_or_unavailable,35,0.07300107400078559,14.363843468778498,CPU/NumPy fallback; run this script on a CUDA workstation for true GPU acceleration data
+2048,2048,2048,numpy,False,gpu_not_requested_or_unavailable,118,0.23322049699982017,17.98428548929485,CPU/NumPy fallback; run this script on a CUDA workstation for true GPU acceleration data

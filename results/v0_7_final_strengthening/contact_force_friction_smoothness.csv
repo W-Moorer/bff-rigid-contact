@@ -1,0 +1,3 @@
+method,samples,normal_force_tv,total_force_tv,friction_force_tv,max_total_force_jump,mean_total_force_jump,friction_mode_stick,friction_mode_slip,notes
+linear_face_normal,260,6.803857204424476,7.138570797299921,0.506311051438078,2.8701586013133387,0.027562049410424404,260,0,mu=0.35; d_hat=0.08; gap=0.045; stiffness=80.0; tangent_stiffness=25.0
+calg_smooth_normal_field,260,7.553376938156305,7.585358979878405,0.42483246578708744,0.05134482817064832,0.02928710030841083,260,0,mu=0.35; d_hat=0.08; gap=0.045; stiffness=80.0; tangent_stiffness=25.0

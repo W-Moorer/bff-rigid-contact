@@ -1,0 +1,9 @@
+# CALG advanced validation summary
+
+| case | metric | value | expected | passed |
+|---|---|---:|---:|---|
+| curved4d_newton_plane_pair | gap | 0.08 | 0.08 | True |
+| interval_bezier_plane_pair | gap | 0.08 | 0.08 | True |
+| threshold_ccd_moving_plane | toi | 0.6669921875 | 0.6666666666666666 | True |
+| ipc_barrier_response | energy | 0.019462325189191877 | >0 | True |
+| force_assembly_balance | net_force_norm | 0.0 | 0.0 | True |

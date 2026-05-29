@@ -1,0 +1,20 @@
+[
+  {
+    "method": "linear_face_normal",
+    "samples": 240,
+    "total_variation_rad": 3.292147817208569,
+    "max_jump_rad": 0.46610333139771176,
+    "mean_jump_rad": 0.013774677059450081,
+    "rms_jump_rad": 0.06154681531304497,
+    "notes": "piecewise-constant PL face normals along the sliding path"
+  },
+  {
+    "method": "calg_smooth_normal_field",
+    "samples": 240,
+    "total_variation_rad": 2.189214106533274,
+    "max_jump_rad": 0.014019902766798514,
+    "mean_jump_rad": 0.009159891659135038,
+    "rms_jump_rad": 0.009445674786301627,
+    "notes": "analytic normals representing the curved-jet smooth normal field"
+  }
+]
