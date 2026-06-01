@@ -55,7 +55,7 @@
 \address[inst1]{Manuscript prepared for submission to Computer Methods in Applied Mechanics and Engineering}
 
 \begin{abstract}
-Rigid frictional contact requires a signed gap, normal, and tangential frame that remain smooth as bodies slide or roll. Facet-based collision proxies and fixed tessellations can make these quantities change with mesh topology, producing nonphysical friction-force spikes and stick--slip chatter. We propose Contact-Aligned Local Graphs with configuration-space signed-distance refinement (CALG-SDF), a contact-geometry backend for smooth rigid frictional contact. CALG constructs a local contact frame for each broad-phase candidate and, when a normal-cone certificate is satisfied, represents the two patches as height graphs over a shared contact plane. The resulting signed gap samples a local configuration-space signed-distance field queried by tensor-product cubic interpolation; the rigid response uses the interpolated gap and gradient normal. Analytic inclined-plane controls first verify the implemented static and kinetic Coulomb response. Four same-scene dynamic benchmarks then compare CALG-SDF with Linear-triangle BVH and PN-triangle BVH under identical rigid-body states and friction parameters. Linear-triangle BVH produces $71.9$--$2.20\times10^3$ times larger contact-normal angle jumps and $37.7$--$108$ times larger friction-force jumps than CALG; PN-triangle BVH produces $40.2$--$826$ times larger normal-angle jumps and $35.8$--$62.6$ times larger friction-force jumps. Chrono and Recurdyn comparisons show trajectory-level agreement in displacement and velocity trends in three selected engineering scenes, and solver-loop timings are reported for the implemented validation benchmark.
+Rigid frictional contact requires a signed gap, contact normal, and tangential frame that vary smoothly as bodies slide or roll. When these quantities are obtained from faceted collision proxies or fixed surface tessellations, contact-point motion across cells can produce nonphysical friction-force spikes and stick--slip chatter. We propose Contact-Aligned Local Graphs with configuration-space signed-distance refinement (CALG-SDF), a contact-geometry backend for smooth rigid frictional contact. CALG constructs a local contact frame for each broad-phase candidate and, when a normal-cone certificate is satisfied, represents the two patches as height graphs over a shared contact plane. The resulting signed gap samples a local configuration-space signed-distance field queried by tensor-product cubic interpolation; the rigid response uses the interpolated gap and gradient normal. Analytic inclined-plane controls first verify the implemented static and kinetic Coulomb response. Four same-scene dynamic benchmarks then compare CALG-SDF with two triangle-based baselines, Linear-triangle BVH and PN-triangle BVH, under identical rigid-body states and friction parameters. Linear-triangle BVH produces $71.9$--$2.20\times10^3$ times larger contact-normal angle jumps and $37.7$--$108$ times larger friction-force jumps than CALG; PN-triangle BVH produces $40.2$--$826$ times larger normal-angle jumps and $35.8$--$62.6$ times larger friction-force jumps. Comparisons with the independent multibody solvers Chrono and Recurdyn show trajectory-level agreement in displacement and velocity trends in three selected engineering scenes, and solver-loop timings are reported for the implemented validation benchmark.
 \end{abstract}
 
 \begin{keyword}
@@ -98,7 +98,7 @@ This work concerns the geometric backend of rigid-body frictional contact. The r
 
 \subsection{Rigid-body frictional contact and multibody dynamics}
 
-Rigid-body contact with Coulomb friction is commonly advanced through time-stepping complementarity, nonsmooth dynamics, or compliant regularization. Implicit time-stepping and complementarity formulations provide stable updates for inelastic impacts and multirigid-body contact \cite{stewart1996,anitescu1997}. Nonsmooth contact dynamics and its numerical analysis give another route for unilateral constraints with friction \cite{jean1999,acary2008}. Semi-implicit and geometrically implicit schemes target convergence and intermittent contact \cite{gavrea2008,chakraborty2014}. Cone-complementarity and matrix-free formulations address large rigid-body systems \cite{anitescu2010,tasora2011}.
+Rigid-body contact with Coulomb friction is commonly advanced through time-stepping complementarity, nonsmooth dynamics, or compliant regularization. Implicit time-stepping and complementarity formulations provide stable updates for inelastic impacts and contact among multiple rigid bodies \cite{stewart1996,anitescu1997}. Nonsmooth contact dynamics and its numerical analysis give another route for unilateral constraints with friction \cite{jean1999,acary2008}. Semi-implicit and geometrically implicit schemes target convergence and intermittent contact \cite{gavrea2008,chakraborty2014}. Cone-complementarity and matrix-free formulations address large rigid-body systems \cite{anitescu2010,tasora2011}.
 
 Compliant contact models are widely used in multibody solvers because they regularize impact and friction into force laws that are practical for engineering dynamics. Machado et al. review compliant force models derived from Hertz-type contact theory \cite{machado2012}, and recent reviews summarize contact phenomena in dynamical and multibody systems \cite{flores2021,corral2021}. Project Chrono is used here as an independent multibody reference because it provides a documented open-source implementation of rigid and multiphysics contact simulation \cite{tasora2016}. These works primarily address time integration, complementarity, regularization, or solver implementation. They still require a geometric backend that returns reliable gaps, normals, and tangent frames; errors or discontinuities in these quantities enter the friction law directly.
 
@@ -600,14 +600,14 @@ The quantities being checked are therefore patch quantities rather than a single
 \label{tab:static_patch_contact_equivalence}
 \begin{tabular}{l r r r}
 \toprule
-Quantity & Reference & \calg{} graph region & Error \\
+Quantity & Reference & \calg{} graph & Error \\
 \midrule
 Active area (m$^2$) & $1.696460\times10^{-1}$ & $1.696460\times10^{-1}$ & $2.78\times10^{-17}$ \\
 $\int_{\Omega_c}g_{AB}\,d\xi$ (m$^3$) & $-2.261947\times10^{-5}$ & $-2.261947\times10^{-5}$ & $3.05\times10^{-20}$ \\
 Mean gap (m) & $-1.333333\times10^{-4}$ & $-1.333333\times10^{-4}$ & $1.63\times10^{-19}$ \\
 Normal force (N) & $4.523893\times10^{1}$ & $4.523893\times10^{1}$ & $5.68\times10^{-14}$ \\
 Pressure center (m) & high-order quadrature & graph quadrature & $1.02\times10^{-15}$ \\
-Average normal angle (deg) & high-order quadrature & graph quadrature & $<10^{-12}$ \\
+Mean normal angle (deg) & high-order quadrature & graph quadrature & $<10^{-12}$ \\
 \bottomrule
 \end{tabular}
 \end{table}
