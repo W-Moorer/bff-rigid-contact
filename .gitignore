@@ -12,6 +12,7 @@ htmlcov/
 build/
 dist/
 *.egg-info/
+cpp/build*/
 
 # Local environments and machine-specific files
 .venv/
