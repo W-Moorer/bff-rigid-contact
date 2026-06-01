@@ -2433,7 +2433,7 @@ static BenchResult run_deep_ball_joint_pendulum_mesh_detector(int steps, const s
             force_sample.gap = std::max(force_sample.gap, CONTACT_RELEASE_TOL + 1.0e-6);
         }
         std::vector<SocketSample> patch =
-            finite_socket_sdf_contact_patch(socket_sdf, make_configuration(ball_center, body.rotation), force_sample, 0.0040, 3, 1.0e-3);
+            finite_socket_sdf_contact_patch(socket_sdf, make_configuration(ball_center, body.rotation), force_sample, 0.0040, 2, 1.0e-3);
         ContactEval contact;
         for (size_t qi = 0; qi < patch.size(); ++qi) {
             SocketSample sample = patch[qi];
