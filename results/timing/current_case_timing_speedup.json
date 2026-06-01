@@ -1,0 +1,53 @@
+[
+  {
+    "case": "guide_slot",
+    "label": "Guide slot",
+    "calg_basis": "CALG C++ surface patch + tricubic SDF",
+    "steps": 6000,
+    "sim_time_s": 3.0,
+    "chrono_ms": 868.3105439999963,
+    "recurdyn_cpu_ms": 12400.0,
+    "calg_wall_ms": 661.168,
+    "calg_internal_ms": 661.168,
+    "speedup_vs_chrono_wall": 1.3132978970549032,
+    "speedup_vs_recurdyn_wall": 18.75468867216804,
+    "speedup_vs_chrono_internal": 1.3132978970549032,
+    "speedup_vs_recurdyn_internal": 18.75468867216804,
+    "avg_contacts": 3.01617,
+    "avg_candidate_pairs": 5.42233
+  },
+  {
+    "case": "deep_ball_joint_pendulum",
+    "label": "Ball-and-socket pendulum",
+    "calg_basis": "CALG C++ surface patch + tricubic SDF",
+    "steps": 25000,
+    "sim_time_s": 5.0,
+    "chrono_ms": 150218.88074,
+    "recurdyn_cpu_ms": 454830.0,
+    "calg_wall_ms": 20978.7,
+    "calg_internal_ms": 20978.7,
+    "speedup_vs_chrono_wall": 7.160542871579268,
+    "speedup_vs_recurdyn_wall": 21.6805617125942,
+    "speedup_vs_chrono_internal": 7.160542871579268,
+    "speedup_vs_recurdyn_internal": 21.6805617125942,
+    "avg_contacts": 148.0,
+    "avg_candidate_pairs": 195.323
+  },
+  {
+    "case": "bearing_rotating_inner",
+    "label": "Bearing raceway",
+    "calg_basis": "CALG C++ surface patch + tricubic SDF",
+    "steps": 10000,
+    "sim_time_s": 5.0,
+    "chrono_ms": 49426.548308000005,
+    "recurdyn_cpu_ms": 61190.0,
+    "calg_wall_ms": 18657.6,
+    "calg_internal_ms": 18657.6,
+    "speedup_vs_chrono_wall": 2.649137526155562,
+    "speedup_vs_recurdyn_wall": 3.2796286767858676,
+    "speedup_vs_chrono_internal": 2.649137526155562,
+    "speedup_vs_recurdyn_internal": 3.2796286767858676,
+    "avg_contacts": 56.0,
+    "avg_candidate_pairs": 64.0
+  }
+]

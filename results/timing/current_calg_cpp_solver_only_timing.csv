@@ -1,0 +1,4 @@
+case,steps,wall_total_ms,internal_elapsed_ms,wall_us_per_step,internal_us_per_step,avg_contacts,avg_candidate_pairs
+guide_slot,6000,661.168,661.168,110.19466666666666,110.19466666666666,3.01617,5.42233
+deep_ball_joint_pendulum,25000,20978.7,20978.7,839.148,839.148,148.0,195.323
+bearing_rotating_inner,10000,18657.6,18657.6,1865.76,1865.76,56.0,64.0

@@ -1,0 +1,13 @@
+case,solver,scope,steps,dt,sim_time_s,total_ms,us_per_step,avg_contacts,avg_candidate_pairs
+guide_slot,chrono_smc,Project Chrono SMC solver call,6000,0.0005,3.0,868.3105439999963,144.71842399999937,,
+guide_slot,calg_cpp,"native C++ solver loop; excludes one-time dense SDF build; uses mesh detector, tricubic SDF signed refinement, and normalized surface-contact response quadrature",6000,0.0005,3.0,661.168,110.19466666666666,3.01617,5.42233
+guide_slot,calg_cpp_with_csv_trace,native C++ solver loop with full time-series CSV trace; excludes one-time dense SDF build,6000,0.0005,3.0,743.777,123.96283333333334,3.01617,5.42233
+guide_slot,recurdyn_solidsolid_cpu_time,RecurDyn reported CPU Time,6000,0.0005,3.0,12400.0,2066.6666666666665,,
+deep_ball_joint_pendulum,chrono_smc,Project Chrono SMC solver call,25000,0.0002,5.0,150218.88074,6008.755229599999,,
+deep_ball_joint_pendulum,calg_cpp,"native C++ solver loop; excludes one-time dense SDF build; uses mesh detector, tricubic SDF signed refinement, and normalized surface-contact response quadrature",25000,0.0002,5.0,20978.7,839.148,148.0,195.323
+deep_ball_joint_pendulum,calg_cpp_with_csv_trace,native C++ solver loop with full time-series CSV trace; excludes one-time dense SDF build,25000,0.0002,5.0,21481.8,859.272,148.0,195.323
+deep_ball_joint_pendulum,recurdyn_solidsolid_cpu_time,RecurDyn reported CPU Time,25000,0.0002,5.0,454830.0,18193.2,,
+bearing_rotating_inner,chrono_smc,Project Chrono SMC solver call,10000,0.0005,5.0,49426.548308000005,4942.6548308,,
+bearing_rotating_inner,calg_cpp,"native C++ solver loop; excludes one-time dense SDF build; uses mesh detector, tricubic SDF signed refinement, and normalized surface-contact response quadrature",10000,0.0005,5.0,18657.6,1865.76,56.0,64.0
+bearing_rotating_inner,calg_cpp_with_csv_trace,native C++ solver loop with full time-series CSV trace; excludes one-time dense SDF build,10000,0.0005,5.0,19059.8,1905.98,56.0,64.0
+bearing_rotating_inner,recurdyn_solidsolid_cpu_time,RecurDyn reported CPU Time,10000,0.0005,5.0,61190.0,6119.0,,

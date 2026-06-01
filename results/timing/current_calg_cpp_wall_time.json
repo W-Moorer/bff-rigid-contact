@@ -1,0 +1,32 @@
+[
+  {
+    "case": "guide_slot",
+    "steps": 6000,
+    "wall_total_ms": 661.168,
+    "internal_elapsed_ms": 661.168,
+    "wall_us_per_step": 110.19466666666666,
+    "internal_us_per_step": 110.19466666666666,
+    "avg_contacts": 3.01617,
+    "avg_candidate_pairs": 5.42233
+  },
+  {
+    "case": "deep_ball_joint_pendulum",
+    "steps": 25000,
+    "wall_total_ms": 20978.7,
+    "internal_elapsed_ms": 20978.7,
+    "wall_us_per_step": 839.148,
+    "internal_us_per_step": 839.148,
+    "avg_contacts": 148.0,
+    "avg_candidate_pairs": 195.323
+  },
+  {
+    "case": "bearing_rotating_inner",
+    "steps": 10000,
+    "wall_total_ms": 18657.6,
+    "internal_elapsed_ms": 18657.6,
+    "wall_us_per_step": 1865.76,
+    "internal_us_per_step": 1865.76,
+    "avg_contacts": 56.0,
+    "avg_candidate_pairs": 64.0
+  }
+]
