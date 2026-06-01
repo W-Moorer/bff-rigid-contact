@@ -51,8 +51,28 @@
 
 \title{Contact-Aligned Local Graphs with Tricubic Signed-Distance Refinement for Smooth Rigid Frictional Contact}
 
-\author[inst1]{Anonymous Author(s)}
-\address[inst1]{Manuscript prepared for submission to Computer Methods in Applied Mechanics and Engineering}
+\author[1]{Lijing Wang}
+\author[2,3]{Ping Zhou}
+\author[2,3]{Wei Fan}
+\author[1,2,3]{Hui Ren\texorpdfstring{\corref{cor1}}{}}
+\ead{renhui@hit.edu.cn}
+
+\affiliation[1]{organization={Faculty of Computing, Harbin Institute of Technology},
+  city={Harbin},
+  postcode={150001},
+  country={China}}
+
+\affiliation[2]{organization={Institute of Aerospace Vehicle Dynamics and Control, School of Astronautics, Harbin Institute of Technology},
+  city={Harbin},
+  postcode={150001},
+  country={China}}
+
+\affiliation[3]{organization={Automotive Industrial Software Openlab (Anhui)},
+  city={Hefei},
+  postcode={230000},
+  country={China}}
+
+\cortext[cor1]{Corresponding author. E-mail address: \href{mailto:renhui@hit.edu.cn}{renhui@hit.edu.cn}}
 
 \begin{abstract}
 Rigid frictional contact requires a signed gap, contact normal, and tangential frame that vary smoothly as bodies slide or roll. When these quantities are obtained from faceted collision proxies or fixed surface tessellations, contact-point motion across cells can produce nonphysical friction-force spikes and stick--slip chatter. We propose Contact-Aligned Local Graphs with configuration-space signed-distance refinement (CALG-SDF), a contact-geometry backend for smooth rigid frictional contact. CALG constructs a local contact frame for each broad-phase candidate and, when a normal-cone certificate is satisfied, represents the two patches as height graphs over a shared contact plane. The resulting signed gap samples a local configuration-space signed-distance field queried by tensor-product cubic interpolation; the rigid response uses the interpolated gap and gradient normal. Analytic inclined-plane controls first verify the implemented static and kinetic Coulomb response. Four same-scene dynamic benchmarks then compare CALG-SDF with two triangle-based baselines, Linear-triangle BVH and PN-triangle BVH, under identical rigid-body states and friction parameters. Linear-triangle BVH produces $71.9$--$2.20\times10^3$ times larger contact-normal angle jumps and $37.7$--$108$ times larger friction-force jumps than CALG; PN-triangle BVH produces $40.2$--$826$ times larger normal-angle jumps and $35.8$--$62.6$ times larger friction-force jumps. Comparisons with the independent multibody solvers Chrono and Recurdyn show trajectory-level agreement in displacement and velocity trends in three selected engineering scenes, and solver-loop timings are reported for the implemented validation benchmark.
@@ -1147,23 +1167,23 @@ The reported results support the method at three levels. Analytic inclined-plane
 
 The present limitation is scope rather than the central geometric mechanism. The implementation and validation focus on rigid frictional contact over smooth analytic or CAD-like patches, with a configuration-space SDF used as the signed-gap response layer in the final C++ backend. Sparse or adaptive response-field storage and production-grade multiphysics integration remain future work.
 
-\section*{CRediT author statement}
-Anonymous Author(s): Conceptualization, Methodology, Software, Validation, Formal analysis, Investigation, Data curation, Writing -- original draft, Writing -- review \& editing, and Visualization.
+\section*{Acknowledgments}
+This work was supported by the Open Funding of Automotive Industrial Software Openlab (Anhui).
+
+\section*{CRediT authorship contribution statement}
+\textbf{Lijing Wang}: Conceptualization, Methodology, Software, Investigation, Writing - original draft.
+\textbf{Ping Zhou}: Methodology, Validation, Formal analysis, Writing - review and editing.
+\textbf{Wei Fan}: Validation, Resources, Writing - review and editing.
+\textbf{Hui Ren}: Conceptualization, Supervision, Project administration, Funding acquisition.
 
 \section*{Declaration of competing interest}
-The authors declare no known competing financial interests or personal relationships that could have appeared to influence the work reported in this paper.
-
-\section*{Funding}
-This research received no specific grant from any funding agency in the public, commercial, or not-for-profit sectors.
+The authors declare that they have no known competing financial interests or personal relationships that could have appeared to influence the work reported in this paper.
 
 \section*{Data availability}
 The code, input definitions, scripts, generated figures, and numerical result artifacts required to reproduce the reported tables are available in the public repository at \url{https://github.com/W-Moorer/bff-rigid-contact.git}. The result files used in this draft are stored in the repository result directories v0.6, v0.9, v0.10, v0.11, v0.12, v0.13, v0.14, and v0.15. The repository includes source-result mappings, repository metadata, and a file-level manifest with SHA256 checksums.
 
 \section*{Declaration of generative AI and AI-assisted technologies in the manuscript preparation process}
 During the preparation of this work, the authors used OpenAI Codex to assist with manuscript restructuring, wording, consistency checks, and preparation of reproducibility and plotting scripts. No generative image model was used to create the scientific figures. After using this tool, the authors reviewed and edited the content as needed and take full responsibility for the content of the publication.
-
-\section*{Acknowledgements}
-No acknowledgements are included in this anonymized draft.
 
 \begin{thebibliography}{99}
 
