@@ -544,7 +544,56 @@ where $C_{\rm sample}$ is the average cost of a certified \calg{} sample at a gr
 \section{Numerical results}
 \label{sec:results}
 
-This section reports the executable evidence for the proposed rigid frictional contact-geometry backend. The numerical sequence follows the logic of the paper. First, analytic inclined-plane controls verify that the friction update reproduces Coulomb sticking, sliding, and threshold behavior. Second, four engineering scenes compare \calg{}--SDF directly with Linear-triangle BVH and PN-triangle BVH under the same rigid-body update, so that any force or velocity jump is attributable to the contact-geometry module. Third, three selected engineering scenes are reproduced against Chrono and Recurdyn to evaluate trajectory-level agreement in displacement and velocity trends with independent dynamics solvers. Finally, native C++ timings quantify the solver-loop cost of the implemented \calg{}--SDF backend.
+This section reports the executable evidence for the proposed rigid frictional contact-geometry backend. The numerical sequence follows the logic of the paper. First, a static patch-contact equivalence check verifies that the local graph representation recovers area-level contact quantities over an active patch. Second, analytic inclined-plane controls verify that the friction update reproduces Coulomb sticking, sliding, and threshold behavior. Third, four engineering scenes compare \calg{}--SDF directly with Linear-triangle BVH and PN-triangle BVH under the same rigid-body update, so that any force or velocity jump is attributable to the contact-geometry module. Fourth, three selected engineering scenes are reproduced against Chrono and Recurdyn to evaluate trajectory-level agreement in displacement and velocity trends with independent dynamics solvers. Finally, native C++ timings quantify the solver-loop cost of the implemented \calg{}--SDF backend.
+
+\subsection{Static patch-contact equivalence check}
+
+The first numerical check isolates the geometric part of the method before introducing frictional dynamics. Two graphable but geometrically complex analytic patches are constructed over a shared contact plane. Their signed graph gap is prescribed so that
+\begin{equation}
+    \Omega_c=\{\xi:g_{AB}(\xi)\le 0\}
+\end{equation}
+is an ellipse in the local contact coordinates. Inside this active patch, the maximum compression is $4.0\times10^{-4}$ m and the gap varies smoothly to zero at the boundary. The comparison uses the contact-plane measure $d\xi$ and the regularized pressure
+\begin{equation}
+    p_n(\xi)=k_n\max(0,-g_{AB}(\xi)),
+    \qquad k_n=2.0\times10^6~{\rm N/m^3}.
+\end{equation}
+The quantities being checked are therefore patch quantities rather than a single closest point: active area, $\int_{\Omega_c}g_{AB}(\xi)\,d\xi$, area-averaged gap, pressure resultant, pressure-weighted center, and pressure-weighted average normal.
+
+\begin{figure}[H]
+\centering
+\begin{minipage}[t]{0.49\linewidth}
+\centering
+\includegraphics[width=\linewidth]{figures/static_patch_contact_equivalence/static_patch_contact_equivalence_model.png}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.41\linewidth}
+\centering
+\includegraphics[width=\linewidth]{figures/static_patch_contact_equivalence/static_patch_contact_equivalence_gap_field.png}
+\end{minipage}
+\caption{Static patch-contact equivalence setup. The active contact patch is an ellipse embedded in two graphable, geometrically complex analytic surfaces. The right panel shows the prescribed signed graph gap in the local contact coordinates; negative values are the active compressed region.}
+\label{fig:static_patch_contact_equivalence}
+\end{figure}
+
+\begin{table}[H]
+\centering
+\caption{Static patch-contact equivalence metrics. The reference active area, gap integral, mean gap, and normal force have analytic values; pressure center and average normal are compared with high-order quadrature.}
+\label{tab:static_patch_contact_equivalence}
+\begin{tabular}{l r r r}
+\toprule
+Quantity & Reference & \calg{} graph region & Error \\
+\midrule
+Active area (m$^2$) & $1.696460\times10^{-1}$ & $1.696460\times10^{-1}$ & $2.78\times10^{-17}$ \\
+$\int_{\Omega_c}g_{AB}\,d\xi$ (m$^3$) & $-2.261947\times10^{-5}$ & $-2.261947\times10^{-5}$ & $3.05\times10^{-20}$ \\
+Mean gap (m) & $-1.333333\times10^{-4}$ & $-1.333333\times10^{-4}$ & $1.63\times10^{-19}$ \\
+Normal force (N) & $4.523893\times10^{1}$ & $4.523893\times10^{1}$ & $5.68\times10^{-14}$ \\
+Pressure center (m) & high-order quadrature & graph quadrature & $1.02\times10^{-15}$ \\
+Average normal angle (deg) & high-order quadrature & graph quadrature & $<10^{-12}$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Table~\ref{tab:static_patch_contact_equivalence} shows that the \calg{} graph-region quadrature reproduces the analytic patch quantities to roundoff accuracy in this controlled case. The active-band graphability certificate remains well conditioned, with minimum $N_A\cdot n_c=0.973$ and minimum $(-N_B)\cdot n_c=0.973$ over the sampled contact band. This check does not replace dynamic validation; it establishes that the local graph representation can be used as an area-contact object when the active region is integrated rather than collapsed to a representative point.
+
+\FloatBarrier
 
 \subsection{Analytic inclined-plane friction controls}
 

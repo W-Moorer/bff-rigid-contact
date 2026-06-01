@@ -9,11 +9,6 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 
-try:
-    from scipy import optimize
-except ImportError as exc:  # pragma: no cover
-    raise SystemExit("This static equivalence script requires scipy.optimize.") from exc
-
 
 mpl.rcParams.update(
     {
@@ -23,33 +18,42 @@ mpl.rcParams.update(
         "pdf.fonttype": 42,
         "ps.fonttype": 42,
         "svg.fonttype": "none",
-        "font.size": 8.5,
+        "font.size": 9.0,
+        "axes.labelsize": 9.0,
+        "xtick.labelsize": 8.5,
+        "ytick.labelsize": 8.5,
+        "legend.fontsize": 8.5,
     }
 )
 
 
 ROOT = Path(__file__).resolve().parents[1]
-FIG_DIR = ROOT / "figures" / "static_graph_equivalence"
-RES_DIR = ROOT.parents[0] / "results" / "v0_16_static_graph_equivalence"
+FIG_DIR = ROOT / "figures" / "static_patch_contact_equivalence"
+RES_DIR = ROOT.parents[0] / "results" / "v0_17_static_patch_contact_equivalence"
 
-GAP0 = 2.5e-2
-ALPHA = 1.2e-1
-BETA = 3.5e-2
-GEOM_SCALE = 5.0
 DOMAIN = (-0.9, 0.9)
+GEOM_SCALE = 5.0
+U0 = 0.16
+V0 = -0.12
+ELLIPSE_A = 0.30
+ELLIPSE_B = 0.18
+PENETRATION = 4.0e-4
+CLEARANCE = 2.0e-3
+NORMAL_STIFFNESS = 2.0e6
 
 
 @dataclass
-class SolveResult:
+class RegionIntegral:
     name: str
-    parameters: np.ndarray
-    gap_or_distance: float
-    point_a: np.ndarray
-    point_b: np.ndarray
-    normal: np.ndarray
-    success: bool
-    iterations: int
-    objective: float
+    area: float
+    int_gap: float
+    mean_gap: float
+    pressure_integral: float
+    mean_pressure: float
+    pressure_center: np.ndarray
+    average_normal: np.ndarray
+    radial_order: int
+    theta_order: int
 
 
 def h_common(u: np.ndarray | float, v: np.ndarray | float) -> np.ndarray | float:
@@ -61,7 +65,7 @@ def h_common(u: np.ndarray | float, v: np.ndarray | float) -> np.ndarray | float
     )
 
 
-def grad_common(u: float, v: float) -> np.ndarray:
+def grad_common(u: np.ndarray | float, v: np.ndarray | float) -> tuple[np.ndarray | float, np.ndarray | float]:
     hu = GEOM_SCALE * (
         0.070 * u
         - 0.020 * 3.2 * np.sin(3.2 * u) * (0.65 + 0.35 * np.cos(2.4 * v))
@@ -74,151 +78,106 @@ def grad_common(u: float, v: float) -> np.ndarray:
         + 0.012 * 3.1 * np.sin(2.7 * u) * np.cos(3.1 * v)
         - 0.006 * 3.8 * (np.cos(5.0 * u) - 1.0) * np.sin(3.8 * v)
     )
-    return np.array([hu, hv], dtype=float)
+    return hu, hv
+
+
+def ellipse_r2(u: np.ndarray | float, v: np.ndarray | float) -> np.ndarray | float:
+    return ((u - U0) / ELLIPSE_A) ** 2 + ((v - V0) / ELLIPSE_B) ** 2
+
+
+def signed_gap(u: np.ndarray | float, v: np.ndarray | float) -> np.ndarray | float:
+    s = ellipse_r2(u, v) - 1.0
+    return np.where(s <= 0.0, -PENETRATION * s * s, CLEARANCE * s * s)
+
+
+def grad_signed_gap(u: np.ndarray | float, v: np.ndarray | float) -> tuple[np.ndarray | float, np.ndarray | float]:
+    s = ellipse_r2(u, v) - 1.0
+    scale = np.where(s <= 0.0, -PENETRATION, CLEARANCE)
+    ds_du = 2.0 * (u - U0) / (ELLIPSE_A * ELLIPSE_A)
+    ds_dv = 2.0 * (v - V0) / (ELLIPSE_B * ELLIPSE_B)
+    return 2.0 * scale * s * ds_du, 2.0 * scale * s * ds_dv
 
 
 def h_upper(u: np.ndarray | float, v: np.ndarray | float) -> np.ndarray | float:
-    return h_common(u, v) + GAP0 + ALPHA * (u * u + v * v) + BETA * (u**4 + 0.7 * v**4)
+    return h_common(u, v) + signed_gap(u, v)
 
 
-def grad_upper(u: float, v: float) -> np.ndarray:
-    base = grad_common(u, v)
-    return np.array(
-        [
-            base[0] + 2.0 * ALPHA * u + 4.0 * BETA * u**3,
-            base[1] + 2.0 * ALPHA * v + 4.0 * 0.7 * BETA * v**3,
-        ],
-        dtype=float,
-    )
-
-
-def gap_graph(uv: np.ndarray) -> float:
-    u, v = uv
-    return float(h_upper(u, v) - h_common(u, v))
-
-
-def grad_gap_graph(uv: np.ndarray) -> np.ndarray:
-    u, v = uv
-    return np.array(
-        [
-            2.0 * ALPHA * u + 4.0 * BETA * u**3,
-            2.0 * ALPHA * v + 4.0 * 0.7 * BETA * v**3,
-        ],
-        dtype=float,
-    )
-
-
-def point_a(uv: np.ndarray) -> np.ndarray:
-    u, v = uv
-    return np.array([u, v, h_common(u, v)], dtype=float)
-
-
-def point_b(uv: np.ndarray) -> np.ndarray:
-    u, v = uv
-    return np.array([u, v, h_upper(u, v)], dtype=float)
-
-
-def jac_a(uv: np.ndarray) -> np.ndarray:
-    u, v = uv
+def grad_upper(u: np.ndarray | float, v: np.ndarray | float) -> tuple[np.ndarray | float, np.ndarray | float]:
     hu, hv = grad_common(u, v)
-    return np.array([[1.0, 0.0], [0.0, 1.0], [hu, hv]], dtype=float)
+    gu, gv = grad_signed_gap(u, v)
+    return hu + gu, hv + gv
 
 
-def jac_b(uv: np.ndarray) -> np.ndarray:
-    u, v = uv
-    hu, hv = grad_upper(u, v)
-    return np.array([[1.0, 0.0], [0.0, 1.0], [hu, hv]], dtype=float)
+def point_a(u: np.ndarray | float, v: np.ndarray | float) -> np.ndarray:
+    return np.stack([u, v, h_common(u, v)], axis=-1)
 
 
-def upward_normal(grad: np.ndarray) -> np.ndarray:
-    n = np.array([-grad[0], -grad[1], 1.0], dtype=float)
-    return n / np.linalg.norm(n)
+def point_b(u: np.ndarray | float, v: np.ndarray | float) -> np.ndarray:
+    return np.stack([u, v, h_upper(u, v)], axis=-1)
 
 
-def solve_2d_graph() -> SolveResult:
-    starts = [
-        np.array([0.45, -0.35]),
-        np.array([-0.55, 0.40]),
-        np.array([0.75, 0.75]),
-        np.array([-0.30, -0.70]),
-    ]
-    best = None
-    bounds = [DOMAIN, DOMAIN]
-    for start in starts:
-        res = optimize.minimize(
-            gap_graph,
-            start,
-            jac=grad_gap_graph,
-            bounds=bounds,
-            method="L-BFGS-B",
-            options={"ftol": 1e-15, "gtol": 1e-13, "maxiter": 500},
-        )
-        if best is None or res.fun < best.fun:
-            best = res
-    uv = np.asarray(best.x, dtype=float)
-    pa = point_a(uv)
-    pb = point_b(uv)
-    n = upward_normal(grad_common(*uv))
-    return SolveResult("2D graph gap", uv, float(best.fun), pa, pb, n, bool(best.success), int(best.nit), float(best.fun))
+def normal_from_grad(hu: np.ndarray, hv: np.ndarray) -> np.ndarray:
+    n = np.stack([-hu, -hv, np.ones_like(hu)], axis=-1)
+    return n / np.linalg.norm(n, axis=-1, keepdims=True)
 
 
-def objective_4d(z: np.ndarray) -> float:
-    p = z[:2]
-    q = z[2:]
-    r = point_a(p) - point_b(q)
-    return float(0.5 * np.dot(r, r))
+def active_quadrature(radial_order: int, theta_order: int, name: str) -> RegionIntegral:
+    r_nodes, r_weights = np.polynomial.legendre.leggauss(radial_order)
+    r = 0.5 * (r_nodes + 1.0)
+    wr = 0.5 * r_weights
+    theta = np.linspace(0.0, 2.0 * np.pi, theta_order, endpoint=False)
+    wt = 2.0 * np.pi / theta_order
 
+    rr, tt = np.meshgrid(r, theta, indexing="ij")
+    weights = wr[:, None] * wt * ELLIPSE_A * ELLIPSE_B * rr
+    u = U0 + ELLIPSE_A * rr * np.cos(tt)
+    v = V0 + ELLIPSE_B * rr * np.sin(tt)
 
-def gradient_4d(z: np.ndarray) -> np.ndarray:
-    p = z[:2]
-    q = z[2:]
-    r = point_a(p) - point_b(q)
-    return np.r_[jac_a(p).T @ r, -jac_b(q).T @ r]
+    g = signed_gap(u, v)
+    pressure = NORMAL_STIFFNESS * np.maximum(0.0, -g)
+    pa = point_a(u, v)
+    pb = point_b(u, v)
+    mid = 0.5 * (pa + pb)
+    hu, hv = grad_common(u, v)
+    normal = normal_from_grad(hu, hv)
 
+    area = float(np.sum(weights))
+    int_gap = float(np.sum(g * weights))
+    pressure_integral = float(np.sum(pressure * weights))
+    pressure_weight = pressure * weights
+    if pressure_integral <= 0.0:
+        pressure_center = np.array([np.nan, np.nan, np.nan], dtype=float)
+        average_normal = np.array([np.nan, np.nan, np.nan], dtype=float)
+    else:
+        pressure_center = np.sum(mid * pressure_weight[..., None], axis=(0, 1)) / pressure_integral
+        normal_integral = np.sum(normal * pressure_weight[..., None], axis=(0, 1))
+        average_normal = normal_integral / np.linalg.norm(normal_integral)
 
-def solve_4d_patch_patch() -> SolveResult:
-    starts = []
-    for a in (-0.55, 0.0, 0.55):
-        for b in (-0.45, 0.45):
-            starts.append(np.array([a, b, a, b], dtype=float))
-            starts.append(np.array([a, b, 0.5 * a, 0.5 * b], dtype=float))
-    best = None
-    bounds = [DOMAIN, DOMAIN, DOMAIN, DOMAIN]
-    for start in starts:
-        res = optimize.minimize(
-            objective_4d,
-            start,
-            jac=gradient_4d,
-            bounds=bounds,
-            method="L-BFGS-B",
-            options={"ftol": 1e-15, "gtol": 1e-13, "maxiter": 1000},
-        )
-        if best is None or res.fun < best.fun:
-            best = res
-    z = np.asarray(best.x, dtype=float)
-    pa = point_a(z[:2])
-    pb = point_b(z[2:])
-    n = pb - pa
-    distance = float(np.linalg.norm(n))
-    n = n / distance
-    return SolveResult(
-        "4D patch-patch closest",
-        z,
-        distance,
-        pa,
-        pb,
-        n,
-        bool(best.success),
-        int(best.nit),
-        float(best.fun),
+    return RegionIntegral(
+        name=name,
+        area=area,
+        int_gap=int_gap,
+        mean_gap=int_gap / area,
+        pressure_integral=pressure_integral,
+        mean_pressure=pressure_integral / area,
+        pressure_center=pressure_center,
+        average_normal=average_normal,
+        radial_order=radial_order,
+        theta_order=theta_order,
     )
 
 
-def analytic_reference() -> SolveResult:
-    uv = np.array([0.0, 0.0], dtype=float)
-    pa = point_a(uv)
-    pb = point_b(uv)
-    return SolveResult("analytic reference", uv, GAP0, pa, pb, np.array([0.0, 0.0, 1.0]), True, 0, GAP0)
+def analytic_reference() -> dict[str, float]:
+    area = np.pi * ELLIPSE_A * ELLIPSE_B
+    int_gap = -PENETRATION * area / 3.0
+    pressure_integral = NORMAL_STIFFNESS * PENETRATION * area / 3.0
+    return {
+        "active_area_m2": float(area),
+        "int_gap_m3": float(int_gap),
+        "mean_gap_m": float(int_gap / area),
+        "normal_force_N": float(pressure_integral),
+        "mean_pressure_Pa": float(pressure_integral / area),
+    }
 
 
 def normal_angle_deg(a: np.ndarray, b: np.ndarray) -> float:
@@ -226,104 +185,113 @@ def normal_angle_deg(a: np.ndarray, b: np.ndarray) -> float:
     return float(np.degrees(np.arccos(dot)))
 
 
-def graphability_statistics(samples: int = 121) -> dict[str, float]:
-    vals = np.linspace(*DOMAIN, samples)
+def graphability_statistics(radial_samples: int = 81, theta_samples: int = 240) -> dict[str, float]:
+    radii = np.linspace(0.0, 1.05, radial_samples)
+    theta = np.linspace(0.0, 2.0 * np.pi, theta_samples, endpoint=False)
     min_a = 1.0
     min_b = 1.0
-    for u in vals:
-        for v in vals:
-            ga = grad_common(u, v)
-            gb = grad_upper(u, v)
-            min_a = min(min_a, 1.0 / np.sqrt(1.0 + float(np.dot(ga, ga))))
-            min_b = min(min_b, 1.0 / np.sqrt(1.0 + float(np.dot(gb, gb))))
+    for r in radii:
+        for t in theta:
+            u = U0 + ELLIPSE_A * r * np.cos(t)
+            v = V0 + ELLIPSE_B * r * np.sin(t)
+            ha_u, ha_v = grad_common(u, v)
+            hb_u, hb_v = grad_upper(u, v)
+            min_a = min(min_a, 1.0 / np.sqrt(1.0 + float(ha_u * ha_u + ha_v * ha_v)))
+            min_b = min(min_b, 1.0 / np.sqrt(1.0 + float(hb_u * hb_u + hb_v * hb_v)))
     return {
-        "min_NA_dot_nc": float(min_a),
-        "min_minus_NB_dot_nc": float(min_b),
-        "sample_count": samples * samples,
+        "active_band_min_NA_dot_nc": float(min_a),
+        "active_band_min_minus_NB_dot_nc": float(min_b),
+        "active_band_sample_count": radial_samples * theta_samples,
     }
 
 
-def write_outputs(ref: SolveResult, graph: SolveResult, patch: SolveResult) -> dict[str, float]:
+def write_outputs(reference: RegionIntegral, calg: RegionIntegral) -> dict[str, float]:
     RES_DIR.mkdir(parents=True, exist_ok=True)
-    stats = graphability_statistics()
+    exact = analytic_reference()
     metrics = {
-        "analytic_gap_m": ref.gap_or_distance,
-        "graph_gap_m": graph.gap_or_distance,
-        "patch_patch_distance_m": patch.gap_or_distance,
-        "abs_graph_minus_reference_gap_m": abs(graph.gap_or_distance - ref.gap_or_distance),
-        "abs_patch_minus_reference_distance_m": abs(patch.gap_or_distance - ref.gap_or_distance),
-        "abs_graph_minus_patch_m": abs(graph.gap_or_distance - patch.gap_or_distance),
-        "graph_patch_point_A_difference_m": float(np.linalg.norm(graph.point_a - patch.point_a)),
-        "graph_patch_point_B_difference_m": float(np.linalg.norm(graph.point_b - patch.point_b)),
-        "graph_patch_normal_angle_deg": normal_angle_deg(graph.normal, patch.normal),
-        "graph_success": graph.success,
-        "patch_success": patch.success,
-        "graph_iterations": graph.iterations,
-        "patch_iterations": patch.iterations,
-        **stats,
+        "exact_active_area_m2": exact["active_area_m2"],
+        "calg_active_area_m2": calg.area,
+        "active_area_abs_error_m2": abs(calg.area - exact["active_area_m2"]),
+        "active_area_rel_error": abs(calg.area - exact["active_area_m2"]) / exact["active_area_m2"],
+        "exact_int_gap_m3": exact["int_gap_m3"],
+        "calg_int_gap_m3": calg.int_gap,
+        "int_gap_abs_error_m3": abs(calg.int_gap - exact["int_gap_m3"]),
+        "int_gap_rel_error": abs(calg.int_gap - exact["int_gap_m3"]) / abs(exact["int_gap_m3"]),
+        "exact_mean_gap_m": exact["mean_gap_m"],
+        "calg_mean_gap_m": calg.mean_gap,
+        "mean_gap_abs_error_m": abs(calg.mean_gap - exact["mean_gap_m"]),
+        "exact_normal_force_N": exact["normal_force_N"],
+        "calg_normal_force_N": calg.pressure_integral,
+        "normal_force_abs_error_N": abs(calg.pressure_integral - exact["normal_force_N"]),
+        "normal_force_rel_error": abs(calg.pressure_integral - exact["normal_force_N"]) / exact["normal_force_N"],
+        "pressure_center_error_m": float(np.linalg.norm(calg.pressure_center - reference.pressure_center)),
+        "average_normal_angle_error_deg": normal_angle_deg(calg.average_normal, reference.average_normal),
+        "reference_pressure_center_x_m": float(reference.pressure_center[0]),
+        "reference_pressure_center_y_m": float(reference.pressure_center[1]),
+        "reference_pressure_center_z_m": float(reference.pressure_center[2]),
+        "calg_pressure_center_x_m": float(calg.pressure_center[0]),
+        "calg_pressure_center_y_m": float(calg.pressure_center[1]),
+        "calg_pressure_center_z_m": float(calg.pressure_center[2]),
+        "reference_average_normal_x": float(reference.average_normal[0]),
+        "reference_average_normal_y": float(reference.average_normal[1]),
+        "reference_average_normal_z": float(reference.average_normal[2]),
+        "calg_average_normal_x": float(calg.average_normal[0]),
+        "calg_average_normal_y": float(calg.average_normal[1]),
+        "calg_average_normal_z": float(calg.average_normal[2]),
+        "reference_radial_order": reference.radial_order,
+        "reference_theta_order": reference.theta_order,
+        "calg_radial_order": calg.radial_order,
+        "calg_theta_order": calg.theta_order,
+        **graphability_statistics(),
     }
 
-    with (RES_DIR / "static_graph_equivalence_summary.json").open("w", encoding="utf-8") as f:
+    with (RES_DIR / "static_patch_contact_equivalence_summary.json").open("w", encoding="utf-8") as f:
         json.dump(metrics, f, indent=2)
 
-    rows = [
-        {
-            "method": ref.name,
-            "gap_or_distance_m": ref.gap_or_distance,
-            "parameters": " ".join(f"{x:.16e}" for x in ref.parameters),
-            "point_A_m": " ".join(f"{x:.16e}" for x in ref.point_a),
-            "point_B_m": " ".join(f"{x:.16e}" for x in ref.point_b),
-            "normal": " ".join(f"{x:.16e}" for x in ref.normal),
-            "iterations": ref.iterations,
-        },
-        {
-            "method": graph.name,
-            "gap_or_distance_m": graph.gap_or_distance,
-            "parameters": " ".join(f"{x:.16e}" for x in graph.parameters),
-            "point_A_m": " ".join(f"{x:.16e}" for x in graph.point_a),
-            "point_B_m": " ".join(f"{x:.16e}" for x in graph.point_b),
-            "normal": " ".join(f"{x:.16e}" for x in graph.normal),
-            "iterations": graph.iterations,
-        },
-        {
-            "method": patch.name,
-            "gap_or_distance_m": patch.gap_or_distance,
-            "parameters": " ".join(f"{x:.16e}" for x in patch.parameters),
-            "point_A_m": " ".join(f"{x:.16e}" for x in patch.point_a),
-            "point_B_m": " ".join(f"{x:.16e}" for x in patch.point_b),
-            "normal": " ".join(f"{x:.16e}" for x in patch.normal),
-            "iterations": patch.iterations,
-        },
-    ]
-    with (RES_DIR / "static_graph_equivalence_methods.csv").open("w", newline="", encoding="utf-8") as f:
+    rows = []
+    for item in (reference, calg):
+        rows.append(
+            {
+                "method": item.name,
+                "active_area_m2": item.area,
+                "int_gap_m3": item.int_gap,
+                "mean_gap_m": item.mean_gap,
+                "normal_force_N": item.pressure_integral,
+                "mean_pressure_Pa": item.mean_pressure,
+                "pressure_center_m": " ".join(f"{x:.16e}" for x in item.pressure_center),
+                "average_normal": " ".join(f"{x:.16e}" for x in item.average_normal),
+                "radial_order": item.radial_order,
+                "theta_order": item.theta_order,
+            }
+        )
+    with (RES_DIR / "static_patch_contact_equivalence_methods.csv").open("w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=list(rows[0].keys()))
         writer.writeheader()
         writer.writerows(rows)
 
     md = [
-        "# Static graph-equivalence check",
+        "# Static patch-contact equivalence check",
         "",
-        "The scene uses two geometrically complex but graphable analytic patches. "
-        "The upper patch is the same complex base geometry plus a positive opening field, "
-        "so the static contact state has a known reference minimum at the patch center.",
+        "The scene uses two graphable but geometrically complex analytic patches. "
+        "Their signed graph gap is prescribed so that the active contact set is a small ellipse, "
+        "allowing area, gap, pressure-center, and average-normal quantities to be compared.",
         "",
         "| quantity | value |",
         "|---|---:|",
     ]
     for key, value in metrics.items():
-        if isinstance(value, bool):
-            value_text = str(value)
-        elif isinstance(value, int):
+        if isinstance(value, int):
             value_text = str(value)
         else:
             value_text = f"{value:.12e}"
         md.append(f"| {key} | {value_text} |")
     md.append("")
     md.append(
-        "The equality of the 2D graph gap, the 4D patch-patch closest distance, "
-        "and the analytic reference demonstrates equivalence for this certified graphable static case."
+        "The CALG graph-region quadrature reproduces the analytic active area, "
+        "gap integral, mean gap, and normal force, while the pressure-weighted center "
+        "and average normal agree with the high-order reference quadrature."
     )
-    (RES_DIR / "static_graph_equivalence_summary.md").write_text("\n".join(md), encoding="utf-8")
+    (RES_DIR / "static_patch_contact_equivalence_summary.md").write_text("\n".join(md), encoding="utf-8")
     return metrics
 
 
@@ -335,74 +303,95 @@ def save_figure(fig: plt.Figure, stem: str) -> None:
     plt.close(fig)
 
 
-def draw_model_figure(graph: SolveResult, patch: SolveResult) -> None:
-    fig = plt.figure(figsize=(4.8, 3.6))
+def draw_model_figure() -> None:
+    fig = plt.figure(figsize=(4.8, 3.7))
     ax = fig.add_subplot(111, projection="3d")
-    u = np.linspace(*DOMAIN, 90)
-    v = np.linspace(*DOMAIN, 90)
-    U, V = np.meshgrid(u, v)
-    ZA = h_common(U, V)
-    ZB = h_upper(U, V)
-    ax.plot_surface(U, V, ZA, rstride=2, cstride=2, linewidth=0.12, edgecolor="#5C85B8", color="#CFE0F2", alpha=0.78)
-    ax.plot_surface(U, V, ZB, rstride=2, cstride=2, linewidth=0.12, edgecolor="#61A778", color="#DDEFE4", alpha=0.48)
-    ax.plot(
-        [graph.point_a[0], graph.point_b[0]],
-        [graph.point_a[1], graph.point_b[1]],
-        [graph.point_a[2], graph.point_b[2]],
-        color="#B83A3A",
-        linewidth=3.0,
-        zorder=50,
-    )
-    ax.scatter(*graph.point_a, s=70, color="#1A1A1A", edgecolor="white", linewidth=0.4, depthshade=False, zorder=60)
-    ax.scatter(*graph.point_b, s=70, color="#1A1A1A", edgecolor="white", linewidth=0.4, depthshade=False, zorder=60)
-    ax.scatter(*patch.point_a, s=35, color="#B83A3A", depthshade=False, zorder=70)
-    ax.scatter(*patch.point_b, s=35, color="#B83A3A", depthshade=False, zorder=70)
-    ax.view_init(elev=24, azim=-57)
+    u = np.linspace(*DOMAIN, 120)
+    v = np.linspace(*DOMAIN, 120)
+    uu, vv = np.meshgrid(u, v)
+    za = h_common(uu, vv)
+    zb = h_upper(uu, vv)
+    ax.plot_surface(uu, vv, za, rstride=3, cstride=3, linewidth=0.10, edgecolor="#5C85B8", color="#CFE0F2", alpha=0.74)
+    ax.plot_surface(uu, vv, zb, rstride=3, cstride=3, linewidth=0.10, edgecolor="#61A778", color="#DDEFE4", alpha=0.42)
+
+    r = np.linspace(0.0, 1.0, 40)
+    theta = np.linspace(0.0, 2.0 * np.pi, 160)
+    rr, tt = np.meshgrid(r, theta, indexing="ij")
+    up = U0 + ELLIPSE_A * rr * np.cos(tt)
+    vp = V0 + ELLIPSE_B * rr * np.sin(tt)
+    zp = h_common(up, vp) + 1.5e-3
+    ax.plot_surface(up, vp, zp, linewidth=0.0, color="#C73E3A", alpha=0.82)
+
+    edge_u = U0 + ELLIPSE_A * np.cos(theta)
+    edge_v = V0 + ELLIPSE_B * np.sin(theta)
+    edge_z = h_common(edge_u, edge_v) + 2.0e-3
+    ax.plot(edge_u, edge_v, edge_z, color="#7A1F1F", linewidth=1.4)
+    ax.view_init(elev=23, azim=-55)
     ax.set_axis_off()
     ax.set_box_aspect((1.0, 1.0, 0.34))
-    save_figure(fig, "static_graph_equivalence_model")
+    save_figure(fig, "static_patch_contact_equivalence_model")
+
+
+def draw_gap_field_figure() -> None:
+    fig, ax = plt.subplots(figsize=(3.2, 2.8))
+    u = np.linspace(-0.26, 0.58, 260)
+    v = np.linspace(-0.44, 0.20, 220)
+    uu, vv = np.meshgrid(u, v)
+    g = signed_gap(uu, vv)
+    levels = np.linspace(-PENETRATION * 1e3, PENETRATION * 1e3, 25)
+    im = ax.contourf(uu, vv, g * 1e3, levels=levels, cmap="coolwarm", extend="both")
+    theta = np.linspace(0.0, 2.0 * np.pi, 240)
+    ax.plot(U0 + ELLIPSE_A * np.cos(theta), V0 + ELLIPSE_B * np.sin(theta), color="black", linewidth=0.9)
+    ax.set_aspect("equal", adjustable="box")
+    ax.set_xlabel(r"$\xi_1$ (m)")
+    ax.set_ylabel(r"$\xi_2$ (m)")
+    cb = fig.colorbar(im, ax=ax, shrink=0.82, pad=0.02)
+    cb.set_label(r"$g_{AB}$ (mm)")
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
+    save_figure(fig, "static_patch_contact_equivalence_gap_field")
 
 
 def draw_error_figure(metrics: dict[str, float]) -> None:
     names = [
-        "gap\n2D-ref",
-        "distance\n4D-ref",
-        "2D-4D\ngap",
-        "point A\n2D-4D",
-        "point B\n2D-4D",
-        "normal\nangle",
+        "area",
+        r"$\int g\,d\xi$",
+        "mean gap",
+        "normal force",
+        "center",
+        "normal angle",
     ]
     values = np.array(
         [
-            metrics["abs_graph_minus_reference_gap_m"],
-            metrics["abs_patch_minus_reference_distance_m"],
-            metrics["abs_graph_minus_patch_m"],
-            metrics["graph_patch_point_A_difference_m"],
-            metrics["graph_patch_point_B_difference_m"],
-            metrics["graph_patch_normal_angle_deg"],
+            metrics["active_area_rel_error"],
+            metrics["int_gap_rel_error"],
+            metrics["mean_gap_abs_error_m"] / abs(metrics["exact_mean_gap_m"]),
+            metrics["normal_force_rel_error"],
+            metrics["pressure_center_error_m"],
+            metrics["average_normal_angle_error_deg"],
         ],
         dtype=float,
     )
     values_for_plot = np.maximum(values, 1e-16)
-    fig, ax = plt.subplots(figsize=(4.8, 2.6))
-    colors = ["#2F6FAE", "#3C8D5A", "#1A1A1A", "#8A8A8A", "#8A8A8A", "#D58A2A"]
+    fig, ax = plt.subplots(figsize=(4.8, 2.7))
+    colors = ["#2F6FAE", "#3C8D5A", "#1A1A1A", "#8A8A8A", "#B83A3A", "#D58A2A"]
     ax.bar(np.arange(len(values)), values_for_plot, color=colors, width=0.66)
     ax.set_yscale("log")
     ax.set_xticks(np.arange(len(values)))
     ax.set_xticklabels(names)
-    ax.set_ylabel("absolute discrepancy")
+    ax.set_ylabel("discrepancy")
     ax.spines["top"].set_visible(False)
     ax.spines["right"].set_visible(False)
     ax.grid(axis="y", color="#D9D9D9", linewidth=0.45)
-    save_figure(fig, "static_graph_equivalence_errors")
+    save_figure(fig, "static_patch_contact_equivalence_errors")
 
 
 def main() -> None:
-    ref = analytic_reference()
-    graph = solve_2d_graph()
-    patch = solve_4d_patch_patch()
-    metrics = write_outputs(ref, graph, patch)
-    draw_model_figure(graph, patch)
+    reference = active_quadrature(180, 720, "high-order reference")
+    calg = active_quadrature(36, 144, "CALG graph-region quadrature")
+    metrics = write_outputs(reference, calg)
+    draw_model_figure()
+    draw_gap_field_figure()
     draw_error_figure(metrics)
     print(json.dumps(metrics, indent=2))
 
