@@ -3,16 +3,7 @@ import math
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
-from matplotlib.patches import (
-    Arc,
-    Circle,
-    Ellipse,
-    FancyArrowPatch,
-    PathPatch,
-    Polygon,
-    Rectangle,
-)
-from matplotlib.path import Path as MplPath
+from matplotlib.patches import Arc, Circle, Ellipse, FancyArrowPatch, Polygon, Rectangle
 import numpy as np
 
 
@@ -160,20 +151,28 @@ def draw_rigid_mesh(ax, x0, y0, w, h):
         ax.plot([pts[1, 0], pts[3, 0]], [pts[1, 1], pts[3, 1]], color=GRAY, lw=0.45)
 
 
-def draw_provider():
-    fig, ax = setup_canvas(6.6, 1.75)
-    positions = [(0.08, 0.35), (0.31, 0.35), (0.54, 0.35), (0.77, 0.35)]
-    labels = ["Analytic\npatch", "CAD\npatch", "Mesh\npatch", "Rigid\nmesh"]
+def draw_analytic_patch_icon():
+    fig, ax = setup_canvas(1.6, 1.45)
+    draw_curved_patch(ax, 0.25, 0.22, 0.43, 0.54, color=BLUE, fill=BLUE_LIGHT, mesh=False)
+    save(fig, "01a_analytic_surface_patch")
 
-    draw_curved_patch(ax, positions[0][0], positions[0][1], 0.13, 0.26, color=BLUE, fill=BLUE_LIGHT)
-    draw_cad_patch(ax, positions[1][0], positions[1][1], 0.14, 0.26)
-    draw_curved_patch(ax, positions[2][0], positions[2][1], 0.13, 0.26, color=GREEN, fill=GREEN_LIGHT, mesh=True, tri=True)
-    draw_rigid_mesh(ax, positions[3][0], positions[3][1], 0.14, 0.28)
 
-    for (x, _), txt in zip(positions, labels):
-        label(ax, (x + 0.07, 0.17), txt, size=7.0)
-    label(ax, (0.5, 0.86), "Contact element provider", size=10, weight="bold")
-    save(fig, "01_contact_element_provider")
+def draw_cad_patch_icon():
+    fig, ax = setup_canvas(1.6, 1.45)
+    draw_cad_patch(ax, 0.27, 0.22, 0.44, 0.54)
+    save(fig, "01b_cad_surface_patch")
+
+
+def draw_curved_mesh_patch_icon():
+    fig, ax = setup_canvas(1.6, 1.45)
+    draw_curved_patch(ax, 0.25, 0.22, 0.43, 0.54, color=GREEN, fill=GREEN_LIGHT, mesh=True, tri=True)
+    save(fig, "01c_curved_mesh_patch")
+
+
+def draw_rigid_mesh_contact_icon():
+    fig, ax = setup_canvas(1.6, 1.45)
+    draw_rigid_mesh(ax, 0.27, 0.24, 0.48, 0.55)
+    save(fig, "01d_rigid_mesh_contact_element")
 
 
 def draw_curved_jets_bvh():
@@ -325,7 +324,10 @@ def draw_friction_response():
 
 
 def main():
-    draw_provider()
+    draw_analytic_patch_icon()
+    draw_cad_patch_icon()
+    draw_curved_mesh_patch_icon()
+    draw_rigid_mesh_contact_icon()
     draw_curved_jets_bvh()
     draw_candidate_pair()
     draw_graph_gap_solve()
