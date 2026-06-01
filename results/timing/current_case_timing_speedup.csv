@@ -1,0 +1,4 @@
+case,label,calg_basis,steps,sim_time_s,chrono_ms,recurdyn_cpu_ms,calg_wall_ms,calg_internal_ms,speedup_vs_chrono_wall,speedup_vs_recurdyn_wall,speedup_vs_chrono_internal,speedup_vs_recurdyn_internal,avg_contacts,avg_candidate_pairs
+guide_slot,Guide slot,CALG C++ surface patch + tricubic SDF,6000,3.0,868.3105439999963,12400.0,580.415,580.415,1.4960167190716924,21.364024017297968,1.4960167190716924,21.364024017297968,3.01617,5.42233
+deep_ball_joint_pendulum,Deep ball-joint pendulum,CALG C++ surface patch + tricubic SDF,25000,5.0,150218.88074,454830.0,28095.3,28095.3,5.346761316119067,16.189007413339597,5.346761316119067,16.189007413339597,148,195.49
+bearing_rotating_inner,Rotating raceway,CALG C++ surface patch + tricubic SDF,10000,5.0,49426.548308000005,61190.0,20172.6,20172.6,2.450184820457502,3.033321431057873,2.450184820457502,3.033321431057873,56,64

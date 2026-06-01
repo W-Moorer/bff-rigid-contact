@@ -871,7 +871,7 @@ The dynamic results support the central mechanism of the method. Linear-triangle
 
 \subsection{External validation against Chrono and Recurdyn}
 
-The same-scene backend comparison isolates the geometric input to the friction response, but it does not by itself show that the resulting motion is consistent with independent dynamics engines. We therefore reproduced three selected engineering scenes in Chrono, Recurdyn, and the \calg{} detector-driven rigid contact model: the guide slot, the ball-and-socket pendulum, and the bearing raceway. Each case uses the same scene description, rigid-body mass and geometry, initial state, friction coefficient, and timestep where applicable. In the \calg{} C++ runs, the local curved mesh detector supplies candidate/contact work and a configuration-space SDF refines the signed gap and normal used by the regularized point-contact response. Chrono and Recurdyn use different contact envelopes and regularizations, so the validation target is trajectory-level agreement in displacement and velocity trends rather than pointwise equality of raw contact force.
+The same-scene backend comparison isolates the geometric input to the friction response, but it does not by itself show that the resulting motion is consistent with independent dynamics engines. We therefore reproduced three selected engineering scenes in Chrono, Recurdyn, and the \calg{} detector-driven rigid contact model: the guide slot, the ball-and-socket pendulum, and the bearing raceway. Each case uses the same scene description, rigid-body mass and geometry, initial state, friction coefficient, and timestep where applicable. In the \calg{} C++ runs, the local curved mesh detector supplies candidate/contact work and a configuration-space SDF refines the signed gap and normal at a small surface-contact quadrature patch; the regularized normal and friction responses are integrated over these patch samples. Chrono and Recurdyn use different contact envelopes and regularizations, so the validation target is trajectory-level agreement in displacement and velocity trends rather than pointwise equality of raw contact force.
 
 In all trajectory-validation figures, the black solid curve denotes \calg{}, the blue dashed curve denotes Chrono, and the orange dash-dot curve denotes Recurdyn; sparse open markers are used only to separate nearly overlapping traces. The plotted directions are the three Cartesian ball coordinates, and displacements are relative to each solver's initial ball coordinate.
 
@@ -1080,7 +1080,7 @@ Table~\ref{tab:chrono_backend_diagnostic} connects the external-validation scene
 
 \subsection{C++ backend efficiency}
 
-The Python engineering suite is useful for development but not an appropriate efficiency baseline. To measure module cost more fairly, all three selected validation scenes were run through the same native CALG C++ backend and compared with Chrono wall-clock time and Recurdyn solver-reported CPU Time. Table~\ref{tab:cpp_efficiency} reports CALG solver-loop time without full CSV trace export and excludes one-time geometry preprocessing such as dense SDF construction. In all three scenes, the reported CALG timing uses local mesh/CALG detector traversal followed by configuration-space SDF refinement for the signed gap and normal, rather than a faster analytic-provider-only replay.
+The Python engineering suite is useful for development but not an appropriate efficiency baseline. To measure module cost more fairly, all three selected validation scenes were run through the same native CALG C++ backend and compared with Chrono wall-clock time and Recurdyn solver-reported CPU Time. Table~\ref{tab:cpp_efficiency} reports CALG solver-loop time without full CSV trace export and excludes one-time geometry preprocessing such as dense SDF construction. In all three scenes, the reported CALG timing uses local mesh/CALG detector traversal followed by configuration-space SDF refinement and surface-contact quadrature for the signed gap, normal, and frictional response, rather than a faster analytic-provider-only replay.
 
 \begin{table}[t]
 \centering
@@ -1090,14 +1090,14 @@ The Python engineering suite is useful for development but not an appropriate ef
 \toprule
 Case & Metric & Chrono & Recurdyn & CALG \\
 \midrule
-Guide slot & Time (s) & 0.87 & 12.40 & 0.57 \\
-& Time/CALG & $1.52\times$ & $21.71\times$ & $1.00\times$ \\
+Guide slot & Time (s) & 0.87 & 12.40 & 0.58 \\
+& Time/CALG & $1.50\times$ & $21.36\times$ & $1.00\times$ \\
 \midrule
-Ball-and-socket pendulum & Time (s) & 150.22 & 454.83 & 21.22 \\
-& Time/CALG & $7.08\times$ & $21.44\times$ & $1.00\times$ \\
+Ball-and-socket pendulum & Time (s) & 150.22 & 454.83 & 28.10 \\
+& Time/CALG & $5.35\times$ & $16.19\times$ & $1.00\times$ \\
 \midrule
-Bearing raceway & Time (s) & 49.43 & 61.19 & 13.31 \\
-& Time/CALG & $3.71\times$ & $4.60\times$ & $1.00\times$ \\
+Bearing raceway & Time (s) & 49.43 & 61.19 & 20.17 \\
+& Time/CALG & $2.45\times$ & $3.03\times$ & $1.00\times$ \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -1107,7 +1107,7 @@ Figure~\ref{fig:cpp_efficiency} visualizes the same solver-timing data. These va
 \begin{figure}[t]
 \centering
 \includegraphics[width=0.78\linewidth]{figures/04_efficiency_wall_time.png}
-\caption{Solver timing per selected validation scene. CALG uses no-CSV solver-loop time and excludes one-time geometry preprocessing such as dense SDF construction; Recurdyn uses solver-reported CPU Time. All three CALG rows include local mesh/CALG detector traversal and configuration-space SDF signed refinement. Timing ratios are reported in Table~\ref{tab:cpp_efficiency} and describe this implemented validation benchmark only, not a solver-wide engine comparison.}
+\caption{Solver timing per selected validation scene. CALG uses no-CSV solver-loop time and excludes one-time geometry preprocessing such as dense SDF construction; Recurdyn uses solver-reported CPU Time. All three CALG rows include local mesh/CALG detector traversal, configuration-space SDF signed refinement, and surface-contact quadrature. Timing ratios are reported in Table~\ref{tab:cpp_efficiency} and describe this implemented validation benchmark only, not a solver-wide engine comparison.}
 \label{fig:cpp_efficiency}
 \end{figure}
 

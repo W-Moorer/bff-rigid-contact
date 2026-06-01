@@ -547,6 +547,8 @@ struct ContactSampleCpp {
     Vec3 point_b = Vec3::Zero();
     Vec3 normal = Vec3::UnitZ();
     double gap = 0.0;
+    double area_weight = 1.0;
+    double response_weight = 1.0;
 };
 
 struct SdfSampleCpp {
@@ -919,6 +921,7 @@ struct ContactParams {
     double normal_erp = 0.25;
     double normal_solve_time = 0.0;
     double target_gap = 0.0;
+    double force_scale = 1.0;
 };
 
 struct FrictionState {
@@ -929,6 +932,15 @@ struct FrictionState {
 struct ContactEval {
     Vec3 total_force = Vec3::Zero();
     Vec3 torque = Vec3::Zero();
+};
+
+struct SurfaceFrictionState {
+    std::vector<FrictionState> samples;
+
+    FrictionState& at(size_t i, size_t n) {
+        if (samples.size() != n) samples.assign(n, FrictionState{});
+        return samples[i];
+    }
 };
 
 static ContactEval evaluate_contact(const RigidBody& body,
@@ -973,6 +985,7 @@ static ContactEval evaluate_contact(const RigidBody& body,
         double impulse = std::max(0.0, (vn_min - vn_free) / std::max(inv_eff_mass, 1.0e-14));
         double solve_time = std::max(dt, p.normal_solve_time);
         lambda_constraint = impulse / solve_time;
+        lambda_constraint *= p.force_scale;
     }
     double lambda = std::max(lambda_penalty, lambda_constraint);
     lambda = std::max(0.0, lambda);
@@ -1003,6 +1016,16 @@ static ContactEval evaluate_contact(const RigidBody& body,
     out.total_force = normal_force + friction_force;
     out.torque = (point - body.position).cross(out.total_force);
     return out;
+}
+
+static ContactParams scaled_contact_params(ContactParams p, double weight) {
+    const double w = std::max(0.0, weight);
+    p.kn *= w;
+    p.cn *= w;
+    p.kt *= w;
+    p.ct *= w;
+    p.force_scale *= w;
+    return p;
 }
 
 static ContactEval evaluate_contact_full(const FullRigidBody& body,
@@ -1268,6 +1291,29 @@ private:
     DenseSe3TensorCubicSdf sdf_;
 };
 
+class FunctionalContactResponseField final : public ContactResponseField {
+public:
+    using Sampler = std::function<Se3SdfSampleCpp(const RigidConfiguration&)>;
+
+    explicit FunctionalContactResponseField(Sampler sampler) : sampler_(std::move(sampler)) {}
+
+    bool sample(const RigidConfiguration& body_config,
+                const ContactSampleCpp& detector_or_fallback,
+                ContactSampleCpp& out) const override {
+        Se3SdfSampleCpp s = sampler_(body_config);
+        if (!s.valid || !std::isfinite(s.phi) || !s.grad.allFinite()) return false;
+        out = detector_or_fallback;
+        Vec3 normal = s.normal(detector_or_fallback.normal);
+        if (normal.dot(detector_or_fallback.normal) < 0.0) normal = -normal;
+        out.normal = normal;
+        out.gap = s.phi;
+        return true;
+    }
+
+private:
+    Sampler sampler_;
+};
+
 struct ContactPairSpec {
     std::string id;
     int terrain_geometry = -1;
@@ -1276,6 +1322,11 @@ struct ContactPairSpec {
     ContactParams params;
     Vec3 normal_hint = Vec3(0.0, 0.0, 1.0);
     std::shared_ptr<const ContactResponseField> response_field;
+    bool surface_to_surface = true;
+    double surface_patch_radius = 0.0;
+    int surface_quadrature_order = 2;
+    double surface_outer_fraction = 0.10;
+    int detector_stride = 1;
 };
 
 struct ContactScene {
@@ -1308,10 +1359,21 @@ struct ContactQueryResult {
     bool has_response = false;
 };
 
+struct ContactPatchCpp {
+    std::vector<ContactSampleCpp> samples;
+    ContactSampleCpp representative;
+    DetectionStats stats;
+    bool has_detector = false;
+    bool has_response = false;
+    double area = 0.0;
+};
+
 static ContactQueryResult query_contact_pair(const ContactGeometry& terrain,
                                              const ContactGeometry& moving,
                                              const RigidConfiguration& body_config,
-                                             const ContactPairSpec& pair) {
+                                             const ContactPairSpec& pair,
+                                             bool run_detector = true,
+                                             bool assume_detector_active = false) {
     ContactQueryResult out;
     const double search_radius = std::max(0.0, moving.bounding_radius());
     const bool direct_response = terrain.supports_direct_response(moving);
@@ -1321,19 +1383,25 @@ static ContactQueryResult query_contact_pair(const ContactGeometry& terrain,
         out.has_response = true;
     }
 
-    Mesh terrain_mesh = terrain.local_patch(body_config, search_radius, pair.normal_hint, pair.detection_d_hat);
-    Mesh body_mesh = moving.local_patch(body_config, search_radius, pair.normal_hint, pair.detection_d_hat);
-    auto [contacts, stats] = detect_curved(terrain_mesh, body_mesh, pair.detection_d_hat);
-    out.stats = stats;
+    if (run_detector) {
+        Mesh terrain_mesh = terrain.local_patch(body_config, search_radius, pair.normal_hint, pair.detection_d_hat);
+        Mesh body_mesh = moving.local_patch(body_config, search_radius, pair.normal_hint, pair.detection_d_hat);
+        auto [contacts, stats] = detect_curved(terrain_mesh, body_mesh, pair.detection_d_hat);
+        out.stats = stats;
 
-    if (!contacts.empty()) {
-        out.detector = signed_detector_sample(select_contact(contacts, body_config.position), body_config.position);
-        out.has_detector = true;
-        if (!out.has_response) {
-            out.response = out.detector;
-            out.has_response = true;
+        if (!contacts.empty()) {
+            out.detector = signed_detector_sample(select_contact(contacts, body_config.position), body_config.position);
+            out.has_detector = true;
+            if (!out.has_response) {
+                out.response = out.detector;
+                out.has_response = true;
+            }
         }
-    } else if (!out.has_response) {
+    } else {
+        out.has_detector = assume_detector_active;
+    }
+
+    if (!out.has_response) {
         out.response.point_a = body_config.position - pair.normal_hint * search_radius;
         out.response.point_b = body_config.position;
         out.response.normal = normalize(pair.normal_hint);
@@ -1353,10 +1421,130 @@ static ContactQueryResult query_contact_pair(const ContactGeometry& terrain,
     return out;
 }
 
+static double default_surface_patch_radius(const ContactGeometry& moving, const ContactPairSpec& pair) {
+    if (pair.surface_patch_radius > 0.0) return pair.surface_patch_radius;
+    const double r = moving.sphere_radius();
+    if (r > 0.0) return clamp(0.22 * r, 0.008, 0.028);
+    return 0.012;
+}
+
+static std::vector<std::tuple<Vec2, double>> square_patch_quadrature(int order, double radius, double outer_fraction = 0.10) {
+    order = std::max(1, std::min(order, 3));
+    outer_fraction = clamp(outer_fraction, 0.0, 1.0);
+    std::vector<double> x;
+    std::vector<double> w;
+    if (order == 1) {
+        x = {0.0};
+        w = {2.0};
+    } else if (order == 2) {
+        const double a = 0.62 * radius;
+        const double b = 0.36 * radius;
+        const double area = 4.0 * radius * radius;
+        return {
+            {Vec2(0.0, 0.0), (1.0 - outer_fraction) * area},
+            {Vec2(0.0, 2.0 * b), (outer_fraction / 3.0) * area},
+            {Vec2(-a, -b), (outer_fraction / 3.0) * area},
+            {Vec2(a, -b), (outer_fraction / 3.0) * area},
+        };
+    } else {
+        const double a = std::sqrt(3.0 / 5.0);
+        x = {-a, 0.0, a};
+        w = {5.0 / 9.0, 8.0 / 9.0, 5.0 / 9.0};
+    }
+    std::vector<std::tuple<Vec2, double>> nodes;
+    nodes.reserve(x.size() * x.size());
+    for (size_t j = 0; j < x.size(); ++j) {
+        for (size_t i = 0; i < x.size(); ++i) {
+            nodes.emplace_back(Vec2(radius * x[i], radius * x[j]), radius * radius * w[i] * w[j]);
+        }
+    }
+    return nodes;
+}
+
+static ContactPatchCpp query_surface_contact_patch(const ContactGeometry& terrain,
+                                                   const ContactGeometry& moving,
+                                                   const RigidConfiguration& body_config,
+                                                   const ContactPairSpec& pair,
+                                                   bool run_detector = true,
+                                                   bool assume_detector_active = false) {
+    ContactQueryResult center = query_contact_pair(terrain, moving, body_config, pair, run_detector, assume_detector_active);
+    ContactPatchCpp patch;
+    patch.stats = center.stats;
+    patch.has_detector = center.has_detector;
+    patch.has_response = center.has_response;
+    if (!center.has_response) return patch;
+
+    ContactSampleCpp central = orient_sample(center.response, body_config.position);
+    if (!pair.surface_to_surface || pair.surface_quadrature_order <= 1) {
+        central.area_weight = 1.0;
+        central.response_weight = 1.0;
+        patch.samples.push_back(central);
+        patch.representative = central;
+        patch.area = 1.0;
+        return patch;
+    }
+
+    const double radius = default_surface_patch_radius(moving, pair);
+    auto [t1, t2, nc] = basis_from_axis(central.normal);
+    (void)nc;
+    auto nodes = square_patch_quadrature(pair.surface_quadrature_order, radius, pair.surface_outer_fraction);
+    double area_sum = 0.0;
+    for (const auto& node : nodes) area_sum += std::get<1>(node);
+    if (area_sum <= 0.0) area_sum = 1.0;
+
+    patch.samples.reserve(nodes.size());
+    for (const auto& node : nodes) {
+        Vec2 uv = std::get<0>(node);
+        double area_w = std::get<1>(node);
+        Vec3 offset = uv.x() * t1 + uv.y() * t2;
+        RigidConfiguration shifted = body_config;
+        shifted.position += offset;
+
+        ContactSampleCpp sample = central;
+        sample.point_a += offset;
+        sample.point_b += offset;
+        sample.area_weight = area_w;
+        sample.response_weight = area_w / area_sum;
+
+        bool refined = false;
+        if (pair.response_field) {
+            ContactSampleCpp seed = sample;
+            ContactSampleCpp field_sample;
+            if (pair.response_field->sample(shifted, seed, field_sample)) {
+                sample = orient_sample(field_sample, shifted.position);
+                sample.point_a = seed.point_a;
+                sample.point_b = seed.point_b;
+                sample.area_weight = area_w;
+                sample.response_weight = area_w / area_sum;
+                refined = true;
+            }
+        }
+        if (!refined && terrain.supports_direct_response(moving)) {
+            sample = orient_sample(terrain.direct_response_sample(shifted, moving, central.normal, pair.detection_d_hat),
+                                   shifted.position);
+            sample.area_weight = area_w;
+            sample.response_weight = area_w / area_sum;
+        }
+        if (!center.has_detector && pair.params.penetration_only) {
+            sample.gap = std::max(sample.gap, std::max(0.0, pair.params.release_tol) + 1.0e-6);
+        }
+        patch.samples.push_back(sample);
+    }
+    patch.area = area_sum;
+    patch.representative = *std::min_element(patch.samples.begin(), patch.samples.end(), [](const auto& a, const auto& b) {
+        return a.gap < b.gap;
+    });
+    return patch;
+}
+
 static ContactSampleCpp trace_contact_sample(const ContactGeometry& terrain,
                                              const ContactGeometry& moving,
                                              const RigidConfiguration& body_config,
                                              const ContactPairSpec& pair) {
+    if (pair.surface_to_surface && pair.surface_quadrature_order > 1) {
+        ContactPatchCpp patch = query_surface_contact_patch(terrain, moving, body_config, pair);
+        if (!patch.samples.empty()) return patch.representative;
+    }
     if (pair.response_field) {
         return query_contact_pair(terrain, moving, body_config, pair).response;
     }
@@ -1369,7 +1557,8 @@ static ContactSampleCpp trace_contact_sample(const ContactGeometry& terrain,
 
 static BenchResult run_contact_scene(ContactScene& scene, int steps, const std::string& output_dir = "") {
     RigidBody body = scene.body;
-    std::map<std::string, FrictionState> states;
+    std::map<std::string, SurfaceFrictionState> states;
+    std::map<std::string, bool> detector_active_cache;
     TraceWriter trace(output_dir, scene.source);
     int total_contacts = 0;
     int total_pairs = 0;
@@ -1386,21 +1575,43 @@ static BenchResult run_contact_scene(ContactScene& scene, int steps, const std::
         for (ContactPairSpec& pair : scene.pairs) {
             const ContactGeometry& terrain = *scene.geometries.at(static_cast<size_t>(pair.terrain_geometry));
             const ContactGeometry& body_geometry = *scene.geometries.at(static_cast<size_t>(pair.body_geometry));
-            ContactQueryResult query =
-                query_contact_pair(terrain, body_geometry, make_configuration(body.position, body.rotation), pair);
-            total_contacts += query.stats.contacts;
-            total_pairs += query.stats.candidate_pairs;
-            step_contacts += query.stats.contacts;
-            step_pairs += query.stats.candidate_pairs;
+            const int stride = std::max(1, pair.detector_stride);
+            const bool cached_active = detector_active_cache[pair.id];
+            const bool run_detector = (step % stride == 0) || !cached_active;
+            ContactPatchCpp patch =
+                query_surface_contact_patch(terrain,
+                                            body_geometry,
+                                            make_configuration(body.position, body.rotation),
+                                            pair,
+                                            run_detector,
+                                            cached_active);
+            if (run_detector) detector_active_cache[pair.id] = patch.has_detector;
+            total_contacts += patch.stats.contacts;
+            total_pairs += patch.stats.candidate_pairs;
+            step_contacts += patch.stats.contacts;
+            step_pairs += patch.stats.candidate_pairs;
 
-            ContactSampleCpp sample = query.response;
-            Vec3 terrain_velocity = terrain.surface_velocity(sample.point_a);
-            ContactEval c = evaluate_contact(
-                body, sample.point_b, sample.normal, sample.gap, scene.dt, pair.params, states[pair.id], terrain_velocity, scene.gravity);
-            contact_force += c.total_force;
-            total_torque += c.torque;
-            if (sample.gap < best.gap) best = sample;
-            pair.normal_hint = sample.normal;
+            SurfaceFrictionState& pair_state = states[pair.id];
+            for (size_t qi = 0; qi < patch.samples.size(); ++qi) {
+                ContactSampleCpp sample = patch.samples[qi];
+                Vec3 terrain_velocity = terrain.surface_velocity(sample.point_a);
+                ContactParams weighted_params = scaled_contact_params(pair.params, sample.response_weight);
+                ContactEval c = evaluate_contact(body,
+                                                 sample.point_b,
+                                                 sample.normal,
+                                                 sample.gap,
+                                                 scene.dt,
+                                                 weighted_params,
+                                                 pair_state.at(qi, patch.samples.size()),
+                                                 terrain_velocity,
+                                                 scene.gravity);
+                contact_force += c.total_force;
+                total_torque += c.torque;
+                if (sample.gap < best.gap) best = sample;
+            }
+            if (!patch.samples.empty()) {
+                pair.normal_hint = patch.representative.normal;
+            }
         }
 
         Vec3 previous_linear_velocity = body.linear_velocity;
@@ -1645,14 +1856,21 @@ static ContactScene make_guide_scene() {
     scene.body.angular_velocity = n0.cross(scene.body.linear_velocity) / radius;
     scene.geometries.push_back(std::make_unique<GuideHeightFieldGeometry>());
     scene.geometries.push_back(std::make_unique<SphereGeometry>("sphere_patch", radius, 0.035, 1));
-    scene.pairs.push_back(ContactPairSpec{
+    ContactPairSpec guide_pair{
         "guide_track",
         0,
         1,
         0.018,
         ContactParams{0.002, 8.0e4, 520.0, g_guide_mu, 1200.0, 4.0, true, 5.0e-4, true, 0.25, 1.0e-3, g_guide_target_gap},
         n0,
-    });
+    };
+    guide_pair.response_field =
+        std::make_shared<FunctionalContactResponseField>([](const RigidConfiguration& q) { return Guide::configuration_sdf().sample(q); });
+    guide_pair.surface_patch_radius = 0.0035;
+    guide_pair.surface_quadrature_order = 2;
+    guide_pair.surface_outer_fraction = 1.0e-3;
+    guide_pair.detector_stride = 5;
+    scene.pairs.push_back(guide_pair);
     scene.post_integrate = [](RigidBody& body) {
         constexpr double radius_local = 0.09;
         auto [gap, normal, surface_point] = Guide::gap_normal_point(body.position, radius_local);
@@ -1820,6 +2038,8 @@ struct SocketSample {
     Vec3 normal = Vec3(0.0, 0.0, -1.0);
     Vec3 point = Vec3::Zero();
     int candidate_pairs = 0;
+    double area_weight = 1.0;
+    double response_weight = 1.0;
 };
 
 struct CompositeData {
@@ -1948,6 +2168,34 @@ static SocketSample finite_socket_sdf_contact_sample(const OrientationInvariantS
 
 static SocketSample finite_socket_sdf_contact_sample(const OrientationInvariantSe3TricubicSdf& sdf, const Vec3& ball_center) {
     return finite_socket_sdf_contact_sample(sdf, make_configuration(ball_center));
+}
+
+static std::vector<SocketSample> finite_socket_sdf_contact_patch(const OrientationInvariantSe3TricubicSdf& sdf,
+                                                                 const RigidConfiguration& ball_config,
+                                                                 const SocketSample& central,
+                                                                 double patch_radius,
+                                                                 int order,
+                                                                 double outer_fraction = 0.10) {
+    auto [t1, t2, nc] = basis_from_axis(central.normal);
+    (void)nc;
+    auto nodes = square_patch_quadrature(order, patch_radius, outer_fraction);
+    double area_sum = 0.0;
+    for (const auto& node : nodes) area_sum += std::get<1>(node);
+    if (area_sum <= 0.0) area_sum = 1.0;
+
+    std::vector<SocketSample> patch;
+    patch.reserve(nodes.size());
+    for (const auto& node : nodes) {
+        Vec2 uv = std::get<0>(node);
+        const double area_w = std::get<1>(node);
+        RigidConfiguration shifted = ball_config;
+        shifted.position += uv.x() * t1 + uv.y() * t2;
+        SocketSample sample = finite_socket_sdf_contact_sample(sdf, shifted);
+        sample.area_weight = area_w;
+        sample.response_weight = area_w / area_sum;
+        patch.push_back(sample);
+    }
+    return patch;
 }
 
 struct MeshDetectorSample {
@@ -2160,7 +2408,7 @@ static BenchResult run_deep_ball_joint_pendulum_mesh_detector(int steps, const s
     params.ct = 300.0;
     params.penetration_only = true;
     params.release_tol = CONTACT_RELEASE_TOL;
-    FrictionState friction_state;
+    SurfaceFrictionState friction_state;
     Vec3 gravity(0.0, 0.0, -9.81);
     bool contact_active =
         finite_socket_sdf_contact_sample(socket_sdf, make_configuration(body.position + body.rotation * data.ball_offset_body, body.rotation))
@@ -2184,8 +2432,26 @@ static BenchResult run_deep_ball_joint_pendulum_mesh_detector(int steps, const s
         if (!detected.detector_contact) {
             force_sample.gap = std::max(force_sample.gap, CONTACT_RELEASE_TOL + 1.0e-6);
         }
-        Vec3 contact_point = ball_center - BALL_R * force_sample.normal;
-        ContactEval contact = evaluate_contact_full(body, contact_point, force_sample.normal, force_sample.gap, DT, params, friction_state);
+        std::vector<SocketSample> patch =
+            finite_socket_sdf_contact_patch(socket_sdf, make_configuration(ball_center, body.rotation), force_sample, 0.0040, 3, 1.0e-3);
+        ContactEval contact;
+        for (size_t qi = 0; qi < patch.size(); ++qi) {
+            SocketSample sample = patch[qi];
+            if (!detected.detector_contact) {
+                sample.gap = std::max(sample.gap, CONTACT_RELEASE_TOL + 1.0e-6);
+            }
+            Vec3 contact_point = sample.point + sample.gap * sample.normal;
+            ContactParams weighted_params = scaled_contact_params(params, sample.response_weight);
+            ContactEval c = evaluate_contact_full(body,
+                                                  contact_point,
+                                                  sample.normal,
+                                                  sample.gap,
+                                                  DT,
+                                                  weighted_params,
+                                                  friction_state.at(qi, patch.size()));
+            contact.total_force += c.total_force;
+            contact.torque += c.torque;
+        }
         Vec3 force = body.mass * gravity + contact.total_force;
         body.integrate(force, contact.torque, DT);
 
@@ -2369,8 +2635,22 @@ static ContactScene make_bearing_scene() {
     (void)outer_gap;
     (void)outer_point;
     ContactParams params{0.003, 700.0, 28.0, 0.08, 2.0, 0.010, true};
-    scene.pairs.push_back(ContactPairSpec{"bearing_inner", 0, 2, 0.010, params, inner_normal});
-    scene.pairs.push_back(ContactPairSpec{"bearing_outer", 1, 2, 0.010, params, outer_normal});
+    ContactPairSpec inner_pair{"bearing_inner", 0, 2, 0.010, params, inner_normal};
+    inner_pair.response_field = std::make_shared<FunctionalContactResponseField>(
+        [](const RigidConfiguration& q) { return Bearing::side_configuration_sdf("inner").sample(q); });
+    inner_pair.surface_patch_radius = 0.0040;
+    inner_pair.surface_quadrature_order = 2;
+    inner_pair.surface_outer_fraction = 1.0e-3;
+    inner_pair.detector_stride = 2;
+    ContactPairSpec outer_pair{"bearing_outer", 1, 2, 0.010, params, outer_normal};
+    outer_pair.response_field = std::make_shared<FunctionalContactResponseField>(
+        [](const RigidConfiguration& q) { return Bearing::side_configuration_sdf("outer").sample(q); });
+    outer_pair.surface_patch_radius = 0.0040;
+    outer_pair.surface_quadrature_order = 2;
+    outer_pair.surface_outer_fraction = 1.0e-3;
+    outer_pair.detector_stride = 2;
+    scene.pairs.push_back(inner_pair);
+    scene.pairs.push_back(outer_pair);
     return scene;
 }
 
@@ -2429,10 +2709,11 @@ int main(int argc, char** argv) {
     if (selected_case == "socket" || selected_case == "spherical_socket") {
         results.push_back(run_socket(steps, output_dir));
     }
-    if (selected_case == "all" || selected_case == "ball_joint" || selected_case == "deep_ball_joint_pendulum") {
+    if (selected_case == "ball_joint" || selected_case == "deep_ball_joint_pendulum") {
         results.push_back(run_deep_ball_joint_pendulum(steps, output_dir));
     }
-    if (selected_case == "all_mesh" || selected_case == "ball_joint_mesh" || selected_case == "deep_ball_joint_pendulum_mesh") {
+    if (selected_case == "all" || selected_case == "all_mesh" || selected_case == "ball_joint_mesh" ||
+        selected_case == "deep_ball_joint_pendulum_mesh") {
         results.push_back(run_deep_ball_joint_pendulum_mesh_detector(steps, output_dir));
     }
     if (selected_case == "all" || selected_case == "all_mesh" || selected_case == "bearing" || selected_case == "bearing_rotating_inner") {
@@ -2442,7 +2723,7 @@ int main(int argc, char** argv) {
         std::cerr << "unknown case: " << selected_case << "\n";
         return 2;
     }
-    std::cout << "{\n  \"backend\": \"calg_cpp_contact_geometry\",\n  \"results\": [\n";
+    std::cout << "{\n  \"backend\": \"calg_cpp_surface_patch_sdf_contact\",\n  \"results\": [\n";
     for (size_t i = 0; i < results.size(); ++i) {
         print_result(results[i]);
         std::cout << (i + 1 == results.size() ? "\n" : ",\n");
