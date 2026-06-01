@@ -1,0 +1,18 @@
+{
+  "analytic_gap_m": 0.025,
+  "graph_gap_m": 0.025,
+  "patch_patch_distance_m": 0.025,
+  "abs_graph_minus_reference_gap_m": 0.0,
+  "abs_patch_minus_reference_distance_m": 0.0,
+  "abs_graph_minus_patch_m": 0.0,
+  "graph_patch_point_A_difference_m": 2.910168634620068e-09,
+  "graph_patch_point_B_difference_m": 2.859323459168915e-09,
+  "graph_patch_normal_angle_deg": 0.0,
+  "graph_success": true,
+  "patch_success": true,
+  "graph_iterations": 6,
+  "patch_iterations": 18,
+  "min_NA_dot_nc": 0.8947763872309762,
+  "min_minus_NB_dot_nc": 0.7855873960437652,
+  "sample_count": 14641
+}
