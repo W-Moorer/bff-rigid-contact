@@ -62,6 +62,15 @@ static Mat3 orthonormalize(const Mat3& R) {
     return out;
 }
 
+struct RigidConfiguration {
+    Vec3 position = Vec3::Zero();
+    Mat3 rotation = Mat3::Identity();
+};
+
+static RigidConfiguration make_configuration(const Vec3& position, const Mat3& rotation = Mat3::Identity()) {
+    return {position, rotation};
+}
+
 struct AABB {
     Vec3 lo = Vec3::Zero();
     Vec3 hi = Vec3::Zero();
@@ -89,6 +98,23 @@ struct Mesh {
     std::vector<std::array<int, 3>> faces;
     std::string name;
 };
+
+static Mesh transform_mesh(const Mesh& local, const RigidConfiguration& config, const std::string& name = "") {
+    Mesh out;
+    out.name = name.empty() ? local.name : name;
+    out.vertices.reserve(local.vertices.size());
+    out.normals.reserve(local.normals.size());
+    for (const Vec3& v : local.vertices) out.vertices.push_back(config.rotation * v + config.position);
+    for (const Vec3& n : local.normals) out.normals.push_back(normalize(config.rotation * n));
+    out.faces = local.faces;
+    return out;
+}
+
+static double mesh_bounding_radius(const Mesh& local) {
+    double r = 0.0;
+    for (const Vec3& v : local.vertices) r = std::max(r, v.norm());
+    return r;
+}
 
 struct Primitive {
     std::string mesh_name;
@@ -528,15 +554,6 @@ struct SdfSampleCpp {
     Vec3 grad = Vec3::UnitZ();
     bool valid = false;
 };
-
-struct RigidConfiguration {
-    Vec3 position = Vec3::Zero();
-    Mat3 rotation = Mat3::Identity();
-};
-
-static RigidConfiguration make_configuration(const Vec3& position, const Mat3& rotation = Mat3::Identity()) {
-    return {position, rotation};
-}
 
 struct Se3SdfSampleCpp {
     double phi = 0.0;
@@ -1068,6 +1085,28 @@ static Mesh sphere_patch(const Vec3& center, double radius, const Vec3& contact_
     return m;
 }
 
+static Mesh box_mesh(double hx, double hy, double hz, const std::string& name) {
+    Mesh m;
+    m.name = name;
+    auto add_quad = [&](const Vec3& a, const Vec3& b, const Vec3& c, const Vec3& d, const Vec3& normal) {
+        int base = static_cast<int>(m.vertices.size());
+        m.vertices.push_back(a);
+        m.vertices.push_back(b);
+        m.vertices.push_back(c);
+        m.vertices.push_back(d);
+        for (int i = 0; i < 4; ++i) m.normals.push_back(normal);
+        m.faces.push_back({base, base + 1, base + 2});
+        m.faces.push_back({base, base + 2, base + 3});
+    };
+    add_quad(Vec3(-hx, -hy, hz), Vec3(hx, -hy, hz), Vec3(hx, hy, hz), Vec3(-hx, hy, hz), Vec3(0.0, 0.0, 1.0));
+    add_quad(Vec3(-hx, hy, -hz), Vec3(hx, hy, -hz), Vec3(hx, -hy, -hz), Vec3(-hx, -hy, -hz), Vec3(0.0, 0.0, -1.0));
+    add_quad(Vec3(-hx, -hy, -hz), Vec3(hx, -hy, -hz), Vec3(hx, -hy, hz), Vec3(-hx, -hy, hz), Vec3(0.0, -1.0, 0.0));
+    add_quad(Vec3(hx, -hy, -hz), Vec3(hx, hy, -hz), Vec3(hx, hy, hz), Vec3(hx, -hy, hz), Vec3(1.0, 0.0, 0.0));
+    add_quad(Vec3(hx, hy, -hz), Vec3(-hx, hy, -hz), Vec3(-hx, hy, hz), Vec3(hx, hy, hz), Vec3(0.0, 1.0, 0.0));
+    add_quad(Vec3(-hx, hy, -hz), Vec3(-hx, -hy, -hz), Vec3(-hx, -hy, hz), Vec3(-hx, hy, hz), Vec3(-1.0, 0.0, 0.0));
+    return m;
+}
+
 static ContactSampleCpp select_contact(const std::vector<ContactSampleCpp>& contacts, const Vec3& body_pos) {
     return *std::min_element(contacts.begin(), contacts.end(), [&](const auto& a, const auto& b) {
         double oa = normalize(a.normal).dot(body_pos - a.point_a);
@@ -1127,12 +1166,32 @@ public:
     virtual ~ContactGeometry() = default;
     virtual std::string id() const = 0;
     virtual double sphere_radius() const { return 0.0; }
+    virtual double bounding_radius() const { return sphere_radius(); }
     virtual Mesh local_patch(const RigidBody& body, double sphere_radius, const Vec3& normal_hint, double d_hat) const = 0;
-    virtual ContactSampleCpp closest_contact(const RigidConfiguration& body_config, double sphere_radius) const {
+    virtual Mesh local_patch(const RigidConfiguration& body_config, double search_radius, const Vec3& normal_hint, double d_hat) const {
         RigidBody sphere_body;
         sphere_body.position = body_config.position;
         sphere_body.rotation = body_config.rotation;
-        return closest_sphere_contact(sphere_body, sphere_radius);
+        return local_patch(sphere_body, search_radius, normal_hint, d_hat);
+    }
+    virtual bool supports_sphere_response() const { return false; }
+    virtual bool supports_direct_response(const ContactGeometry& moving_geometry) const {
+        return supports_sphere_response() && moving_geometry.sphere_radius() > 0.0;
+    }
+    virtual ContactSampleCpp direct_response_sample(const RigidConfiguration& body_config,
+                                                    const ContactGeometry& moving_geometry,
+                                                    const Vec3& normal_hint,
+                                                    double d_hat) const {
+        (void)normal_hint;
+        (void)d_hat;
+        double r = moving_geometry.sphere_radius();
+        if (supports_sphere_response() && r > 0.0) {
+            RigidBody sphere_body;
+            sphere_body.position = body_config.position;
+            sphere_body.rotation = body_config.rotation;
+            return closest_sphere_contact(sphere_body, r);
+        }
+        throw std::logic_error("direct_response_sample is not defined for this geometry pair");
     }
     virtual ContactSampleCpp closest_sphere_contact(const RigidBody& sphere_body, double sphere_radius) const {
         (void)sphere_body;
@@ -1145,6 +1204,70 @@ public:
     }
 };
 
+class RigidMeshGeometry final : public ContactGeometry {
+public:
+    RigidMeshGeometry(std::string id, Mesh body_frame_mesh)
+        : id_(std::move(id)), body_frame_mesh_(std::move(body_frame_mesh)), bounding_radius_(mesh_bounding_radius(body_frame_mesh_)) {
+        if (body_frame_mesh_.name.empty()) body_frame_mesh_.name = id_;
+    }
+
+    std::string id() const override { return id_; }
+    double bounding_radius() const override { return bounding_radius_; }
+    Mesh local_patch(const RigidBody& body, double search_radius, const Vec3& normal_hint, double d_hat) const override {
+        (void)search_radius;
+        (void)normal_hint;
+        (void)d_hat;
+        return transform_mesh(body_frame_mesh_, make_configuration(body.position, body.rotation), id_ + "_world");
+    }
+    Mesh local_patch(const RigidConfiguration& body_config, double search_radius, const Vec3& normal_hint, double d_hat) const override {
+        (void)search_radius;
+        (void)normal_hint;
+        (void)d_hat;
+        return transform_mesh(body_frame_mesh_, body_config, id_ + "_world");
+    }
+
+private:
+    std::string id_;
+    Mesh body_frame_mesh_;
+    double bounding_radius_ = 0.0;
+};
+
+class ContactResponseField {
+public:
+    virtual ~ContactResponseField() = default;
+    virtual bool sample(const RigidConfiguration& body_config,
+                        const ContactSampleCpp& detector_or_fallback,
+                        ContactSampleCpp& out) const = 0;
+};
+
+class DenseSe3ContactResponseField final : public ContactResponseField {
+public:
+    using Sampler = DenseSe3TensorCubicSdf::Sampler;
+
+    DenseSe3ContactResponseField(const RigidConfiguration& origin,
+                                 const Vec6& lo,
+                                 const Vec6& hi,
+                                 const std::array<int, 6>& dims,
+                                 const Sampler& sampler)
+        : sdf_(origin, lo, hi, dims, sampler) {}
+
+    bool sample(const RigidConfiguration& body_config,
+                const ContactSampleCpp& detector_or_fallback,
+                ContactSampleCpp& out) const override {
+        Se3SdfSampleCpp s = sdf_.sample(body_config);
+        if (!s.valid || !std::isfinite(s.phi) || !s.grad.allFinite()) return false;
+        out = detector_or_fallback;
+        Vec3 normal = s.normal(detector_or_fallback.normal);
+        if (normal.dot(detector_or_fallback.normal) < 0.0) normal = -normal;
+        out.normal = normal;
+        out.gap = s.phi;
+        return true;
+    }
+
+private:
+    DenseSe3TensorCubicSdf sdf_;
+};
+
 struct ContactPairSpec {
     std::string id;
     int terrain_geometry = -1;
@@ -1152,6 +1275,7 @@ struct ContactPairSpec {
     double detection_d_hat = 0.0;
     ContactParams params;
     Vec3 normal_hint = Vec3(0.0, 0.0, 1.0);
+    std::shared_ptr<const ContactResponseField> response_field;
 };
 
 struct ContactScene {
@@ -1168,6 +1292,79 @@ static ContactSampleCpp orient_sample(ContactSampleCpp sample, const Vec3& body_
     sample.normal = normalize(sample.normal);
     if (sample.normal.dot(body_pos - sample.point_a) < 0.0) sample.normal = -sample.normal;
     return sample;
+}
+
+static ContactSampleCpp signed_detector_sample(ContactSampleCpp sample, const Vec3& body_pos) {
+    sample = orient_sample(sample, body_pos);
+    sample.gap = (sample.point_b - sample.point_a).dot(sample.normal);
+    return sample;
+}
+
+struct ContactQueryResult {
+    ContactSampleCpp detector;
+    ContactSampleCpp response;
+    DetectionStats stats;
+    bool has_detector = false;
+    bool has_response = false;
+};
+
+static ContactQueryResult query_contact_pair(const ContactGeometry& terrain,
+                                             const ContactGeometry& moving,
+                                             const RigidConfiguration& body_config,
+                                             const ContactPairSpec& pair) {
+    ContactQueryResult out;
+    const double search_radius = std::max(0.0, moving.bounding_radius());
+    const bool direct_response = terrain.supports_direct_response(moving);
+    if (direct_response) {
+        out.response = orient_sample(terrain.direct_response_sample(body_config, moving, pair.normal_hint, pair.detection_d_hat),
+                                     body_config.position);
+        out.has_response = true;
+    }
+
+    Mesh terrain_mesh = terrain.local_patch(body_config, search_radius, pair.normal_hint, pair.detection_d_hat);
+    Mesh body_mesh = moving.local_patch(body_config, search_radius, pair.normal_hint, pair.detection_d_hat);
+    auto [contacts, stats] = detect_curved(terrain_mesh, body_mesh, pair.detection_d_hat);
+    out.stats = stats;
+
+    if (!contacts.empty()) {
+        out.detector = signed_detector_sample(select_contact(contacts, body_config.position), body_config.position);
+        out.has_detector = true;
+        if (!out.has_response) {
+            out.response = out.detector;
+            out.has_response = true;
+        }
+    } else if (!out.has_response) {
+        out.response.point_a = body_config.position - pair.normal_hint * search_radius;
+        out.response.point_b = body_config.position;
+        out.response.normal = normalize(pair.normal_hint);
+        out.response.gap = std::numeric_limits<double>::infinity();
+        out.has_response = true;
+    }
+
+    if (!out.has_detector && pair.params.penetration_only && out.has_response) {
+        out.response.gap = std::max(out.response.gap, std::max(0.0, pair.params.release_tol) + 1.0e-6);
+    }
+    if (pair.response_field && out.has_response) {
+        ContactSampleCpp field_response;
+        if (pair.response_field->sample(body_config, out.response, field_response)) {
+            out.response = orient_sample(field_response, body_config.position);
+        }
+    }
+    return out;
+}
+
+static ContactSampleCpp trace_contact_sample(const ContactGeometry& terrain,
+                                             const ContactGeometry& moving,
+                                             const RigidConfiguration& body_config,
+                                             const ContactPairSpec& pair) {
+    if (pair.response_field) {
+        return query_contact_pair(terrain, moving, body_config, pair).response;
+    }
+    if (terrain.supports_direct_response(moving)) {
+        return orient_sample(terrain.direct_response_sample(body_config, moving, pair.normal_hint, pair.detection_d_hat),
+                             body_config.position);
+    }
+    return query_contact_pair(terrain, moving, body_config, pair).response;
 }
 
 static BenchResult run_contact_scene(ContactScene& scene, int steps, const std::string& output_dir = "") {
@@ -1189,27 +1386,14 @@ static BenchResult run_contact_scene(ContactScene& scene, int steps, const std::
         for (ContactPairSpec& pair : scene.pairs) {
             const ContactGeometry& terrain = *scene.geometries.at(static_cast<size_t>(pair.terrain_geometry));
             const ContactGeometry& body_geometry = *scene.geometries.at(static_cast<size_t>(pair.body_geometry));
-            double sphere_radius = body_geometry.sphere_radius();
-            if (sphere_radius <= 0.0) throw std::logic_error("the current analytic scene backend expects a sphere body geometry");
+            ContactQueryResult query =
+                query_contact_pair(terrain, body_geometry, make_configuration(body.position, body.rotation), pair);
+            total_contacts += query.stats.contacts;
+            total_pairs += query.stats.candidate_pairs;
+            step_contacts += query.stats.contacts;
+            step_pairs += query.stats.candidate_pairs;
 
-            ContactSampleCpp refined =
-                orient_sample(terrain.closest_contact(make_configuration(body.position, body.rotation), sphere_radius), body.position);
-            Mesh terrain_mesh = terrain.local_patch(body, sphere_radius, pair.normal_hint, pair.detection_d_hat);
-            Mesh body_mesh = body_geometry.local_patch(body, sphere_radius, pair.normal_hint, pair.detection_d_hat);
-            auto [contacts, stats] = detect_curved(terrain_mesh, body_mesh, pair.detection_d_hat);
-            total_contacts += stats.contacts;
-            total_pairs += stats.candidate_pairs;
-            step_contacts += stats.contacts;
-            step_pairs += stats.candidate_pairs;
-
-            if (!contacts.empty()) {
-                ContactSampleCpp detector_sample = orient_sample(select_contact(contacts, body.position), body.position);
-                (void)detector_sample;
-            } else if (pair.params.penetration_only) {
-                refined.gap = std::max(refined.gap, std::max(0.0, pair.params.release_tol) + 1.0e-6);
-            }
-
-            ContactSampleCpp sample = refined;
+            ContactSampleCpp sample = query.response;
             Vec3 terrain_velocity = terrain.surface_velocity(sample.point_a);
             ContactEval c = evaluate_contact(
                 body, sample.point_b, sample.normal, sample.gap, scene.dt, pair.params, states[pair.id], terrain_velocity, scene.gravity);
@@ -1229,8 +1413,8 @@ static BenchResult run_contact_scene(ContactScene& scene, int steps, const std::
         for (const ContactPairSpec& pair : scene.pairs) {
             const ContactGeometry& terrain = *scene.geometries.at(static_cast<size_t>(pair.terrain_geometry));
             const ContactGeometry& body_geometry = *scene.geometries.at(static_cast<size_t>(pair.body_geometry));
-            ContactSampleCpp sample = orient_sample(
-                terrain.closest_contact(make_configuration(body.position, body.rotation), body_geometry.sphere_radius()), body.position);
+            ContactSampleCpp sample =
+                trace_contact_sample(terrain, body_geometry, make_configuration(body.position, body.rotation), pair);
             if (sample.gap < trace_sample.gap) trace_sample = sample;
         }
         if (!std::isfinite(trace_sample.gap)) trace_sample = best;
@@ -1429,6 +1613,7 @@ public:
     GuideHeightFieldGeometry() : cache_(Guide::Cache::build(18, 8)) {}
 
     std::string id() const override { return "guide_track"; }
+    bool supports_sphere_response() const override { return true; }
     Mesh local_patch(const RigidBody& body, double sphere_radius, const Vec3& normal_hint, double d_hat) const override {
         (void)normal_hint;
         return cache_.local_mesh(body.position, sphere_radius + d_hat);
@@ -1487,6 +1672,36 @@ static BenchResult run_guide(int steps, const std::string& output_dir = "") {
     return run_contact_scene(scene, steps, output_dir);
 }
 
+static ContactScene make_generic_mesh_smoke_scene() {
+    Vec3 p0 = Guide::point(-0.72, 0.01);
+    Vec3 n0 = Guide::normal(-0.72, 0.01);
+    ContactScene scene;
+    scene.source = "generic_mesh_contact_cpp";
+    scene.dt = 5.0e-4;
+    scene.gravity = Vec3(0.0, 0.0, -9.81);
+    scene.body.mass = 0.80;
+    scene.body.inertia = 1.0e-3;
+    scene.body.position = p0 + n0 * 0.035;
+    scene.body.rotation = rotation_from_rotvec(Vec3(0.0, 0.10, 0.05));
+    scene.body.linear_velocity = Vec3(0.16, 0.0, 0.0);
+    scene.geometries.push_back(std::make_unique<GuideHeightFieldGeometry>());
+    scene.geometries.push_back(std::make_unique<RigidMeshGeometry>("box_contact", box_mesh(0.030, 0.024, 0.018, "box_contact_body")));
+    scene.pairs.push_back(ContactPairSpec{
+        "generic_mesh_guide",
+        0,
+        1,
+        0.020,
+        ContactParams{0.006, 3.0e4, 120.0, 0.30, 300.0, 1.0, false},
+        n0,
+    });
+    return scene;
+}
+
+static BenchResult run_generic_mesh_smoke(int steps, const std::string& output_dir = "") {
+    ContactScene scene = make_generic_mesh_smoke_scene();
+    return run_contact_scene(scene, steps, output_dir);
+}
+
 namespace Socket {
 constexpr double R = 0.42;
 static Vec3 direction(const Vec3& p) { return normalize(p, Vec3(0.0, 0.0, -1.0)); }
@@ -1524,6 +1739,7 @@ static Mesh socket_patch(const Vec3& contact_normal, double patch_radius, int n)
 class SphericalSocketGeometry final : public ContactGeometry {
 public:
     std::string id() const override { return "spherical_socket"; }
+    bool supports_sphere_response() const override { return true; }
     Mesh local_patch(const RigidBody& body, double sphere_radius, const Vec3& normal_hint, double d_hat) const override {
         (void)body;
         (void)sphere_radius;
@@ -2110,6 +2326,7 @@ public:
     explicit BearingRacewayGeometry(std::string side) : side_(std::move(side)) {}
 
     std::string id() const override { return "bearing_" + side_; }
+    bool supports_sphere_response() const override { return true; }
     Mesh local_patch(const RigidBody& body, double sphere_radius, const Vec3& normal_hint, double d_hat) const override {
         (void)sphere_radius;
         (void)normal_hint;
@@ -2196,7 +2413,7 @@ int main(int argc, char** argv) {
         } else if (arg == "all" || arg == "all_mesh" || arg == "guide" || arg == "guide_slot" || arg == "socket" ||
                    arg == "spherical_socket" || arg == "ball_joint" || arg == "deep_ball_joint_pendulum" ||
                    arg == "ball_joint_mesh" || arg == "deep_ball_joint_pendulum_mesh" || arg == "bearing" ||
-                   arg == "bearing_rotating_inner") {
+                   arg == "bearing_rotating_inner" || arg == "generic_mesh" || arg == "generic_mesh_smoke") {
             selected_case = arg;
         } else if (output_dir.empty()) {
             output_dir = arg;
@@ -2205,6 +2422,9 @@ int main(int argc, char** argv) {
     std::vector<BenchResult> results;
     if (selected_case == "all" || selected_case == "all_mesh" || selected_case == "guide" || selected_case == "guide_slot") {
         results.push_back(run_guide(steps, output_dir));
+    }
+    if (selected_case == "generic_mesh" || selected_case == "generic_mesh_smoke") {
+        results.push_back(run_generic_mesh_smoke(steps, output_dir));
     }
     if (selected_case == "socket" || selected_case == "spherical_socket") {
         results.push_back(run_socket(steps, output_dir));
