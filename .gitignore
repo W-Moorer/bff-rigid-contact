@@ -38,9 +38,20 @@ Thumbs.db
 *.lof
 *.lot
 *.out
+*.spl
 *.synctex.gz
 *.toc
 
 # Experiment scratch outputs. Curated validation results under results/v0_* are tracked.
 results/tmp_*/
 results/debug_*/
+
+# Local scratch and duplicated manuscript experiments
+tmp/
+paper2/
+--case/
+--case=guide/
+
+# Submission-grade raster exports are kept locally; commit PDF/PNG/SVG sources instead.
+paper/**/*.tif
+paper/**/*.tiff

@@ -1,0 +1,5 @@
+CALG reduces rigid contact to certified local graph queries.
+Linear-triangle BVH causes normal jumps and friction spikes.
+PN-triangle BVH improves smoothness but remains tessellation-dependent.
+Chrono and Recurdyn comparisons confirm rigid-motion trends.
+Timing is reported for the implemented validation benchmark.
