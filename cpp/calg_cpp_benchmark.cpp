@@ -641,37 +641,11 @@ struct DetectorVtpBuilder {
 
 static void add_mesh_to_snapshot(DetectorVtpBuilder& b,
                                  const Mesh& mesh,
-                                 const std::set<int>& candidate_faces,
-                                 const std::set<int>& accepted_faces,
-                                 int regular_part,
-                                 int candidate_part,
-                                 int accepted_part) {
+                                 int part) {
     for (int fi = 0; fi < static_cast<int>(mesh.faces.size()); ++fi) {
         auto f = mesh.faces[fi];
-        int part = regular_part;
-        if (candidate_faces.count(fi)) part = candidate_part;
-        if (accepted_faces.count(fi)) part = accepted_part;
         b.add_triangle(mesh.vertices[f[0]], mesh.vertices[f[1]], mesh.vertices[f[2]], part);
     }
-}
-
-static double mesh_pair_extent(const Mesh& a, const Mesh& b) {
-    AABB box;
-    bool first = true;
-    auto expand = [&](const Vec3& p) {
-        if (first) {
-            box.lo = p;
-            box.hi = p;
-            first = false;
-        } else {
-            box.lo = box.lo.cwiseMin(p);
-            box.hi = box.hi.cwiseMax(p);
-        }
-    };
-    for (const Vec3& p : a.vertices) expand(p);
-    for (const Vec3& p : b.vertices) expand(p);
-    if (first) return 1.0;
-    return std::max((box.hi - box.lo).norm(), 1.0e-9);
 }
 
 static void add_aabb_to_snapshot(DetectorVtpBuilder& b, const AABB& box, int part) {
@@ -704,159 +678,14 @@ static void add_candidate_aabbs_to_snapshot(DetectorVtpBuilder& b,
     }
 }
 
-static void add_initial_closest_segments_to_snapshot(DetectorVtpBuilder& b,
-                                                     const std::vector<DetectorCandidatePair>& pairs,
-                                                     bool active_only,
-                                                     int part) {
-    for (int i = 0; i < static_cast<int>(pairs.size()); ++i) {
-        const DetectorCandidatePair& pair = pairs[i];
-        if (active_only && !pair.contact) continue;
-        b.add_line(pair.linear.a, pair.linear.b, part, i);
-    }
-}
-
-static void add_contact_segments_to_snapshot(DetectorVtpBuilder& b,
-                                             const std::vector<DetectorCandidatePair>& pairs,
-                                             int part) {
-    for (int i = 0; i < static_cast<int>(pairs.size()); ++i) {
-        const DetectorCandidatePair& pair = pairs[i];
-        if (!pair.contact) continue;
-        b.add_line(pair.curved.point_a, pair.curved.point_b, part, i);
-    }
-}
-
-static void add_representative_normal_to_snapshot(DetectorVtpBuilder& b,
-                                                  const std::vector<ContactSampleCpp>& contacts,
-                                                  double length,
-                                                  int part) {
-    if (contacts.empty()) return;
-    const ContactSampleCpp selected = *std::min_element(contacts.begin(), contacts.end(), [](const auto& a, const auto& b) {
-        return a.gap < b.gap;
-    });
-    const Vec3 p = selected.point_a;
-    b.add_line(p, p + length * normalize(selected.normal), part, 0);
-}
-
-struct ResponseActiveSample {
-    Vec3 point_a = Vec3::Zero();
-    Vec3 point_b = Vec3::Zero();
+struct SdfContactPointRecord {
+    Vec3 point = Vec3::Zero();
     Vec3 normal = Vec3::UnitZ();
     double gap = 0.0;
     double normal_lambda = 0.0;
     double normal_force_norm = 0.0;
     double area_weight = 1.0;
 };
-
-static std::tuple<Vec3, Vec3, Vec3> basis_from_axis(const Vec3& axis_in);
-static void write_detector_snapshot_vtp(const std::filesystem::path& path,
-                                        const DetectorVtpBuilder& b,
-                                        int step,
-                                        double time,
-                                        int candidate_pairs,
-                                        int contacts);
-
-static void add_sample_cell_to_snapshot(DetectorVtpBuilder& b,
-                                        const Vec3& center,
-                                        const Vec3& normal,
-                                        double area_weight,
-                                        int part,
-                                        int pair_id) {
-    auto [u, v, w] = basis_from_axis(normal);
-    (void)w;
-    const double half_extent = clamp(0.35 * std::sqrt(std::max(area_weight, 1.0e-12)), 1.5e-3, 2.5e-2);
-    const Vec3 p00 = center - half_extent * u - half_extent * v;
-    const Vec3 p10 = center + half_extent * u - half_extent * v;
-    const Vec3 p11 = center + half_extent * u + half_extent * v;
-    const Vec3 p01 = center - half_extent * u + half_extent * v;
-    b.add_triangle(p00, p10, p11, part, pair_id);
-    b.add_triangle(p00, p11, p01, part, pair_id);
-}
-
-static void add_response_active_cells(DetectorVtpBuilder& terrain_builder,
-                                      DetectorVtpBuilder& body_builder,
-                                      const std::vector<ResponseActiveSample>& samples,
-                                      bool force_active,
-                                      int terrain_part,
-                                      int body_part) {
-    constexpr double FORCE_EPS = 1.0e-12;
-    for (int i = 0; i < static_cast<int>(samples.size()); ++i) {
-        const ResponseActiveSample& sample = samples[i];
-        const bool active = force_active ? (sample.normal_lambda > FORCE_EPS) : (sample.gap <= 0.0);
-        if (!active) continue;
-        add_sample_cell_to_snapshot(terrain_builder, sample.point_a, sample.normal, sample.area_weight, terrain_part, i);
-        add_sample_cell_to_snapshot(body_builder, sample.point_b, sample.normal, sample.area_weight, body_part, i);
-    }
-}
-
-static void add_force_active_normals(DetectorVtpBuilder& b,
-                                     const std::vector<ResponseActiveSample>& samples,
-                                     int part) {
-    double max_force = 0.0;
-    for (const ResponseActiveSample& sample : samples) {
-        max_force = std::max(max_force, sample.normal_force_norm);
-    }
-    constexpr double FORCE_EPS = 1.0e-12;
-    for (int i = 0; i < static_cast<int>(samples.size()); ++i) {
-        const ResponseActiveSample& sample = samples[i];
-        if (sample.normal_lambda <= FORCE_EPS) continue;
-        const double scale = max_force > FORCE_EPS ? clamp(sample.normal_force_norm / max_force, 0.25, 1.0) : 0.25;
-        const double len = clamp(0.45 * std::sqrt(std::max(sample.area_weight, 1.0e-12)), 3.0e-3, 3.0e-2) * scale;
-        b.add_line(sample.point_b, sample.point_b + len * normalize(sample.normal), part, i);
-    }
-}
-
-static void export_response_active_snapshot(const std::string& case_name,
-                                            const std::string& pair_id,
-                                            int step,
-                                            double time,
-                                            const std::vector<ResponseActiveSample>& samples,
-                                            const std::filesystem::path& out_dir) {
-    const std::string stem = safe_stem(case_name + "_step" + std::to_string(step) + "_" + pair_id + "_detector_snapshot");
-    const std::filesystem::path sdf_terrain_path = out_dir / (stem + "_sdf_gap_active_terrain_patch.vtp");
-    const std::filesystem::path sdf_body_path = out_dir / (stem + "_sdf_gap_active_body_patch.vtp");
-    const std::filesystem::path force_terrain_path = out_dir / (stem + "_normal_force_active_terrain_patch.vtp");
-    const std::filesystem::path force_body_path = out_dir / (stem + "_normal_force_active_body_patch.vtp");
-    const std::filesystem::path force_normals_path = out_dir / (stem + "_normal_force_active_normals.vtp");
-
-    DetectorVtpBuilder sdf_terrain;
-    DetectorVtpBuilder sdf_body;
-    add_response_active_cells(sdf_terrain, sdf_body, samples, false, 12, 13);
-    write_detector_snapshot_vtp(sdf_terrain_path, sdf_terrain, step, time, static_cast<int>(samples.size()), static_cast<int>(sdf_terrain.polys.size() / 2));
-    write_detector_snapshot_vtp(sdf_body_path, sdf_body, step, time, static_cast<int>(samples.size()), static_cast<int>(sdf_body.polys.size() / 2));
-
-    DetectorVtpBuilder force_terrain;
-    DetectorVtpBuilder force_body;
-    add_response_active_cells(force_terrain, force_body, samples, true, 14, 15);
-    write_detector_snapshot_vtp(force_terrain_path, force_terrain, step, time, static_cast<int>(samples.size()), static_cast<int>(force_terrain.polys.size() / 2));
-    write_detector_snapshot_vtp(force_body_path, force_body, step, time, static_cast<int>(samples.size()), static_cast<int>(force_body.polys.size() / 2));
-
-    DetectorVtpBuilder force_normals;
-    add_force_active_normals(force_normals, samples, 16);
-    write_detector_snapshot_vtp(force_normals_path, force_normals, step, time, static_cast<int>(samples.size()), static_cast<int>(force_normals.lines.size()));
-
-    int sdf_active_samples = 0;
-    int force_active_samples = 0;
-    double min_gap = std::numeric_limits<double>::infinity();
-    double max_normal_force = 0.0;
-    for (const ResponseActiveSample& sample : samples) {
-        if (sample.gap <= 0.0) ++sdf_active_samples;
-        if (sample.normal_lambda > 1.0e-12) ++force_active_samples;
-        min_gap = std::min(min_gap, sample.gap);
-        max_normal_force = std::max(max_normal_force, sample.normal_force_norm);
-    }
-    if (!std::isfinite(min_gap)) min_gap = std::numeric_limits<double>::infinity();
-
-    std::ofstream summary((out_dir / (stem + "_response_active_index.csv")).string());
-    summary << "case,pair_id,step,time,response_samples,sdf_gap_active_samples,normal_force_active_samples,min_gap,max_normal_force,"
-               "sdf_gap_active_terrain_vtp,sdf_gap_active_body_vtp,normal_force_active_terrain_vtp,normal_force_active_body_vtp,"
-               "normal_force_active_normals_vtp\n";
-    summary << case_name << ',' << pair_id << ',' << step << ',' << std::setprecision(17) << time << ','
-            << samples.size() << ',' << sdf_active_samples << ',' << force_active_samples << ','
-            << min_gap << ',' << max_normal_force << ','
-            << sdf_terrain_path.filename().string() << ',' << sdf_body_path.filename().string() << ','
-            << force_terrain_path.filename().string() << ',' << force_body_path.filename().string() << ','
-            << force_normals_path.filename().string() << '\n';
-}
 
 static void write_int_array(std::ofstream& f, const std::vector<int>& values) {
     for (size_t i = 0; i < values.size(); ++i) {
@@ -957,6 +786,94 @@ static void write_detector_snapshot_vtp(const std::filesystem::path& path,
     f << "</VTKFile>\n";
 }
 
+static void write_sdf_contact_points_vtp(const std::filesystem::path& path,
+                                         const std::vector<SdfContactPointRecord>& points,
+                                         int step,
+                                         double time) {
+    std::filesystem::create_directories(path.parent_path());
+    std::ofstream f(path.string());
+    f << std::setprecision(17);
+    f << "<?xml version=\"1.0\"?>\n";
+    f << "<VTKFile type=\"PolyData\" version=\"0.1\" byte_order=\"LittleEndian\">\n";
+    f << "  <PolyData>\n";
+    f << "    <Piece NumberOfPoints=\"" << points.size() << "\" NumberOfVerts=\"" << points.size()
+      << "\" NumberOfLines=\"0\" NumberOfStrips=\"0\" NumberOfPolys=\"0\">\n";
+    f << "      <FieldData>\n";
+    f << "        <DataArray type=\"Int32\" Name=\"step\" NumberOfTuples=\"1\" format=\"ascii\">" << step << "</DataArray>\n";
+    f << "        <DataArray type=\"Float64\" Name=\"time\" NumberOfTuples=\"1\" format=\"ascii\">" << time << "</DataArray>\n";
+    f << "        <DataArray type=\"Int32\" Name=\"sdf_contact_points\" NumberOfTuples=\"1\" format=\"ascii\">"
+      << points.size() << "</DataArray>\n";
+    f << "      </FieldData>\n";
+    f << "      <PointData>\n";
+    f << "        <DataArray type=\"Float64\" Name=\"gap\" format=\"ascii\">";
+    for (size_t i = 0; i < points.size(); ++i) {
+        if (i) f << ' ';
+        f << points[i].gap;
+    }
+    f << "</DataArray>\n";
+    f << "        <DataArray type=\"Float64\" Name=\"normal_lambda\" format=\"ascii\">";
+    for (size_t i = 0; i < points.size(); ++i) {
+        if (i) f << ' ';
+        f << points[i].normal_lambda;
+    }
+    f << "</DataArray>\n";
+    f << "        <DataArray type=\"Float64\" Name=\"normal_force\" format=\"ascii\">";
+    for (size_t i = 0; i < points.size(); ++i) {
+        if (i) f << ' ';
+        f << points[i].normal_force_norm;
+    }
+    f << "</DataArray>\n";
+    f << "        <DataArray type=\"Float64\" Name=\"area_weight\" format=\"ascii\">";
+    for (size_t i = 0; i < points.size(); ++i) {
+        if (i) f << ' ';
+        f << points[i].area_weight;
+    }
+    f << "</DataArray>\n";
+    f << "        <DataArray type=\"Float64\" Name=\"normal\" NumberOfComponents=\"3\" format=\"ascii\">";
+    for (size_t i = 0; i < points.size(); ++i) {
+        if (i) f << ' ';
+        const Vec3 n = normalize(points[i].normal);
+        f << n.x() << ' ' << n.y() << ' ' << n.z();
+    }
+    f << "</DataArray>\n";
+    f << "      </PointData>\n";
+    f << "      <Points>\n";
+    f << "        <DataArray type=\"Float64\" NumberOfComponents=\"3\" format=\"ascii\">";
+    for (size_t i = 0; i < points.size(); ++i) {
+        if (i) f << ' ';
+        f << points[i].point.x() << ' ' << points[i].point.y() << ' ' << points[i].point.z();
+    }
+    f << "</DataArray>\n";
+    f << "      </Points>\n";
+    f << "      <Verts>\n";
+    f << "        <DataArray type=\"Int32\" Name=\"connectivity\" format=\"ascii\">";
+    for (size_t i = 0; i < points.size(); ++i) {
+        if (i) f << ' ';
+        f << i;
+    }
+    f << "</DataArray>\n";
+    f << "        <DataArray type=\"Int32\" Name=\"offsets\" format=\"ascii\">";
+    for (size_t i = 0; i < points.size(); ++i) {
+        if (i) f << ' ';
+        f << (i + 1);
+    }
+    f << "</DataArray>\n";
+    f << "      </Verts>\n";
+    f << "    </Piece>\n";
+    f << "  </PolyData>\n";
+    f << "</VTKFile>\n";
+}
+
+static void export_sdf_contact_points_snapshot(const std::string& case_name,
+                                               const std::string& pair_id,
+                                               int step,
+                                               double time,
+                                               const std::vector<SdfContactPointRecord>& points,
+                                               const std::filesystem::path& out_dir) {
+    const std::string stem = safe_stem(case_name + "_step" + std::to_string(step) + "_" + pair_id + "_detector_snapshot");
+    write_sdf_contact_points_vtp(out_dir / (stem + "_sdf_contact_points.vtp"), points, step, time);
+}
+
 static void export_detector_snapshot(const std::string& case_name,
                                      const std::string& pair_id,
                                      int step,
@@ -966,72 +883,43 @@ static void export_detector_snapshot(const std::string& case_name,
                                      double d_hat,
                                      const std::filesystem::path& out_dir) {
     DetectorSnapshotData data = collect_detector_snapshot_data(terrain_mesh, body_mesh, d_hat);
-    std::set<int> terrain_candidate_faces;
-    std::set<int> body_candidate_faces;
-    std::set<int> terrain_accepted_faces;
-    std::set<int> body_accepted_faces;
-    for (const auto& pair : data.candidate_pairs) {
-        terrain_candidate_faces.insert(pair.terrain_face);
-        body_candidate_faces.insert(pair.body_face);
-        if (pair.contact) {
-            terrain_accepted_faces.insert(pair.terrain_face);
-            body_accepted_faces.insert(pair.body_face);
-        }
-    }
+    std::set<int> terrain_faces;
+    std::set<int> body_faces;
+    for (const Primitive& p : data.terrain_primitives) terrain_faces.insert(p.face_index);
+    for (const Primitive& p : data.body_primitives) body_faces.insert(p.face_index);
 
     const std::string stem = safe_stem(case_name + "_step" + std::to_string(step) + "_" + pair_id + "_detector_snapshot");
     const std::filesystem::path terrain_patch_path = out_dir / (stem + "_terrain_patch.vtp");
     const std::filesystem::path body_patch_path = out_dir / (stem + "_body_patch.vtp");
     const std::filesystem::path terrain_aabb_path = out_dir / (stem + "_terrain_aabb.vtp");
     const std::filesystem::path body_aabb_path = out_dir / (stem + "_body_aabb.vtp");
-    const std::filesystem::path closest_segments_path = out_dir / (stem + "_closest_segments.vtp");
-    const std::filesystem::path accepted_closest_segments_path = out_dir / (stem + "_accepted_closest_segments.vtp");
-    const std::filesystem::path contact_segments_path = out_dir / (stem + "_contact_segments.vtp");
-    const std::filesystem::path representative_normal_path = out_dir / (stem + "_representative_normal.vtp");
+    const std::filesystem::path sdf_contact_points_path = out_dir / (stem + "_sdf_contact_points.vtp");
 
     DetectorVtpBuilder terrain_patch;
-    add_mesh_to_snapshot(terrain_patch, terrain_mesh, terrain_candidate_faces, terrain_accepted_faces, 1, 3, 10);
+    add_mesh_to_snapshot(terrain_patch, terrain_mesh, 1);
     write_detector_snapshot_vtp(terrain_patch_path, terrain_patch, step, time, data.stats.candidate_pairs, data.stats.contacts);
 
     DetectorVtpBuilder body_patch;
-    add_mesh_to_snapshot(body_patch, body_mesh, body_candidate_faces, body_accepted_faces, 2, 4, 11);
+    add_mesh_to_snapshot(body_patch, body_mesh, 2);
     write_detector_snapshot_vtp(body_patch_path, body_patch, step, time, data.stats.candidate_pairs, data.stats.contacts);
 
     DetectorVtpBuilder terrain_aabb;
-    add_candidate_aabbs_to_snapshot(terrain_aabb, data.terrain_primitives, terrain_candidate_faces, 5);
+    add_candidate_aabbs_to_snapshot(terrain_aabb, data.terrain_primitives, terrain_faces, 5);
     write_detector_snapshot_vtp(terrain_aabb_path, terrain_aabb, step, time, data.stats.candidate_pairs, data.stats.contacts);
 
     DetectorVtpBuilder body_aabb;
-    add_candidate_aabbs_to_snapshot(body_aabb, data.body_primitives, body_candidate_faces, 6);
+    add_candidate_aabbs_to_snapshot(body_aabb, data.body_primitives, body_faces, 6);
     write_detector_snapshot_vtp(body_aabb_path, body_aabb, step, time, data.stats.candidate_pairs, data.stats.contacts);
-
-    DetectorVtpBuilder closest_segments;
-    add_initial_closest_segments_to_snapshot(closest_segments, data.candidate_pairs, false, 7);
-    write_detector_snapshot_vtp(closest_segments_path, closest_segments, step, time, data.stats.candidate_pairs, data.stats.contacts);
-
-    DetectorVtpBuilder accepted_closest_segments;
-    add_initial_closest_segments_to_snapshot(accepted_closest_segments, data.candidate_pairs, true, 7);
-    write_detector_snapshot_vtp(accepted_closest_segments_path, accepted_closest_segments, step, time, data.stats.candidate_pairs, data.stats.contacts);
-
-    DetectorVtpBuilder contact_segments;
-    add_contact_segments_to_snapshot(contact_segments, data.candidate_pairs, 8);
-    write_detector_snapshot_vtp(contact_segments_path, contact_segments, step, time, data.stats.candidate_pairs, data.stats.contacts);
-
-    DetectorVtpBuilder representative_normal;
-    add_representative_normal_to_snapshot(representative_normal, data.contacts, 0.22 * mesh_pair_extent(terrain_mesh, body_mesh), 9);
-    write_detector_snapshot_vtp(representative_normal_path, representative_normal, step, time, data.stats.candidate_pairs, data.stats.contacts);
 
     std::ofstream summary((out_dir / (stem + "_index.csv")).string());
     summary << "case,pair_id,step,time,d_hat,terrain_faces,body_faces,candidate_pairs,contacts,"
-               "accepted_terrain_faces,accepted_body_faces,terrain_patch_vtp,body_patch_vtp,terrain_aabb_vtp,body_aabb_vtp,"
-               "closest_segments_vtp,accepted_closest_segments_vtp,contact_segments_vtp,representative_normal_vtp\n";
+               "terrain_patch_vtp,body_patch_vtp,terrain_aabb_vtp,body_aabb_vtp,sdf_contact_points_vtp\n";
     summary << case_name << ',' << pair_id << ',' << step << ',' << std::setprecision(17) << time << ',' << d_hat << ','
             << terrain_mesh.faces.size() << ',' << body_mesh.faces.size() << ',' << data.stats.candidate_pairs << ','
-            << data.stats.contacts << ',' << terrain_accepted_faces.size() << ',' << body_accepted_faces.size() << ','
+            << data.stats.contacts << ','
             << terrain_patch_path.filename().string() << ',' << body_patch_path.filename().string() << ','
             << terrain_aabb_path.filename().string() << ',' << body_aabb_path.filename().string() << ','
-            << closest_segments_path.filename().string() << ',' << accepted_closest_segments_path.filename().string() << ','
-            << contact_segments_path.filename().string() << ',' << representative_normal_path.filename().string() << '\n';
+            << sdf_contact_points_path.filename().string() << '\n';
 }
 
 struct SdfSampleCpp {
@@ -2098,9 +1986,9 @@ static BenchResult run_contact_scene(ContactScene& scene, int steps, const std::
             step_pairs += patch.stats.candidate_pairs;
 
             SurfaceFrictionState& pair_state = states[pair.id];
-            std::vector<ResponseActiveSample> response_active_samples;
+            std::vector<SdfContactPointRecord> sdf_contact_points;
             if (step == g_snapshot_step && !g_snapshot_dir.empty()) {
-                response_active_samples.reserve(patch.samples.size());
+                sdf_contact_points.reserve(patch.samples.size());
             }
             for (size_t qi = 0; qi < patch.samples.size(); ++qi) {
                 ContactSampleCpp sample = patch.samples[qi];
@@ -2116,25 +2004,28 @@ static BenchResult run_contact_scene(ContactScene& scene, int steps, const std::
                                                  terrain_velocity,
                                                  scene.gravity);
                 if (step == g_snapshot_step && !g_snapshot_dir.empty()) {
-                    response_active_samples.push_back({sample.point_a,
-                                                       sample.point_b,
-                                                       sample.normal,
-                                                       sample.gap,
-                                                       c.normal_lambda,
-                                                       c.normal_force.norm(),
-                                                       sample.area_weight});
+                    const bool sdf_active = sample.gap <= 0.0;
+                    const bool force_active = c.normal_lambda > 1.0e-12;
+                    if (sdf_active || force_active) {
+                        sdf_contact_points.push_back({0.5 * (sample.point_a + sample.point_b),
+                                                      sample.normal,
+                                                      sample.gap,
+                                                      c.normal_lambda,
+                                                      c.normal_force.norm(),
+                                                      sample.area_weight});
+                    }
                 }
                 contact_force += c.total_force;
                 total_torque += c.torque;
                 if (sample.gap < best.gap) best = sample;
             }
             if (step == g_snapshot_step && !g_snapshot_dir.empty()) {
-                export_response_active_snapshot(scene.source,
-                                                pair.id,
-                                                step,
-                                                step * scene.dt,
-                                                response_active_samples,
-                                                std::filesystem::path(g_snapshot_dir));
+                export_sdf_contact_points_snapshot(scene.source,
+                                                   pair.id,
+                                                   step,
+                                                   step * scene.dt,
+                                                   sdf_contact_points,
+                                                   std::filesystem::path(g_snapshot_dir));
             }
             if (!patch.samples.empty()) {
                 pair.normal_hint = patch.representative.normal;
@@ -2993,9 +2884,9 @@ static BenchResult run_deep_ball_joint_pendulum_mesh_detector(int steps, const s
         std::vector<SocketSample> patch =
             finite_socket_sdf_contact_patch(socket_sdf, make_configuration(ball_center, body.rotation), force_sample, 0.0040, 2, 1.0e-3);
         ContactEval contact;
-        std::vector<ResponseActiveSample> response_active_samples;
+        std::vector<SdfContactPointRecord> sdf_contact_points;
         if (step == g_snapshot_step && !g_snapshot_dir.empty()) {
-            response_active_samples.reserve(patch.size());
+            sdf_contact_points.reserve(patch.size());
         }
         for (size_t qi = 0; qi < patch.size(); ++qi) {
             SocketSample sample = patch[qi];
@@ -3012,24 +2903,27 @@ static BenchResult run_deep_ball_joint_pendulum_mesh_detector(int steps, const s
                                                   weighted_params,
                                                   friction_state.at(qi, patch.size()));
             if (step == g_snapshot_step && !g_snapshot_dir.empty()) {
-                response_active_samples.push_back({sample.point,
-                                                   contact_point,
-                                                   sample.normal,
-                                                   sample.gap,
-                                                   c.normal_lambda,
-                                                   c.normal_force.norm(),
-                                                   sample.area_weight});
+                const bool sdf_active = sample.gap <= 0.0;
+                const bool force_active = c.normal_lambda > 1.0e-12;
+                if (sdf_active || force_active) {
+                    sdf_contact_points.push_back({0.5 * (sample.point + contact_point),
+                                                  sample.normal,
+                                                  sample.gap,
+                                                  c.normal_lambda,
+                                                  c.normal_force.norm(),
+                                                  sample.area_weight});
+                }
             }
             contact.total_force += c.total_force;
             contact.torque += c.torque;
         }
         if (step == g_snapshot_step && !g_snapshot_dir.empty()) {
-            export_response_active_snapshot("deep_ball_joint_pendulum_mesh_cpp",
-                                            "finite_socket_inner",
-                                            step,
-                                            step * DT,
-                                            response_active_samples,
-                                            std::filesystem::path(g_snapshot_dir));
+            export_sdf_contact_points_snapshot("deep_ball_joint_pendulum_mesh_cpp",
+                                               "finite_socket_inner",
+                                               step,
+                                               step * DT,
+                                               sdf_contact_points,
+                                               std::filesystem::path(g_snapshot_dir));
         }
         Vec3 force = body.mass * gravity + contact.total_force;
         body.integrate(force, contact.torque, DT);

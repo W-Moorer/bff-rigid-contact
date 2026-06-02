@@ -9,7 +9,7 @@
         <DataArray type="Int32" Name="contacts" NumberOfTuples="1" format="ascii">148</DataArray>
       </FieldData>
       <CellData Scalars="part_id">
-        <DataArray type="Int32" Name="part_id" format="ascii">10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10</DataArray>
+        <DataArray type="Int32" Name="part_id" format="ascii">1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1</DataArray>
         <DataArray type="Int32" Name="candidate_pair" format="ascii">-1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1</DataArray>
       </CellData>
       <Points>

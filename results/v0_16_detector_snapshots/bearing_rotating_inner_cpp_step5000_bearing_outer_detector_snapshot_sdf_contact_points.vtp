@@ -1,0 +1,26 @@
+<?xml version="1.0"?>
+<VTKFile type="PolyData" version="0.1" byte_order="LittleEndian">
+  <PolyData>
+    <Piece NumberOfPoints="4" NumberOfVerts="4" NumberOfLines="0" NumberOfStrips="0" NumberOfPolys="0">
+      <FieldData>
+        <DataArray type="Int32" Name="step" NumberOfTuples="1" format="ascii">5000</DataArray>
+        <DataArray type="Float64" Name="time" NumberOfTuples="1" format="ascii">2.5</DataArray>
+        <DataArray type="Int32" Name="sdf_contact_points" NumberOfTuples="1" format="ascii">4</DataArray>
+      </FieldData>
+      <PointData>
+        <DataArray type="Float64" Name="gap" format="ascii">-0.00020013380355727361 -0.0002042647774771922 -0.00018203777779978377 -0.00018203777779978445</DataArray>
+        <DataArray type="Float64" Name="normal_lambda" format="ascii">0.13995525083728347 5.018766622138825e-05 4.2475481486616205e-05 4.2475481486616361e-05</DataArray>
+        <DataArray type="Float64" Name="normal_force" format="ascii">0.13995525083728347 5.018766622138825e-05 4.2475481486616205e-05 4.2475481486616367e-05</DataArray>
+        <DataArray type="Float64" Name="area_weight" format="ascii">6.3935999999999992e-05 2.1333333333333332e-08 2.1333333333333332e-08 2.1333333333333332e-08</DataArray>
+        <DataArray type="Float64" Name="normal" NumberOfComponents="3" format="ascii">-0.96166700293736662 -0.27421993994139621 0 -0.96087302735304403 -0.27698921514274938 0 -0.96194381167493537 -0.27281211809790723 -0.015415946264507326 -0.96194381167493537 -0.27281211809790717 0.015415946264507069</DataArray>
+      </PointData>
+      <Points>
+        <DataArray type="Float64" NumberOfComponents="3" format="ascii">1.1165885298881331 0.31840751461058692 -4.1138618641362098e-21 1.1157987764611019 0.32117711557904655 -4.1138618641362098e-21 1.1169834066016486 0.31702271412635713 -0.00248 1.1169834066016486 0.31702271412635713 0.00248</DataArray>
+      </Points>
+      <Verts>
+        <DataArray type="Int32" Name="connectivity" format="ascii">0 1 2 3</DataArray>
+        <DataArray type="Int32" Name="offsets" format="ascii">1 2 3 4</DataArray>
+      </Verts>
+    </Piece>
+  </PolyData>
+</VTKFile>
