@@ -163,22 +163,7 @@ For a rigid configuration $q=(x,R)\in SE(3)$, the configuration-space signed gap
 \end{equation}
 where $g_{\calg}$ is the signed gap returned by the certified detector path, $S_A$ is the fixed or reference contact surface, and $R S_B+x$ is the moved rigid contact element. A general contact element may be orientation dependent; the response field is therefore represented in a local chart of $SE(3)$ and queried through the same full-pose contract for all rigid contact elements.
 
-\begin{table}[t]
-\centering
-\caption{Method modules and their theoretical role. The table is used to separate the detector, the response field, and the fallback hierarchy so that each approximation has a defined validity boundary.}
-\label{tab:method_modules}
-\begin{tabular}{>{\raggedright\arraybackslash}p{0.22\linewidth}>{\raggedright\arraybackslash}p{0.31\linewidth}>{\raggedright\arraybackslash}p{0.35\linewidth}}
-\toprule
-Module & Input and output & Role in the derivation \\
-\midrule
-Contact element & Analytic patch, CAD patch, curved mesh patch, or rigid mesh element; outputs local curved jets and optional surface velocity & Provides a common representation for arbitrary rigid contact features without putting scene-specific cases in the solver loop \\
-Conservative broad phase & Inflated primitive boxes and rigid motion bounds; outputs candidate primitive pairs & Preserves the efficiency of three-dimensional candidate generation while keeping geometric error and motion bounds explicit \\
-Contact-aligned graph detector & Candidate curved primitives; outputs signed samples, normals, tangent frames, and certificates & Converts regular smooth contact into a local height-graph gap when the normal-cone certificate proves that the projection is valid \\
-Generic fallback & Non-graphable or uncertain candidates; outputs a certified closest-patch or interval/subdivision result & Covers open surfaces, boundaries, sharp features, and ill-conditioned local charts without accepting an invalid graph approximation \\
-Configuration-space response field & Certified detector samples in a local $SE(3)$ band; outputs interpolated signed gap and gradient normal & Converts repeated rigid response queries into smooth tensor-product cubic field evaluations while retaining detector fallback outside the valid band \\
-\bottomrule
-\end{tabular}
-\end{table}
+The backend is organized into five modules, each with a distinct validity role. The contact-element provider accepts analytic patches, CAD-like patches, curved mesh patches, or rigid mesh elements and returns local curved jets and optional surface velocity, so scene-specific geometry does not enter the solver loop. The conservative broad phase inflates primitive boxes using geometric error and rigid-motion bounds and returns only candidate primitive pairs. The contact-aligned graph detector then tests each candidate with a normal-cone certificate; when the certificate is valid, the two patches are reduced to a local height-graph gap, signed sample, normal, tangent frame, and certificate. If a candidate is non-graphable, near a boundary, sharp, or numerically uncertain, the generic fallback uses a more general curved patch-patch or interval/subdivision query instead of accepting an invalid graph approximation. Finally, the configuration-space response field stores certified detector samples in a local $SE(3)$ band and returns an interpolated signed gap and gradient normal for repeated rigid response queries, with direct detector fallback outside the valid interpolation band.
 
 The pipeline is designed around five requirements. First, it is local: neither layer requires a global surface chart, user-specified cut, or seam handling. Second, it is certificate driven: smooth curved geometry is exploited in regular regions, while sharp or ambiguous regions are not forced through the graph approximation. Third, the response quantities are coupled: the same signed field supplies gap, normal, and tangent frame. Fourth, the cost is output sensitive: expensive curved-patch work is performed only for near candidates and SDF sampling, while an online dense response query is constant time per active contact. Fifth, failures are contained: a failed graph certificate, uncertain Newton iteration, or invalid SDF cell only selects a more general local query.
 
@@ -796,55 +781,15 @@ The dynamic backend comparison isolates the contact-geometry module while keepin
 \label{fig:model_ball_joint}
 \end{figure}
 
-The four scenes cover common rigid contact mechanisms in which friction is strongly coupled to contact-normal quality: rolling elements in raceways, cam--roller follower contact, ball or cylindrical heads in guide slots, and ball-and-socket pendulum contact. The contact point crosses multiple surface cells in each scene, so a facet-based contact-geometry module changes the normal and tangential basis as a function of mesh topology rather than only physical geometry. Tables~\ref{tab:backend_reproducibility_parameters} and \ref{tab:validation_reproducibility_parameters} list the executable parameters needed to reproduce the dynamic backend comparison and the external-validation runs. The same values are stored with the generated artifacts in the reproducibility package.
-
-\begin{table}[t]
-\centering
-\caption{Parameters for reproducing the dynamic backend comparison. All values are in SI units, and each row uses the same rigid update for Linear-triangle BVH, PN-triangle BVH, and \calg{}.}
-\label{tab:backend_reproducibility_parameters}
-{\setlength{\tabcolsep}{3pt}
-\renewcommand{\arraystretch}{1.12}
-\begin{tabular}{p{0.18\linewidth}p{0.35\linewidth}p{0.40\linewidth}}
-\toprule
-Model & Geometry and initial state & Time, friction, and contact parameters \\
-\midrule
-Bearing raceway & Sphere radius $0.075$ m, mass $0.65$ kg; analytic annular raceway with coarse backend mesh $n=7$; initial velocity $(0.62,-0.08,0)$ m/s. & $T=0.8$ s, 801 frames, $\Delta t=1.0\times10^{-3}$ s; $\mu=0.36$, $\hat d=0.065$ m, $k_n=2550$ N/m, $c_n=36$ N s/m, $k_t=165$ N/m, $c_t=0.6$ N s/m. \\
-\addlinespace
-Cam--roller follower & Roller radius $0.085$ m, mass $0.80$ kg; analytic cam-like lifted track with coarse backend mesh $n=7$; initial velocity $(0.70,0.18,0)$ m/s. & $T=0.8$ s, 801 frames, $\Delta t=1.0\times10^{-3}$ s; $\mu=0.40$, $\hat d=0.070$ m, $k_n=2800$ N/m, $c_n=42$ N s/m, $k_t=185$ N/m, $c_t=0.7$ N s/m. \\
-\addlinespace
-Guide slot & Ball-head radius $0.090$ m, mass $0.75$ kg; analytic wavy guide slot with coarse backend mesh $n=5$; initial velocity $(0.78,0.04,0)$ m/s. & $T=0.8$ s, 801 frames, $\Delta t=1.0\times10^{-3}$ s; $\mu=0.46$, $\hat d=0.070$ m, $k_n=2400$ N/m, $c_n=38$ N s/m, $k_t=180$ N/m, $c_t=0.7$ N s/m. \\
-\addlinespace
-Ball-and-socket pendulum & Contact sphere radius $0.105$ m, mass $0.85$ kg; analytic socket cap with coarse backend mesh $n=6$; initial velocity $(0.58,0.34,-0.16)$ m/s. & $T=0.8$ s, 801 frames, $\Delta t=1.0\times10^{-3}$ s; $\mu=0.44$, $\hat d=0.075$ m, $k_n=3000$ N/m, $c_n=44$ N s/m, $k_t=195$ N/m, $c_t=0.65$ N s/m. \\
-\bottomrule
-\end{tabular}
-}
-\end{table}
-
-\begin{table}[t]
-\centering
-\caption{Parameters for reproducing the C++ \calg{} external-validation runs compared with Chrono and Recurdyn. All values are in SI units.}
-\label{tab:validation_reproducibility_parameters}
-{\setlength{\tabcolsep}{3pt}
-\renewcommand{\arraystretch}{1.12}
-\begin{tabular}{p{0.18\linewidth}p{0.35\linewidth}p{0.40\linewidth}}
-\toprule
-Model & Geometry and initial state & Time, friction, and contact parameters \\
-\midrule
-Guide slot & Sphere radius $0.090$ m, mass $0.75$ kg; initial positive gap $2.0\times10^{-3}$ m; initial speed $0.58$ m/s along the guide. & $T=3.0$ s, 6000 steps, $\Delta t=5.0\times10^{-4}$ s; $\mu=0.40$, detector band $0.018$ m, $k_n=8.0\times10^4$ N/m, $c_n=520$ N s/m, release tolerance $5.0\times10^{-4}$ m; response patch radius $0.0035$ m, $Q=4$. \\
-\addlinespace
-Ball-and-socket pendulum & Socket inner radius $0.42$ m, outer radius $0.50$ m, opening polar angle $0.42$ rad; ball radius $0.34$ m; rod radius $0.035$ m, rod length $0.82$ m, payload radius $0.115$ m. & $T=5.0$ s, 25000 steps, $\Delta t=2.0\times10^{-4}$ s; $\mu=0.35$, detector band $0.012$ m, $k_n=2.0\times10^5$ N/m, $c_n=650$ N s/m, release tolerance $1.2\times10^{-3}$ m; response patch radius $0.0040$ m, $Q=4$. \\
-\addlinespace
-Bearing raceway & Track radius $1.0$ m, groove radius $0.161$ m, preload $2.0\times10^{-4}$ m, ball radius $0.1612$ m; inner ring angular speed $0.036$ rad/s; ball speed $0.015$ m/s. & $T=5.0$ s, 10000 steps, $\Delta t=5.0\times10^{-4}$ s; $\mu=0.08$, detector band $0.010$ m, $k_n=700$ N/m, $c_n=28$ N s/m; response patch radius $0.0040$ m, $Q=4$; SDF grid $181\times181\times81$. \\
-\bottomrule
-\end{tabular}
-}
-\end{table}
+The four scenes cover common rigid contact mechanisms in which friction is strongly coupled to contact-normal quality: rolling elements in raceways, cam--roller follower contact, ball or cylindrical heads in guide slots, and ball-and-socket pendulum contact. The contact point crosses multiple surface cells in each scene, so a facet-based contact-geometry module changes the normal and tangential basis as a function of mesh topology rather than only physical geometry. The executable parameters are stated in the relevant comparison and validation paragraphs below, and the same values are stored with the generated artifacts in the reproducibility package.
 
 \FloatBarrier
 
 \subsection{Dynamic friction comparison against Linear-triangle BVH and PN-triangle BVH}
 
-The main dynamic comparison runs the same rigid-body friction update with the three contact-geometry modules. All four dynamic backend comparison scenes are run for $0.8$ s with 801 stored frames. The reported quantities are the maximum consecutive contact-normal angle jump, maximum normal-force jump, maximum friction-force jump, tangential-speed jitter, and stick--slip switch count. Table~\ref{tab:dynamic_backend_ratios} reports ratios of the baseline value over the \calg{} value; values above one mean that the baseline produces a larger jump or jitter in the same scene. The stick--slip switch metric is a count ratio and is interpreted only as a discrete chatter indicator, not as a continuous error norm.
+The main dynamic comparison runs the same rigid-body friction update with the three contact-geometry modules. All four dynamic backend comparison scenes are run for $0.8$ s with 801 stored frames and timestep $\Delta t=1.0\times10^{-3}$ s. The scene-specific rigid-body and contact parameters are fixed across Linear-triangle BVH, PN-triangle BVH, and \calg{}. The bearing raceway uses a sphere of radius $0.075$ m and mass $0.65$ kg over a coarse backend mesh with $n=7$, initial velocity $(0.62,-0.08,0)$ m/s, $\mu=0.36$, detector distance $\hat d=0.065$ m, $k_n/c_n=2550/36$, and $k_t/c_t=165/0.6$. The cam--roller follower uses radius $0.085$ m, mass $0.80$ kg, mesh $n=7$, initial velocity $(0.70,0.18,0)$ m/s, $\mu=0.40$, $\hat d=0.070$ m, $k_n/c_n=2800/42$, and $k_t/c_t=185/0.7$. The guide slot uses radius $0.090$ m, mass $0.75$ kg, mesh $n=5$, initial velocity $(0.78,0.04,0)$ m/s, $\mu=0.46$, $\hat d=0.070$ m, $k_n/c_n=2400/38$, and $k_t/c_t=180/0.7$. The ball-and-socket pendulum comparison uses contact-sphere radius $0.105$ m, mass $0.85$ kg, mesh $n=6$, initial velocity $(0.58,0.34,-0.16)$ m/s, $\mu=0.44$, $\hat d=0.075$ m, $k_n/c_n=3000/44$, and $k_t/c_t=195/0.65$; stiffnesses are in N/m and damping coefficients are in N s/m.
+
+The reported quantities are the maximum consecutive contact-normal angle jump, maximum normal-force jump, maximum friction-force jump, tangential-speed jitter, and stick--slip switch count. Table~\ref{tab:dynamic_backend_ratios} reports ratios of the baseline value over the \calg{} value; values above one mean that the baseline produces a larger jump or jitter in the same scene. The stick--slip switch metric is a count ratio and is interpreted only as a discrete chatter indicator, not as a continuous error norm.
 
 \begin{table}[t]
 \centering
@@ -967,7 +912,7 @@ The same-scene backend comparison isolates the geometric input to the friction r
 
 In all trajectory-validation figures, the black solid curve denotes \calg{}, the blue dashed curve denotes Chrono, and the orange dash-dot curve denotes Recurdyn; sparse open markers are used only to separate nearly overlapping traces. The plotted directions are the three Cartesian ball coordinates, and displacements are relative to each solver's initial ball coordinate.
 
-The guide slot case tests confined sliding under wall contact, so the expected response is sustained sliding along the slot while the side wall confines transverse motion. Figures~\ref{fig:guide_slot_displacement}--\ref{fig:guide_slot_acceleration} show that the three solvers produce the same sliding direction, comparable transverse confinement, and bounded acceleration after visualization smoothing. This visual agreement in the dominant displacement and velocity trends is the intended validation target for the selected slot model. The limitation is that acceleration is a diagnostic channel rather than a strict pointwise validation target: \calg{}, Chrono, and Recurdyn export or reconstruct acceleration through different contact-force and envelope definitions.
+The guide slot case tests confined sliding under wall contact, so the expected response is sustained sliding along the slot while the side wall confines transverse motion. The \calg{} C++ run uses a sphere of radius $0.090$ m and mass $0.75$ kg, initial positive gap $2.0\times10^{-3}$ m, initial speed $0.58$ m/s along the guide, $T=3.0$ s, 6000 steps, $\Delta t=5.0\times10^{-4}$ s, $\mu=0.40$, detector band $0.018$ m, $k_n/c_n=8.0\times10^4/520$, release tolerance $5.0\times10^{-4}$ m, response patch radius $0.0035$ m, and $Q=4$ normalized response samples. Figures~\ref{fig:guide_slot_displacement}--\ref{fig:guide_slot_acceleration} show that the three solvers produce the same sliding direction, comparable transverse confinement, and bounded acceleration after visualization smoothing. This visual agreement in the dominant displacement and velocity trends is the intended validation target for the selected slot model. The limitation is that acceleration is a diagnostic channel rather than a strict pointwise validation target: \calg{}, Chrono, and Recurdyn export or reconstruct acceleration through different contact-force and envelope definitions.
 
 \begin{figure}[t]
 \centering
@@ -1024,7 +969,7 @@ The guide slot case tests confined sliding under wall contact, so the expected r
 \end{figure}
 \FloatBarrier
 
-The ball-and-socket pendulum case tests gravity-driven swing under deep socket confinement, so the expected response is pendular motion with socket-limited contact. Figures~\ref{fig:ball_joint_displacement}--\ref{fig:ball_joint_acceleration} compare the same 5 s window after matching the Recurdyn moving-body mass distribution to the rod-plus-cylinder assembly used by Chrono and \calg{}. The first vertical pendulum peak occurs at $1.1438$ s in Chrono, $1.1304$ s in \calg{}, and $1.1252$ s in Recurdyn, with peak vertical displacements of $0.1255$, $0.1330$, and $0.1383$ m, respectively. These comparable peak timings and amplitudes support the physical reasonableness of the \calg{} trajectory. The remaining discrepancy is concentrated in re-contact transients and raw acceleration, where the three solvers use different contact regularizations and contact-envelope definitions.
+The ball-and-socket pendulum case tests gravity-driven swing under deep socket confinement, so the expected response is pendular motion with socket-limited contact. The model uses a socket with inner radius $0.42$ m, outer radius $0.50$ m, and opening polar angle $0.42$ rad; the moving assembly contains a ball of radius $0.34$ m, a rod of radius $0.035$ m and length $0.82$ m, and a distal payload of radius $0.115$ m. The \calg{} C++ run uses $T=5.0$ s, 25000 steps, $\Delta t=2.0\times10^{-4}$ s, $\mu=0.35$, detector band $0.012$ m, $k_n/c_n=2.0\times10^5/650$, release tolerance $1.2\times10^{-3}$ m, response patch radius $0.0040$ m, and $Q=4$ normalized response samples. Figures~\ref{fig:ball_joint_displacement}--\ref{fig:ball_joint_acceleration} compare the same 5 s window after matching the Recurdyn moving-body mass distribution to the rod-plus-cylinder assembly used by Chrono and \calg{}. The first vertical pendulum peak occurs at $1.1438$ s in Chrono, $1.1304$ s in \calg{}, and $1.1252$ s in Recurdyn, with peak vertical displacements of $0.1255$, $0.1330$, and $0.1383$ m, respectively. These comparable peak timings and amplitudes support the physical reasonableness of the \calg{} trajectory. The remaining discrepancy is concentrated in re-contact transients and raw acceleration, where the three solvers use different contact regularizations and contact-envelope definitions.
 
 \begin{figure}[t]
 \centering
@@ -1081,7 +1026,7 @@ The ball-and-socket pendulum case tests gravity-driven swing under deep socket c
 \end{figure}
 \FloatBarrier
 
-The bearing raceway case tests raceway-driven in-plane rolling/sliding, with the axial $z$ direction retained as a small diagnostic channel. Figures~\ref{fig:bearing_displacement}--\ref{fig:bearing_acceleration} show that the dominant $x$ and $y$ displacement and velocity curves follow the imposed raceway motion over 5 s in all three solvers. The small axial response is retained to expose contact-envelope differences rather than to define the main motion. The Recurdyn contact stiffness is raised to $1.0\times10^8$ with damping $1.5\times10^4$ to reduce vertical over-penetration, but raw contact force and post-processed gap remain envelope-dependent and are not used as strict pointwise validation targets.
+The bearing raceway case tests raceway-driven in-plane rolling/sliding, with the axial $z$ direction retained as a small diagnostic channel. The model uses track radius $1.0$ m, groove radius $0.161$ m, preload $2.0\times10^{-4}$ m, ball radius $0.1612$ m, inner-ring angular speed $0.036$ rad/s, and initial ball speed $0.015$ m/s. The \calg{} C++ run uses $T=5.0$ s, 10000 steps, $\Delta t=5.0\times10^{-4}$ s, $\mu=0.08$, detector band $0.010$ m, $k_n/c_n=700/28$, response patch radius $0.0040$ m, $Q=4$ normalized response samples, and a dense SDF grid of $181\times181\times81$. Figures~\ref{fig:bearing_displacement}--\ref{fig:bearing_acceleration} show that the dominant $x$ and $y$ displacement and velocity curves follow the imposed raceway motion over 5 s in all three solvers. The small axial response is retained to expose contact-envelope differences rather than to define the main motion. The Recurdyn contact stiffness is raised to $1.0\times10^8$ with damping $1.5\times10^4$ to reduce vertical over-penetration, but raw contact force and post-processed gap remain envelope-dependent and are not used as strict pointwise validation targets.
 
 \begin{figure}[t]
 \centering
