@@ -737,6 +737,127 @@ static void add_representative_normal_to_snapshot(DetectorVtpBuilder& b,
     b.add_line(p, p + length * normalize(selected.normal), part, 0);
 }
 
+struct ResponseActiveSample {
+    Vec3 point_a = Vec3::Zero();
+    Vec3 point_b = Vec3::Zero();
+    Vec3 normal = Vec3::UnitZ();
+    double gap = 0.0;
+    double normal_lambda = 0.0;
+    double normal_force_norm = 0.0;
+    double area_weight = 1.0;
+};
+
+static std::tuple<Vec3, Vec3, Vec3> basis_from_axis(const Vec3& axis_in);
+static void write_detector_snapshot_vtp(const std::filesystem::path& path,
+                                        const DetectorVtpBuilder& b,
+                                        int step,
+                                        double time,
+                                        int candidate_pairs,
+                                        int contacts);
+
+static void add_sample_cell_to_snapshot(DetectorVtpBuilder& b,
+                                        const Vec3& center,
+                                        const Vec3& normal,
+                                        double area_weight,
+                                        int part,
+                                        int pair_id) {
+    auto [u, v, w] = basis_from_axis(normal);
+    (void)w;
+    const double half_extent = clamp(0.35 * std::sqrt(std::max(area_weight, 1.0e-12)), 1.5e-3, 2.5e-2);
+    const Vec3 p00 = center - half_extent * u - half_extent * v;
+    const Vec3 p10 = center + half_extent * u - half_extent * v;
+    const Vec3 p11 = center + half_extent * u + half_extent * v;
+    const Vec3 p01 = center - half_extent * u + half_extent * v;
+    b.add_triangle(p00, p10, p11, part, pair_id);
+    b.add_triangle(p00, p11, p01, part, pair_id);
+}
+
+static void add_response_active_cells(DetectorVtpBuilder& terrain_builder,
+                                      DetectorVtpBuilder& body_builder,
+                                      const std::vector<ResponseActiveSample>& samples,
+                                      bool force_active,
+                                      int terrain_part,
+                                      int body_part) {
+    constexpr double FORCE_EPS = 1.0e-12;
+    for (int i = 0; i < static_cast<int>(samples.size()); ++i) {
+        const ResponseActiveSample& sample = samples[i];
+        const bool active = force_active ? (sample.normal_lambda > FORCE_EPS) : (sample.gap <= 0.0);
+        if (!active) continue;
+        add_sample_cell_to_snapshot(terrain_builder, sample.point_a, sample.normal, sample.area_weight, terrain_part, i);
+        add_sample_cell_to_snapshot(body_builder, sample.point_b, sample.normal, sample.area_weight, body_part, i);
+    }
+}
+
+static void add_force_active_normals(DetectorVtpBuilder& b,
+                                     const std::vector<ResponseActiveSample>& samples,
+                                     int part) {
+    double max_force = 0.0;
+    for (const ResponseActiveSample& sample : samples) {
+        max_force = std::max(max_force, sample.normal_force_norm);
+    }
+    constexpr double FORCE_EPS = 1.0e-12;
+    for (int i = 0; i < static_cast<int>(samples.size()); ++i) {
+        const ResponseActiveSample& sample = samples[i];
+        if (sample.normal_lambda <= FORCE_EPS) continue;
+        const double scale = max_force > FORCE_EPS ? clamp(sample.normal_force_norm / max_force, 0.25, 1.0) : 0.25;
+        const double len = clamp(0.45 * std::sqrt(std::max(sample.area_weight, 1.0e-12)), 3.0e-3, 3.0e-2) * scale;
+        b.add_line(sample.point_b, sample.point_b + len * normalize(sample.normal), part, i);
+    }
+}
+
+static void export_response_active_snapshot(const std::string& case_name,
+                                            const std::string& pair_id,
+                                            int step,
+                                            double time,
+                                            const std::vector<ResponseActiveSample>& samples,
+                                            const std::filesystem::path& out_dir) {
+    const std::string stem = safe_stem(case_name + "_step" + std::to_string(step) + "_" + pair_id + "_detector_snapshot");
+    const std::filesystem::path sdf_terrain_path = out_dir / (stem + "_sdf_gap_active_terrain_patch.vtp");
+    const std::filesystem::path sdf_body_path = out_dir / (stem + "_sdf_gap_active_body_patch.vtp");
+    const std::filesystem::path force_terrain_path = out_dir / (stem + "_normal_force_active_terrain_patch.vtp");
+    const std::filesystem::path force_body_path = out_dir / (stem + "_normal_force_active_body_patch.vtp");
+    const std::filesystem::path force_normals_path = out_dir / (stem + "_normal_force_active_normals.vtp");
+
+    DetectorVtpBuilder sdf_terrain;
+    DetectorVtpBuilder sdf_body;
+    add_response_active_cells(sdf_terrain, sdf_body, samples, false, 12, 13);
+    write_detector_snapshot_vtp(sdf_terrain_path, sdf_terrain, step, time, static_cast<int>(samples.size()), static_cast<int>(sdf_terrain.polys.size() / 2));
+    write_detector_snapshot_vtp(sdf_body_path, sdf_body, step, time, static_cast<int>(samples.size()), static_cast<int>(sdf_body.polys.size() / 2));
+
+    DetectorVtpBuilder force_terrain;
+    DetectorVtpBuilder force_body;
+    add_response_active_cells(force_terrain, force_body, samples, true, 14, 15);
+    write_detector_snapshot_vtp(force_terrain_path, force_terrain, step, time, static_cast<int>(samples.size()), static_cast<int>(force_terrain.polys.size() / 2));
+    write_detector_snapshot_vtp(force_body_path, force_body, step, time, static_cast<int>(samples.size()), static_cast<int>(force_body.polys.size() / 2));
+
+    DetectorVtpBuilder force_normals;
+    add_force_active_normals(force_normals, samples, 16);
+    write_detector_snapshot_vtp(force_normals_path, force_normals, step, time, static_cast<int>(samples.size()), static_cast<int>(force_normals.lines.size()));
+
+    int sdf_active_samples = 0;
+    int force_active_samples = 0;
+    double min_gap = std::numeric_limits<double>::infinity();
+    double max_normal_force = 0.0;
+    for (const ResponseActiveSample& sample : samples) {
+        if (sample.gap <= 0.0) ++sdf_active_samples;
+        if (sample.normal_lambda > 1.0e-12) ++force_active_samples;
+        min_gap = std::min(min_gap, sample.gap);
+        max_normal_force = std::max(max_normal_force, sample.normal_force_norm);
+    }
+    if (!std::isfinite(min_gap)) min_gap = std::numeric_limits<double>::infinity();
+
+    std::ofstream summary((out_dir / (stem + "_response_active_index.csv")).string());
+    summary << "case,pair_id,step,time,response_samples,sdf_gap_active_samples,normal_force_active_samples,min_gap,max_normal_force,"
+               "sdf_gap_active_terrain_vtp,sdf_gap_active_body_vtp,normal_force_active_terrain_vtp,normal_force_active_body_vtp,"
+               "normal_force_active_normals_vtp\n";
+    summary << case_name << ',' << pair_id << ',' << step << ',' << std::setprecision(17) << time << ','
+            << samples.size() << ',' << sdf_active_samples << ',' << force_active_samples << ','
+            << min_gap << ',' << max_normal_force << ','
+            << sdf_terrain_path.filename().string() << ',' << sdf_body_path.filename().string() << ','
+            << force_terrain_path.filename().string() << ',' << force_body_path.filename().string() << ','
+            << force_normals_path.filename().string() << '\n';
+}
+
 static void write_int_array(std::ofstream& f, const std::vector<int>& values) {
     for (size_t i = 0; i < values.size(); ++i) {
         if (i) f << ' ';
@@ -1293,7 +1414,10 @@ struct FrictionState {
 
 struct ContactEval {
     Vec3 total_force = Vec3::Zero();
+    Vec3 normal_force = Vec3::Zero();
+    Vec3 friction_force = Vec3::Zero();
     Vec3 torque = Vec3::Zero();
+    double normal_lambda = 0.0;
 };
 
 struct SurfaceFrictionState {
@@ -1375,6 +1499,9 @@ static ContactEval evaluate_contact(const RigidBody& body,
         }
     }
     ContactEval out;
+    out.normal_force = normal_force;
+    out.friction_force = friction_force;
+    out.normal_lambda = lambda;
     out.total_force = normal_force + friction_force;
     out.torque = (point - body.position).cross(out.total_force);
     return out;
@@ -1434,6 +1561,9 @@ static ContactEval evaluate_contact_full(const FullRigidBody& body,
     }
 
     ContactEval out;
+    out.normal_force = normal_force;
+    out.friction_force = friction_force;
+    out.normal_lambda = lambda;
     out.total_force = normal_force + friction_force;
     out.torque = (point - body.position).cross(out.total_force);
     return out;
@@ -1968,6 +2098,10 @@ static BenchResult run_contact_scene(ContactScene& scene, int steps, const std::
             step_pairs += patch.stats.candidate_pairs;
 
             SurfaceFrictionState& pair_state = states[pair.id];
+            std::vector<ResponseActiveSample> response_active_samples;
+            if (step == g_snapshot_step && !g_snapshot_dir.empty()) {
+                response_active_samples.reserve(patch.samples.size());
+            }
             for (size_t qi = 0; qi < patch.samples.size(); ++qi) {
                 ContactSampleCpp sample = patch.samples[qi];
                 Vec3 terrain_velocity = terrain.surface_velocity(sample.point_a);
@@ -1981,9 +2115,26 @@ static BenchResult run_contact_scene(ContactScene& scene, int steps, const std::
                                                  pair_state.at(qi, patch.samples.size()),
                                                  terrain_velocity,
                                                  scene.gravity);
+                if (step == g_snapshot_step && !g_snapshot_dir.empty()) {
+                    response_active_samples.push_back({sample.point_a,
+                                                       sample.point_b,
+                                                       sample.normal,
+                                                       sample.gap,
+                                                       c.normal_lambda,
+                                                       c.normal_force.norm(),
+                                                       sample.area_weight});
+                }
                 contact_force += c.total_force;
                 total_torque += c.torque;
                 if (sample.gap < best.gap) best = sample;
+            }
+            if (step == g_snapshot_step && !g_snapshot_dir.empty()) {
+                export_response_active_snapshot(scene.source,
+                                                pair.id,
+                                                step,
+                                                step * scene.dt,
+                                                response_active_samples,
+                                                std::filesystem::path(g_snapshot_dir));
             }
             if (!patch.samples.empty()) {
                 pair.normal_hint = patch.representative.normal;
@@ -2842,6 +2993,10 @@ static BenchResult run_deep_ball_joint_pendulum_mesh_detector(int steps, const s
         std::vector<SocketSample> patch =
             finite_socket_sdf_contact_patch(socket_sdf, make_configuration(ball_center, body.rotation), force_sample, 0.0040, 2, 1.0e-3);
         ContactEval contact;
+        std::vector<ResponseActiveSample> response_active_samples;
+        if (step == g_snapshot_step && !g_snapshot_dir.empty()) {
+            response_active_samples.reserve(patch.size());
+        }
         for (size_t qi = 0; qi < patch.size(); ++qi) {
             SocketSample sample = patch[qi];
             if (!detected.detector_contact) {
@@ -2856,8 +3011,25 @@ static BenchResult run_deep_ball_joint_pendulum_mesh_detector(int steps, const s
                                                   DT,
                                                   weighted_params,
                                                   friction_state.at(qi, patch.size()));
+            if (step == g_snapshot_step && !g_snapshot_dir.empty()) {
+                response_active_samples.push_back({sample.point,
+                                                   contact_point,
+                                                   sample.normal,
+                                                   sample.gap,
+                                                   c.normal_lambda,
+                                                   c.normal_force.norm(),
+                                                   sample.area_weight});
+            }
             contact.total_force += c.total_force;
             contact.torque += c.torque;
+        }
+        if (step == g_snapshot_step && !g_snapshot_dir.empty()) {
+            export_response_active_snapshot("deep_ball_joint_pendulum_mesh_cpp",
+                                            "finite_socket_inner",
+                                            step,
+                                            step * DT,
+                                            response_active_samples,
+                                            std::filesystem::path(g_snapshot_dir));
         }
         Vec3 force = body.mass * gravity + contact.total_force;
         body.integrate(force, contact.torque, DT);

@@ -23,6 +23,10 @@ PART_STYLE = {
     4: ("#111111", 0.58, 0.62, "candidate body"),
     10: ("#cc6f2d", 0.88, 0.72, "accepted terrain"),
     11: ("#355f8c", 0.88, 0.72, "accepted body"),
+    12: ("#d62728", 0.92, 0.84, "SDF gap-active terrain"),
+    13: ("#8c1d18", 0.92, 0.84, "SDF gap-active body"),
+    14: ("#159947", 0.92, 0.88, "force-active terrain"),
+    15: ("#006d3c", 0.92, 0.88, "force-active body"),
 }
 
 LINE_STYLE = {
@@ -31,6 +35,7 @@ LINE_STYLE = {
     7: ("#525866", 0.62, 0.48),  # initial closest segment
     8: ("#c43c39", 0.90, 0.80),  # graph contact segment
     9: ("#1f8f4d", 1.95, 0.98),  # representative normal
+    16: ("#00833e", 1.40, 0.92),  # force-active normal response
 }
 
 
@@ -129,7 +134,9 @@ def draw_snapshot(
     datasets: list[dict],
     surface_parts: tuple[int, ...] = (1, 2, 3, 4, 10, 11),
     line_parts_to_draw: tuple[int, ...] = (5, 6),
+    part_style: dict[int, tuple[str, float, float, str]] | None = None,
 ) -> None:
+    styles = PART_STYLE if part_style is None else part_style
     nonempty_points = [data["points"] for data in datasets if len(data["points"])]
     if not nonempty_points:
         raise ValueError("cannot draw an empty snapshot")
@@ -146,7 +153,7 @@ def draw_snapshot(
             faces = [dpts[poly] for poly, pid in zip(polys, poly_parts) if int(pid) == part]
             if not faces:
                 continue
-            color, alpha, linewidth, _ = PART_STYLE[part]
+            color, alpha, linewidth, _ = styles[part]
             coll = Poly3DCollection(faces, facecolor=color, edgecolor=color, linewidth=linewidth, alpha=alpha)
             ax.add_collection3d(coll)
 
@@ -180,6 +187,24 @@ def closest_normal_paths(prefix: Path, accepted_only: bool) -> list[Path]:
     ]
 
 
+def response_active_paths(prefix: Path, mode: str) -> list[Path]:
+    if mode == "sdf_gap":
+        suffixes = ("_sdf_gap_active_terrain_patch.vtp", "_sdf_gap_active_body_patch.vtp")
+    elif mode == "normal_force":
+        suffixes = (
+            "_normal_force_active_terrain_patch.vtp",
+            "_normal_force_active_body_patch.vtp",
+            "_normal_force_active_normals.vtp",
+        )
+    else:
+        raise ValueError(f"unknown response-active mode: {mode}")
+    return [
+        prefix.with_name(prefix.name + "_terrain_patch.vtp"),
+        prefix.with_name(prefix.name + "_body_patch.vtp"),
+        *[prefix.with_name(prefix.name + suffix) for suffix in suffixes],
+    ]
+
+
 def save_one(prefix: Path, out_dir: Path) -> list[Path]:
     datasets = [read_vtp(path) for path in group_paths(prefix)]
     fig = plt.figure(figsize=(3.10, 2.62), constrained_layout=True)
@@ -187,6 +212,31 @@ def save_one(prefix: Path, out_dir: Path) -> list[Path]:
     draw_snapshot(ax, datasets, line_parts_to_draw=(5, 6))
     out_dir.mkdir(parents=True, exist_ok=True)
     stem = prefix.name + "_overlay"
+    outputs = []
+    for suffix, kwargs in {
+        ".png": {"dpi": 600},
+        ".pdf": {},
+        ".svg": {},
+    }.items():
+        out = out_dir / f"{stem}{suffix}"
+        fig.savefig(out, transparent=False, bbox_inches="tight", pad_inches=0.01, **kwargs)
+        outputs.append(out)
+    plt.close(fig)
+    return outputs
+
+
+def save_response_active(prefix: Path, out_dir: Path, mode: str) -> list[Path]:
+    datasets = [read_vtp(path) for path in response_active_paths(prefix, mode)]
+    fig = plt.figure(figsize=(3.10, 2.62), constrained_layout=True)
+    ax = fig.add_subplot(111, projection="3d")
+    line_parts = (16,) if mode == "normal_force" else ()
+    style = dict(PART_STYLE)
+    for part in (1, 2, 3, 4, 10, 11):
+        color, _alpha, linewidth, label = style[part]
+        style[part] = (color, 0.12, linewidth, label)
+    draw_snapshot(ax, datasets, line_parts_to_draw=line_parts, part_style=style)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    stem = prefix.name + ("_sdf_gap_active" if mode == "sdf_gap" else "_normal_force_active")
     outputs = []
     for suffix, kwargs in {
         ".png": {"dpi": 600},
@@ -215,6 +265,39 @@ def save_closest_normal(prefix: Path, out_dir: Path, accepted_only: bool) -> lis
     }.items():
         out = out_dir / f"{stem}{suffix}"
         fig.savefig(out, transparent=False, bbox_inches="tight", pad_inches=0.01, **kwargs)
+        outputs.append(out)
+    plt.close(fig)
+    return outputs
+
+
+def save_response_active_overview(prefixes: list[Path], out_dir: Path, mode: str) -> list[Path]:
+    fig = plt.figure(figsize=(7.20, 5.10), constrained_layout=True)
+    for i, prefix in enumerate(prefixes, 1):
+        ax = fig.add_subplot(2, 2, i, projection="3d")
+        line_parts = (16,) if mode == "normal_force" else ()
+        draw_snapshot(
+            ax,
+            [read_vtp(path) for path in response_active_paths(prefix, mode)],
+            line_parts_to_draw=line_parts,
+            part_style={
+                **PART_STYLE,
+                1: (PART_STYLE[1][0], 0.12, PART_STYLE[1][2], PART_STYLE[1][3]),
+                2: (PART_STYLE[2][0], 0.12, PART_STYLE[2][2], PART_STYLE[2][3]),
+                3: (PART_STYLE[3][0], 0.12, PART_STYLE[3][2], PART_STYLE[3][3]),
+                4: (PART_STYLE[4][0], 0.12, PART_STYLE[4][2], PART_STYLE[4][3]),
+                10: (PART_STYLE[10][0], 0.12, PART_STYLE[10][2], PART_STYLE[10][3]),
+                11: (PART_STYLE[11][0], 0.12, PART_STYLE[11][2], PART_STYLE[11][3]),
+            },
+        )
+    outputs = []
+    stem = "04_1_detector_snapshot_sdf_gap_active_overview" if mode == "sdf_gap" else "04_1_detector_snapshot_normal_force_active_overview"
+    for suffix, kwargs in {
+        ".png": {"dpi": 600},
+        ".pdf": {},
+        ".svg": {},
+    }.items():
+        out = out_dir / f"{stem}{suffix}"
+        fig.savefig(out, transparent=False, bbox_inches="tight", pad_inches=0.02, **kwargs)
         outputs.append(out)
     plt.close(fig)
     return outputs
@@ -276,6 +359,8 @@ def main() -> int:
         outputs.extend(save_one(prefix, args.out_dir))
         outputs.extend(save_closest_normal(prefix, args.out_dir, accepted_only=False))
         outputs.extend(save_closest_normal(prefix, args.out_dir, accepted_only=True))
+        outputs.extend(save_response_active(prefix, args.out_dir, mode="sdf_gap"))
+        outputs.extend(save_response_active(prefix, args.out_dir, mode="normal_force"))
     overview_paths: list[Path] = []
     for token in ("guide_slot", "ball_joint", "bearing_inner", "bearing_outer"):
         match = next((p for p in prefixes if token in p.name), None)
@@ -284,6 +369,8 @@ def main() -> int:
     outputs.extend(save_overview(overview_paths, args.out_dir))
     outputs.extend(save_closest_normal_overview(overview_paths, args.out_dir, accepted_only=False))
     outputs.extend(save_closest_normal_overview(overview_paths, args.out_dir, accepted_only=True))
+    outputs.extend(save_response_active_overview(overview_paths, args.out_dir, mode="sdf_gap"))
+    outputs.extend(save_response_active_overview(overview_paths, args.out_dir, mode="normal_force"))
     print("\n".join(str(p) for p in outputs))
     return 0
 

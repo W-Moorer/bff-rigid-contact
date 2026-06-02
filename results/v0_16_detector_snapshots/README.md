@@ -25,6 +25,11 @@ Each prefix is split into independent VTP files:
 | `_accepted_closest_segments.vtp` | initial closest-point segments for detector-accepted pairs | 7 |
 | `_contact_segments.vtp` | curved-graph closest segments after local solve | 8 |
 | `_representative_normal.vtp` | one representative detector normal | 9 |
+| `_sdf_gap_active_terrain_patch.vtp` | final response cells where SDF signed gap is non-positive on fixed/terrain side | 12 |
+| `_sdf_gap_active_body_patch.vtp` | final response cells where SDF signed gap is non-positive on moving-body side | 13 |
+| `_normal_force_active_terrain_patch.vtp` | final response cells where normal force is positive on fixed/terrain side | 14 |
+| `_normal_force_active_body_patch.vtp` | final response cells where normal force is positive on moving-body side | 15 |
+| `_normal_force_active_normals.vtp` | final positive normal-force directions | 16 |
 
 The companion `_index.csv` files record the case, pair id, selected step, time,
 detector gap radius, local face counts, AABB candidate-pair count, graph-contact
@@ -32,6 +37,12 @@ count, detector-accepted face counts, and the split VTP filenames. The
 detector-accepted counts mean pairs inside the CALG detector radius after the
 curved graph solve. They are not the final signed-gap force-active contact area,
 which is evaluated later by the SDF response field.
+
+The companion `_response_active_index.csv` files record the final response
+sample count, the number of samples with `SDF gap <= 0`, the number of samples
+with positive normal force, the minimum response gap, and the maximum normal
+force. These are the layers to use when the figure needs to show physically
+active contact rather than detector candidates.
 
 The Python review figures in `paper/figures/detector_snapshots` include separate
 `*_closest_normal.*` files. They draw only the patch VTP layers, the gray initial
