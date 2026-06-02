@@ -232,36 +232,39 @@ def draw_field_panel(ax):
 
     extent_pts = [cube_corners((-1, 1, -1, 1, -1, 1)), query[None, :]]
     projected = np.vstack([project(p) for p in extent_pts])
-    set_limits(ax, projected, pad_frac=0.12)
+    set_limits(ax, projected, pad_frac=0.16)
     ax.text(
         0.02,
-        0.96,
+        1.06,
         "local tricubic signed-gap field",
         transform=ax.transAxes,
         ha="left",
-        va="top",
+        va="bottom",
         fontsize=9.2,
         color=BLACK,
+        clip_on=False,
     )
     ax.text(
-        0.58,
-        0.14,
+        0.60,
+        -0.08,
         r"$4\times4\times4$ stencil",
         transform=ax.transAxes,
         ha="left",
         va="center",
         fontsize=8.6,
         color=ORANGE,
+        clip_on=False,
     )
     ax.text(
-        0.16,
-        0.39,
-        r"$g=0$",
+        0.05,
+        -0.08,
+        r"$g=0$ surface",
         transform=ax.transAxes,
         ha="left",
         va="center",
         fontsize=9,
         color=BLUE,
+        clip_on=False,
     )
 
 
