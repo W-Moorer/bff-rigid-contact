@@ -1,4 +1,4 @@
-﻿\documentclass[preprint,12pt]{elsarticle}
+\documentclass[preprint,12pt]{elsarticle}
 
 \usepackage{amsmath,amssymb,amsfonts,amsthm}
 \usepackage{booktabs}
@@ -598,11 +598,11 @@ The quantities being checked are therefore patch quantities rather than a single
 \centering
 \begin{minipage}[t]{0.49\linewidth}
 \centering
-\includegraphics[width=\linewidth]{figures/static_patch_contact_equivalence/static_patch_contact_equivalence_model.png}
+\includegraphics[width=\linewidth]{figures/calg_cmame_used/static_patch_contact_equivalence_model.png}
 \end{minipage}\hfill
 \begin{minipage}[t]{0.41\linewidth}
 \centering
-\includegraphics[width=\linewidth]{figures/static_patch_contact_equivalence/static_patch_contact_equivalence_gap_field.png}
+\includegraphics[width=\linewidth]{figures/calg_cmame_used/static_patch_contact_equivalence_gap_field.png}
 \end{minipage}
 \caption{Static patch-contact equivalence setup. The active contact patch is an ellipse embedded in two graphable, geometrically complex analytic surfaces. The right panel shows the prescribed signed graph gap in the local contact coordinates; negative values are the active compressed region.}
 \label{fig:static_patch_contact_equivalence}
@@ -649,15 +649,15 @@ These controls do not test geometric accuracy because the plane normal is exact 
 \centering
 \begin{minipage}[t]{0.32\linewidth}
 \centering
-\includegraphics[width=\linewidth]{figures/models/CALG_Model_friction_1.png}
+\includegraphics[width=\linewidth]{figures/calg_cmame_used/CALG_Model_friction_1.png}
 \end{minipage}\hfill
 \begin{minipage}[t]{0.32\linewidth}
 \centering
-\includegraphics[width=\linewidth]{figures/models/CALG_Model_friction_2.png}
+\includegraphics[width=\linewidth]{figures/calg_cmame_used/CALG_Model_friction_2.png}
 \end{minipage}\hfill
 \begin{minipage}[t]{0.32\linewidth}
 \centering
-\includegraphics[width=\linewidth]{figures/models/CALG_Model_friction_3.png}
+\includegraphics[width=\linewidth]{figures/calg_cmame_used/CALG_Model_friction_3.png}
 \end{minipage}
 \caption{Model configuration for the analytic inclined-plane controls. The three views show the $30^\circ$ release case and the two static-friction threshold cases with identical block--plane geometry. The threshold cases change the slope angle from $49^\circ$ to $50^\circ$ while keeping $\mu_s=\tan(49.5^\circ)$.}
 \label{fig:inclined_friction_models}
@@ -667,15 +667,15 @@ These controls do not test geometric accuracy because the plane normal is exact 
 \centering
 \begin{minipage}[t]{0.32\linewidth}
 \centering
-\includegraphics[width=\linewidth]{figures/analytic_friction_controls/05_inclined_release_displacement.png}
+\includegraphics[width=\linewidth]{figures/calg_cmame_used/05_inclined_release_displacement.png}
 \end{minipage}\hfill
 \begin{minipage}[t]{0.32\linewidth}
 \centering
-\includegraphics[width=\linewidth]{figures/analytic_friction_controls/05_inclined_release_velocity.png}
+\includegraphics[width=\linewidth]{figures/calg_cmame_used/05_inclined_release_velocity.png}
 \end{minipage}\hfill
 \begin{minipage}[t]{0.32\linewidth}
 \centering
-\includegraphics[width=\linewidth]{figures/analytic_friction_controls/05_inclined_release_friction_force.png}
+\includegraphics[width=\linewidth]{figures/calg_cmame_used/05_inclined_release_friction_force.png}
 \end{minipage}
 \caption{Release control on a $30^\circ$ inclined plane. The block is held until $t=0.40$ s and then released; because the static capacity is exceeded, it switches to kinetic sliding and follows Eq.~\eqref{eq:inclined_plane_acceleration}. The black computed curve and blue dashed analytic curve are plotted separately, with markers on the computed samples to keep the coincident curves distinguishable.}
 \label{fig:inclined_release_controls}
@@ -708,7 +708,7 @@ The dynamic backend comparison isolates the contact-geometry module while keepin
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=\linewidth]{figures/01_mechanism_story.png}
+\includegraphics[width=\linewidth]{figures/calg_cmame_used/01_mechanism_story.png}
 \caption{Mechanism-level comparison between facet-based contact-geometry modules and \calg{}--SDF. Linear-triangle BVH and fixed-tessellation PN-triangle BVH inherit cell-crossing changes in the contact normal or tangent frame, which can enter the regularized Coulomb response as force spikes. \calg{} instead certifies a contact-aligned local height graph and returns a smooth normal and tangent frame, producing a smoother friction response in the same rigid-body update.}
 \label{fig:mechanism_story}
 \end{figure}
@@ -717,15 +717,15 @@ The dynamic backend comparison isolates the contact-geometry module while keepin
 \centering
 \begin{minipage}[t]{0.32\linewidth}
 \centering
-\includegraphics[width=\linewidth]{figures/models/CALG_Model_bearing_raceway_1.png}
+\includegraphics[width=\linewidth]{figures/calg_cmame_used/CALG_Model_bearing_raceway_1.png}
 \end{minipage}\hfill
 \begin{minipage}[t]{0.32\linewidth}
 \centering
-\includegraphics[width=\linewidth]{figures/models/CALG_Model_bearing_raceway_2.png}
+\includegraphics[width=\linewidth]{figures/calg_cmame_used/CALG_Model_bearing_raceway_2.png}
 \end{minipage}\hfill
 \begin{minipage}[t]{0.32\linewidth}
 \centering
-\includegraphics[width=\linewidth]{figures/models/CALG_Model_bearing_raceway_3.png}
+\includegraphics[width=\linewidth]{figures/calg_cmame_used/CALG_Model_bearing_raceway_3.png}
 \end{minipage}
 \caption{Bearing raceway model configuration used for the validation scene. The three views show the imported raceway geometry and rolling element configuration used by Recurdyn, Chrono, and \calg{}.}
 \label{fig:model_bearing}
@@ -735,11 +735,11 @@ The dynamic backend comparison isolates the contact-geometry module while keepin
 \centering
 \begin{minipage}[t]{0.49\linewidth}
 \centering
-\includegraphics[width=\linewidth]{figures/models/CALG_Model_cam_1.png}
+\includegraphics[width=\linewidth]{figures/calg_cmame_used/CALG_Model_cam_1.png}
 \end{minipage}\hfill
 \begin{minipage}[t]{0.49\linewidth}
 \centering
-\includegraphics[width=\linewidth]{figures/models/CALG_Model_cam_2.png}
+\includegraphics[width=\linewidth]{figures/calg_cmame_used/CALG_Model_cam_2.png}
 \end{minipage}
 \caption{Cam--roller follower model configuration used for the contact-geometry comparison. The two views show the non-circular cam profile and roller follower geometry that produces sliding and rolling contact over a faceted collision representation.}
 \label{fig:model_cam}
@@ -749,15 +749,15 @@ The dynamic backend comparison isolates the contact-geometry module while keepin
 \centering
 \begin{minipage}[t]{0.32\linewidth}
 \centering
-\includegraphics[width=\linewidth]{figures/models/CALG_Model_guide_slot_0.png}
+\includegraphics[width=\linewidth]{figures/calg_cmame_used/CALG_Model_guide_slot_0.png}
 \end{minipage}\hfill
 \begin{minipage}[t]{0.32\linewidth}
 \centering
-\includegraphics[width=\linewidth]{figures/models/CALG_Model_guide_slot_1.png}
+\includegraphics[width=\linewidth]{figures/calg_cmame_used/CALG_Model_guide_slot_1.png}
 \end{minipage}\hfill
 \begin{minipage}[t]{0.32\linewidth}
 \centering
-\includegraphics[width=\linewidth]{figures/models/CALG_Model_guide_slot_3.png}
+\includegraphics[width=\linewidth]{figures/calg_cmame_used/CALG_Model_guide_slot_3.png}
 \end{minipage}
 \caption{Guide slot model configuration used for the validation scene. The three views show the slot path, moving contact body, and contact geometry used by Recurdyn, Chrono, and \calg{}.}
 \label{fig:model_guide}
@@ -767,15 +767,15 @@ The dynamic backend comparison isolates the contact-geometry module while keepin
 \centering
 \begin{minipage}[t]{0.32\linewidth}
 \centering
-\includegraphics[width=\linewidth]{figures/models/CALG_Model_ball_joint_pendulum_1.png}
+\includegraphics[width=\linewidth]{figures/calg_cmame_used/CALG_Model_ball_joint_pendulum_1.png}
 \end{minipage}\hfill
 \begin{minipage}[t]{0.32\linewidth}
 \centering
-\includegraphics[width=\linewidth]{figures/models/CALG_Model_ball_joint_pendulum_2.png}
+\includegraphics[width=\linewidth]{figures/calg_cmame_used/CALG_Model_ball_joint_pendulum_2.png}
 \end{minipage}\hfill
 \begin{minipage}[t]{0.32\linewidth}
 \centering
-\includegraphics[width=\linewidth]{figures/models/CALG_Model_ball_joint_pendulum_3.png}
+\includegraphics[width=\linewidth]{figures/calg_cmame_used/CALG_Model_ball_joint_pendulum_3.png}
 \end{minipage}
 \caption{Ball-and-socket pendulum model configuration used for the validation case. The three views show the socket, moving contact ball, and attached pendulum body used by Recurdyn, Chrono, and \calg{}.}
 \label{fig:model_ball_joint}
@@ -834,15 +834,15 @@ Figures~\ref{fig:curves_bearing}--\ref{fig:curves_guide} plot the independent co
 \centering
 \begin{minipage}[t]{0.32\linewidth}
 \centering
-\includegraphics[width=\linewidth]{figures/supplement/bearing_ball_raceway_dynamic_backend_curves_normal_angle_jump.png}
+\includegraphics[width=\linewidth]{figures/calg_cmame_used/bearing_ball_raceway_dynamic_backend_curves_normal_angle_jump.png}
 \end{minipage}\hfill
 \begin{minipage}[t]{0.32\linewidth}
 \centering
-\includegraphics[width=\linewidth]{figures/supplement/bearing_ball_raceway_dynamic_backend_curves_friction_force.png}
+\includegraphics[width=\linewidth]{figures/calg_cmame_used/bearing_ball_raceway_dynamic_backend_curves_friction_force.png}
 \end{minipage}\hfill
 \begin{minipage}[t]{0.32\linewidth}
 \centering
-\includegraphics[width=\linewidth]{figures/supplement/bearing_ball_raceway_dynamic_backend_curves_tangential_speed_jitter.png}
+\includegraphics[width=\linewidth]{figures/calg_cmame_used/bearing_ball_raceway_dynamic_backend_curves_tangential_speed_jitter.png}
 \end{minipage}
 \caption{Independent contact-geometry comparison curves for the bearing raceway case. The body state, timestep, penalty stiffness, friction coefficient, and regularized Coulomb update are identical; only the contact-geometry module changes.}
 \label{fig:curves_bearing}
@@ -852,15 +852,15 @@ Figures~\ref{fig:curves_bearing}--\ref{fig:curves_guide} plot the independent co
 \centering
 \begin{minipage}[t]{0.32\linewidth}
 \centering
-\includegraphics[width=\linewidth]{figures/supplement/cam_roller_follower_dynamic_backend_curves_normal_angle_jump.png}
+\includegraphics[width=\linewidth]{figures/calg_cmame_used/cam_roller_follower_dynamic_backend_curves_normal_angle_jump.png}
 \end{minipage}\hfill
 \begin{minipage}[t]{0.32\linewidth}
 \centering
-\includegraphics[width=\linewidth]{figures/supplement/cam_roller_follower_dynamic_backend_curves_friction_force.png}
+\includegraphics[width=\linewidth]{figures/calg_cmame_used/cam_roller_follower_dynamic_backend_curves_friction_force.png}
 \end{minipage}\hfill
 \begin{minipage}[t]{0.32\linewidth}
 \centering
-\includegraphics[width=\linewidth]{figures/supplement/cam_roller_follower_dynamic_backend_curves_tangential_speed_jitter.png}
+\includegraphics[width=\linewidth]{figures/calg_cmame_used/cam_roller_follower_dynamic_backend_curves_tangential_speed_jitter.png}
 \end{minipage}
 \caption{Independent contact-geometry comparison curves for the cam--roller follower case. Linear-triangle BVH and PN-triangle BVH produce larger normal and friction-force variations when the contact point traverses cam cells.}
 \label{fig:curves_cam}
@@ -870,15 +870,15 @@ Figures~\ref{fig:curves_bearing}--\ref{fig:curves_guide} plot the independent co
 \centering
 \begin{minipage}[t]{0.32\linewidth}
 \centering
-\includegraphics[width=\linewidth]{figures/supplement/spherical_joint_socket_dynamic_backend_curves_normal_angle_jump.png}
+\includegraphics[width=\linewidth]{figures/calg_cmame_used/spherical_joint_socket_dynamic_backend_curves_normal_angle_jump.png}
 \end{minipage}\hfill
 \begin{minipage}[t]{0.32\linewidth}
 \centering
-\includegraphics[width=\linewidth]{figures/supplement/spherical_joint_socket_dynamic_backend_curves_friction_force.png}
+\includegraphics[width=\linewidth]{figures/calg_cmame_used/spherical_joint_socket_dynamic_backend_curves_friction_force.png}
 \end{minipage}\hfill
 \begin{minipage}[t]{0.32\linewidth}
 \centering
-\includegraphics[width=\linewidth]{figures/supplement/spherical_joint_socket_dynamic_backend_curves_tangential_speed_jitter.png}
+\includegraphics[width=\linewidth]{figures/calg_cmame_used/spherical_joint_socket_dynamic_backend_curves_tangential_speed_jitter.png}
 \end{minipage}
 \caption{Independent contact-geometry comparison curves for the ball-and-socket pendulum case. The smooth \calg{} contact frame suppresses the high-frequency tangential-speed jitter and discrete friction-state changes observed in the fixed-tessellation baselines.}
 \label{fig:curves_socket}
@@ -888,15 +888,15 @@ Figures~\ref{fig:curves_bearing}--\ref{fig:curves_guide} plot the independent co
 \centering
 \begin{minipage}[t]{0.32\linewidth}
 \centering
-\includegraphics[width=\linewidth]{figures/supplement/wavy_guide_slot_ball_head_dynamic_backend_curves_normal_angle_jump.png}
+\includegraphics[width=\linewidth]{figures/calg_cmame_used/wavy_guide_slot_ball_head_dynamic_backend_curves_normal_angle_jump.png}
 \end{minipage}\hfill
 \begin{minipage}[t]{0.32\linewidth}
 \centering
-\includegraphics[width=\linewidth]{figures/supplement/wavy_guide_slot_ball_head_dynamic_backend_curves_friction_force.png}
+\includegraphics[width=\linewidth]{figures/calg_cmame_used/wavy_guide_slot_ball_head_dynamic_backend_curves_friction_force.png}
 \end{minipage}\hfill
 \begin{minipage}[t]{0.32\linewidth}
 \centering
-\includegraphics[width=\linewidth]{figures/supplement/wavy_guide_slot_ball_head_dynamic_backend_curves_tangential_speed_jitter.png}
+\includegraphics[width=\linewidth]{figures/calg_cmame_used/wavy_guide_slot_ball_head_dynamic_backend_curves_tangential_speed_jitter.png}
 \end{minipage}
 \caption{Independent contact-geometry comparison curves for the guide slot case. Cell-crossing normal changes in the Linear-triangle BVH and PN-triangle BVH modules enter directly into friction-force and tangential-speed jitter.}
 \label{fig:curves_guide}
@@ -918,15 +918,15 @@ The guide slot case tests confined sliding under wall contact, so the expected r
 \centering
 \begin{minipage}{0.32\linewidth}
 \centering
-\includegraphics[width=\linewidth]{figures/guide_slot_3s_corrected/03_guide_slot_3s_x_displacement.png}
+\includegraphics[width=\linewidth]{figures/calg_cmame_used/03_guide_slot_3s_x_displacement.png}
 \end{minipage}\hfill
 \begin{minipage}{0.32\linewidth}
 \centering
-\includegraphics[width=\linewidth]{figures/guide_slot_3s_corrected/03_guide_slot_3s_y_displacement.png}
+\includegraphics[width=\linewidth]{figures/calg_cmame_used/03_guide_slot_3s_y_displacement.png}
 \end{minipage}\hfill
 \begin{minipage}{0.32\linewidth}
 \centering
-\includegraphics[width=\linewidth]{figures/guide_slot_3s_corrected/03_guide_slot_3s_z_displacement.png}
+\includegraphics[width=\linewidth]{figures/calg_cmame_used/03_guide_slot_3s_z_displacement.png}
 \end{minipage}
 \caption{Guide slot validation over 3 s: ball displacement in the $x$, $y$, and $z$ directions. The \calg{} result is shown as the black solid curve; displacements are relative to each solver's initial ball coordinate.}
 \label{fig:guide_slot_displacement}
@@ -936,15 +936,15 @@ The guide slot case tests confined sliding under wall contact, so the expected r
 \centering
 \begin{minipage}{0.32\linewidth}
 \centering
-\includegraphics[width=\linewidth]{figures/guide_slot_3s_corrected/03_guide_slot_3s_x_velocity.png}
+\includegraphics[width=\linewidth]{figures/calg_cmame_used/03_guide_slot_3s_x_velocity.png}
 \end{minipage}\hfill
 \begin{minipage}{0.32\linewidth}
 \centering
-\includegraphics[width=\linewidth]{figures/guide_slot_3s_corrected/03_guide_slot_3s_y_velocity.png}
+\includegraphics[width=\linewidth]{figures/calg_cmame_used/03_guide_slot_3s_y_velocity.png}
 \end{minipage}\hfill
 \begin{minipage}{0.32\linewidth}
 \centering
-\includegraphics[width=\linewidth]{figures/guide_slot_3s_corrected/03_guide_slot_3s_z_velocity.png}
+\includegraphics[width=\linewidth]{figures/calg_cmame_used/03_guide_slot_3s_z_velocity.png}
 \end{minipage}
 \caption{Guide slot validation over 3 s: ball velocity in the $x$, $y$, and $z$ directions. The \calg{} result is shown as the black solid curve.}
 \label{fig:guide_slot_velocity}
@@ -954,15 +954,15 @@ The guide slot case tests confined sliding under wall contact, so the expected r
 \centering
 \begin{minipage}{0.32\linewidth}
 \centering
-\includegraphics[width=\linewidth]{figures/guide_slot_3s_corrected/03_guide_slot_3s_x_acceleration.png}
+\includegraphics[width=\linewidth]{figures/calg_cmame_used/03_guide_slot_3s_x_acceleration.png}
 \end{minipage}\hfill
 \begin{minipage}{0.32\linewidth}
 \centering
-\includegraphics[width=\linewidth]{figures/guide_slot_3s_corrected/03_guide_slot_3s_y_acceleration.png}
+\includegraphics[width=\linewidth]{figures/calg_cmame_used/03_guide_slot_3s_y_acceleration.png}
 \end{minipage}\hfill
 \begin{minipage}{0.32\linewidth}
 \centering
-\includegraphics[width=\linewidth]{figures/guide_slot_3s_corrected/03_guide_slot_3s_z_acceleration.png}
+\includegraphics[width=\linewidth]{figures/calg_cmame_used/03_guide_slot_3s_z_acceleration.png}
 \end{minipage}
 \caption{Guide slot validation over 3 s: ball acceleration in the $x$, $y$, and $z$ directions. For \calg{}, acceleration is the effective per-step value exported by the C++ backend after the normal-constraint and gap-clamp update; for Chrono it is evaluated from the reported contact force and gravity; for Recurdyn it is taken from the exported body-acceleration channels. The plotted curves use a 21-frame centered average for visualization.}
 \label{fig:guide_slot_acceleration}
@@ -975,15 +975,15 @@ The ball-and-socket pendulum case tests gravity-driven swing under deep socket c
 \centering
 \begin{minipage}{0.32\linewidth}
 \centering
-\includegraphics[width=\linewidth]{figures/long_time_equiv_payload/03_ball_joint_5s_equiv_payload_x_displacement.png}
+\includegraphics[width=\linewidth]{figures/calg_cmame_used/03_ball_joint_5s_equiv_payload_x_displacement.png}
 \end{minipage}\hfill
 \begin{minipage}{0.32\linewidth}
 \centering
-\includegraphics[width=\linewidth]{figures/long_time_equiv_payload/03_ball_joint_5s_equiv_payload_y_displacement.png}
+\includegraphics[width=\linewidth]{figures/calg_cmame_used/03_ball_joint_5s_equiv_payload_y_displacement.png}
 \end{minipage}\hfill
 \begin{minipage}{0.32\linewidth}
 \centering
-\includegraphics[width=\linewidth]{figures/long_time_equiv_payload/03_ball_joint_5s_equiv_payload_z_displacement.png}
+\includegraphics[width=\linewidth]{figures/calg_cmame_used/03_ball_joint_5s_equiv_payload_z_displacement.png}
 \end{minipage}
 \caption{Ball-and-socket pendulum validation over 5 s: ball displacement in the $x$, $y$, and $z$ directions. The Recurdyn model uses an equivalent distal payload with the same rod-plus-cylinder mass center and inertia as the Chrono and \calg{} composite body. The \calg{} result is shown as the black solid curve; displacements are relative to each solver's initial ball coordinate.}
 \label{fig:ball_joint_displacement}
@@ -993,15 +993,15 @@ The ball-and-socket pendulum case tests gravity-driven swing under deep socket c
 \centering
 \begin{minipage}{0.32\linewidth}
 \centering
-\includegraphics[width=\linewidth]{figures/long_time_equiv_payload/03_ball_joint_5s_equiv_payload_x_velocity.png}
+\includegraphics[width=\linewidth]{figures/calg_cmame_used/03_ball_joint_5s_equiv_payload_x_velocity.png}
 \end{minipage}\hfill
 \begin{minipage}{0.32\linewidth}
 \centering
-\includegraphics[width=\linewidth]{figures/long_time_equiv_payload/03_ball_joint_5s_equiv_payload_y_velocity.png}
+\includegraphics[width=\linewidth]{figures/calg_cmame_used/03_ball_joint_5s_equiv_payload_y_velocity.png}
 \end{minipage}\hfill
 \begin{minipage}{0.32\linewidth}
 \centering
-\includegraphics[width=\linewidth]{figures/long_time_equiv_payload/03_ball_joint_5s_equiv_payload_z_velocity.png}
+\includegraphics[width=\linewidth]{figures/calg_cmame_used/03_ball_joint_5s_equiv_payload_z_velocity.png}
 \end{minipage}
 \caption{Ball-and-socket pendulum validation over 5 s: ball velocity in the $x$, $y$, and $z$ directions. The dominant motion trend is consistent across Chrono, Recurdyn, and \calg{}, while re-contact transients remain solver dependent.}
 \label{fig:ball_joint_velocity}
@@ -1011,15 +1011,15 @@ The ball-and-socket pendulum case tests gravity-driven swing under deep socket c
 \centering
 \begin{minipage}{0.32\linewidth}
 \centering
-\includegraphics[width=\linewidth]{figures/long_time_equiv_payload/03_ball_joint_5s_equiv_payload_x_acceleration.png}
+\includegraphics[width=\linewidth]{figures/calg_cmame_used/03_ball_joint_5s_equiv_payload_x_acceleration.png}
 \end{minipage}\hfill
 \begin{minipage}{0.32\linewidth}
 \centering
-\includegraphics[width=\linewidth]{figures/long_time_equiv_payload/03_ball_joint_5s_equiv_payload_y_acceleration.png}
+\includegraphics[width=\linewidth]{figures/calg_cmame_used/03_ball_joint_5s_equiv_payload_y_acceleration.png}
 \end{minipage}\hfill
 \begin{minipage}{0.32\linewidth}
 \centering
-\includegraphics[width=\linewidth]{figures/long_time_equiv_payload/03_ball_joint_5s_equiv_payload_z_acceleration.png}
+\includegraphics[width=\linewidth]{figures/calg_cmame_used/03_ball_joint_5s_equiv_payload_z_acceleration.png}
 \end{minipage}
 \caption{Ball-and-socket pendulum validation over 5 s: ball acceleration in the $x$, $y$, and $z$ directions. Accelerations are shown as diagnostic channels for the contact transient; the displacement and velocity curves provide the primary trajectory-level validation because the three solvers use different contact regularizations and contact-envelope definitions.}
 \label{fig:ball_joint_acceleration}
@@ -1032,15 +1032,15 @@ The bearing raceway case tests raceway-driven in-plane rolling/sliding, with the
 \centering
 \begin{minipage}{0.32\linewidth}
 \centering
-\includegraphics[width=\linewidth]{figures/bearing_5s/03_bearing_5s_x_displacement.png}
+\includegraphics[width=\linewidth]{figures/calg_cmame_used/03_bearing_5s_x_displacement.png}
 \end{minipage}\hfill
 \begin{minipage}{0.32\linewidth}
 \centering
-\includegraphics[width=\linewidth]{figures/bearing_5s/03_bearing_5s_y_displacement.png}
+\includegraphics[width=\linewidth]{figures/calg_cmame_used/03_bearing_5s_y_displacement.png}
 \end{minipage}\hfill
 \begin{minipage}{0.32\linewidth}
 \centering
-\includegraphics[width=\linewidth]{figures/bearing_5s/03_bearing_5s_z_displacement.png}
+\includegraphics[width=\linewidth]{figures/calg_cmame_used/03_bearing_5s_z_displacement.png}
 \end{minipage}
 \caption{Bearing raceway validation over 5 s: ball displacement in the $x$, $y$, and $z$ directions. The \calg{} result is shown as the black solid curve; displacements are relative to each solver's initial ball coordinate.}
 \label{fig:bearing_displacement}
@@ -1050,15 +1050,15 @@ The bearing raceway case tests raceway-driven in-plane rolling/sliding, with the
 \centering
 \begin{minipage}{0.32\linewidth}
 \centering
-\includegraphics[width=\linewidth]{figures/bearing_5s/03_bearing_5s_x_velocity.png}
+\includegraphics[width=\linewidth]{figures/calg_cmame_used/03_bearing_5s_x_velocity.png}
 \end{minipage}\hfill
 \begin{minipage}{0.32\linewidth}
 \centering
-\includegraphics[width=\linewidth]{figures/bearing_5s/03_bearing_5s_y_velocity.png}
+\includegraphics[width=\linewidth]{figures/calg_cmame_used/03_bearing_5s_y_velocity.png}
 \end{minipage}\hfill
 \begin{minipage}{0.32\linewidth}
 \centering
-\includegraphics[width=\linewidth]{figures/bearing_5s/03_bearing_5s_z_velocity.png}
+\includegraphics[width=\linewidth]{figures/calg_cmame_used/03_bearing_5s_z_velocity.png}
 \end{minipage}
 \caption{Bearing raceway validation over 5 s: ball velocity in the $x$, $y$, and $z$ directions. The \calg{} result is shown as the black solid curve.}
 \label{fig:bearing_velocity}
@@ -1068,15 +1068,15 @@ The bearing raceway case tests raceway-driven in-plane rolling/sliding, with the
 \centering
 \begin{minipage}{0.32\linewidth}
 \centering
-\includegraphics[width=\linewidth]{figures/bearing_5s/03_bearing_5s_x_acceleration.png}
+\includegraphics[width=\linewidth]{figures/calg_cmame_used/03_bearing_5s_x_acceleration.png}
 \end{minipage}\hfill
 \begin{minipage}{0.32\linewidth}
 \centering
-\includegraphics[width=\linewidth]{figures/bearing_5s/03_bearing_5s_y_acceleration.png}
+\includegraphics[width=\linewidth]{figures/calg_cmame_used/03_bearing_5s_y_acceleration.png}
 \end{minipage}\hfill
 \begin{minipage}{0.32\linewidth}
 \centering
-\includegraphics[width=\linewidth]{figures/bearing_5s/03_bearing_5s_z_acceleration.png}
+\includegraphics[width=\linewidth]{figures/calg_cmame_used/03_bearing_5s_z_acceleration.png}
 \end{minipage}
 \caption{Bearing raceway validation over 5 s: ball acceleration in the $x$, $y$, and $z$ directions. For \calg{} and Recurdyn, acceleration is taken from the exported solver channels; for Chrono it is evaluated from the reported contact force. The plotted curves use a 41-frame centered average for visualization.}
 \label{fig:bearing_acceleration}
@@ -1143,7 +1143,7 @@ Figure~\ref{fig:cpp_efficiency} visualizes the same solver-timing data. These va
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=0.78\linewidth]{figures/04_efficiency_wall_time.png}
+\includegraphics[width=0.78\linewidth]{figures/calg_cmame_used/04_efficiency_wall_time.png}
 \caption{Solver timing per selected validation scene. CALG uses no-CSV solver-loop time and excludes one-time geometry preprocessing such as dense SDF construction; Recurdyn uses solver-reported CPU Time. All three CALG rows include local mesh/CALG detector traversal, configuration-space SDF signed refinement, and normalized surface-contact response quadrature. Timing ratios are reported in Table~\ref{tab:cpp_efficiency} and describe this implemented validation benchmark only, not a solver-wide engine comparison.}
 \label{fig:cpp_efficiency}
 \end{figure}
