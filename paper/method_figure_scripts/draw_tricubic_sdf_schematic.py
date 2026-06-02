@@ -290,7 +290,17 @@ def draw_response_panel(ax):
     ax.scatter([q[0]], [q[1]], s=34, color=BLACK, edgecolors="white", linewidths=0.5, zorder=9)
     ax.scatter([foot[0]], [foot[1]], s=22, color=BLUE, edgecolors="white", linewidths=0.4, zorder=8)
 
-    ax.text(0.08, 0.92, "continuous response query", ha="left", va="top", fontsize=9.2, color=BLACK)
+    ax.text(
+        0.02,
+        1.06,
+        "continuous response query",
+        transform=ax.transAxes,
+        ha="left",
+        va="bottom",
+        fontsize=9.2,
+        color=BLACK,
+        clip_on=False,
+    )
     ax.text(q[0] + 0.035, q[1] + 0.015, r"$q$", fontsize=9, color=BLACK)
     ax.text(0.65, 0.71, r"$g(q)$", fontsize=9, color=BLACK)
     ax.text(foot[0] + 0.12, foot[1] + 0.08, r"$n_c=\nabla g/\|\nabla g\|$", fontsize=8.6, color=GREEN)
