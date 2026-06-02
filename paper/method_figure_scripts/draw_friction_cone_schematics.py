@@ -99,17 +99,39 @@ def curved_grad(x, y):
     return np.array([0.36 * x + 2.6 * common, -0.07 + 1.4 * common])
 
 
+CURVED_V0 = np.array([-0.78, -0.54])
+CURVED_V1 = np.array([0.82, -0.36])
+CURVED_V2 = np.array([-0.25, 0.84])
+
+
+def curved_point_from_bary(a, b):
+    xy = (1.0 - a - b) * CURVED_V0 + a * CURVED_V1 + b * CURVED_V2
+    return np.array([xy[0], xy[1], curved_height(xy[0], xy[1])])
+
+
+def curved_patch_boundary(n=72):
+    edge_01 = [curved_point_from_bary(a, 0.0) for a in np.linspace(0.0, 1.0, n, endpoint=False)]
+    edge_12 = [curved_point_from_bary(1.0 - s, s) for s in np.linspace(0.0, 1.0, n, endpoint=False)]
+    edge_20 = [curved_point_from_bary(0.0, 1.0 - s) for s in np.linspace(0.0, 1.0, n, endpoint=False)]
+    return np.asarray(edge_01 + edge_12 + edge_20)
+
+
 def make_curved_patch():
-    v0 = np.array([-0.78, -0.54])
-    v1 = np.array([0.82, -0.36])
-    v2 = np.array([-0.25, 0.84])
     bary, faces = triangle_grid()
-    xy = (1.0 - bary[:, :1] - bary[:, 1:2]) * v0 + bary[:, :1] * v1 + bary[:, 1:2] * v2
+    xy = (
+        (1.0 - bary[:, :1] - bary[:, 1:2]) * CURVED_V0
+        + bary[:, :1] * CURVED_V1
+        + bary[:, 1:2] * CURVED_V2
+    )
     z = curved_height(xy[:, 0], xy[:, 1])
     pts = np.column_stack([xy, z])
 
     cp_bary = np.array([0.34, 0.30])
-    cp_xy = (1.0 - cp_bary[0] - cp_bary[1]) * v0 + cp_bary[0] * v1 + cp_bary[1] * v2
+    cp_xy = (
+        (1.0 - cp_bary[0] - cp_bary[1]) * CURVED_V0
+        + cp_bary[0] * CURVED_V1
+        + cp_bary[1] * CURVED_V2
+    )
     cp = np.array([cp_xy[0], cp_xy[1], curved_height(cp_xy[0], cp_xy[1])])
     grad = curved_grad(cp_xy[0], cp_xy[1])
     normal = normalize(np.array([-grad[0], -grad[1], 1.0]))
@@ -204,22 +226,18 @@ def draw_aabb(ax, corners, edges):
         )
 
 
-def draw_patch_mesh(ax, pts, faces):
-    projected = project(pts)
-    depths = pts @ VIEW_DIR
-    order = np.argsort([depths[f].mean() for f in faces])
-    for idx in order:
-        poly = Polygon(
-            projected[faces[idx]],
-            closed=True,
-            facecolor=BLUE_LIGHT,
-            edgecolor=BLUE,
-            lw=0.35,
-            alpha=0.86,
-            joinstyle="round",
-            zorder=3,
-        )
-        ax.add_patch(poly)
+def draw_curved_triangle_patch(ax, boundary):
+    poly = Polygon(
+        project(boundary),
+        closed=True,
+        facecolor=BLUE_LIGHT,
+        edgecolor=BLUE,
+        lw=1.4,
+        alpha=0.88,
+        joinstyle="round",
+        zorder=3,
+    )
+    ax.add_patch(poly)
 
 
 def draw_planar_triangle(ax, tri):
@@ -285,13 +303,14 @@ def draw_contact_point(ax, cp):
 
 def draw_curved_triangle_friction_cone():
     pts, faces, cp, normal = make_curved_patch()
+    boundary = curved_patch_boundary()
     box, edges = aabb_geometry(pts)
     cone_parts = cone_geometry(cp + 0.008 * normal, normal)[:3]
-    projected_extent = [project(pts), project(box), project(cp[None, :])]
+    projected_extent = [project(boundary), project(box), project(cp[None, :])]
     projected_extent.extend(project(part) for part in cone_parts[1])
     projected_extent.append(project(cone_parts[0]))
     fig, ax = setup_canvas(projected_extent)
-    draw_patch_mesh(ax, pts, faces)
+    draw_curved_triangle_patch(ax, boundary)
     draw_aabb(ax, box, edges)
     draw_cone(ax, cp + 0.008 * normal, normal)
     draw_contact_point(ax, cp)
