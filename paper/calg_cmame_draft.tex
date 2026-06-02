@@ -418,7 +418,12 @@ This response layer separates detection thickness from physical force activation
 \end{equation}
 with a small release tolerance used only for contact-state persistence.
 
-For an active rigid contact element, the dynamic backend can query a small local surface-contact response patch rather than a single representative point. Let $\mathcal Q_c=\{(w_i,\delta x_i)\}_{i=1}^{Q}$ denote fixed local quadrature offsets in the contact tangent plane, with $w_i\ge0$ and $\sum_i w_i=1$. Each offset defines a nearby response configuration $q_i=(x+\delta x_i,R)$ and returns
+For an active rigid contact element, the dynamic backend can query a small local surface-contact response patch rather than a single representative point. Let $\widehat{\mathcal Q}_c=\{(A_i,\delta x_i)\}_{i=1}^{Q}$ denote fixed local quadrature offsets in the contact tangent plane, where $A_i\ge0$ are raw area-like quadrature weights over the chosen response patch and $A_c=\sum_i A_i$. The normalized response weights are
+\begin{equation}
+    w_i=\frac{A_i}{A_c},\qquad \sum_{i=1}^{Q}w_i=1 .
+    \label{eq:normalized_response_weights}
+\end{equation}
+Each offset defines a nearby response configuration $q_i=(x+\delta x_i,R)$ and returns
 \begin{equation}
     \tilde\phi_i=\tilde\phi(q_i),
     \qquad
@@ -433,7 +438,12 @@ The rigid contact response is then assembled as a normalized response quadrature
     w_i\,\mathcal F(\tilde\phi_i,\tilde n_i,v_i,\mathcal H_i),
     \label{eq:response_quadrature}
 \end{equation}
-where $r_i$ is the response point, $v_i$ is the relative velocity, $\mathcal H_i$ is the local friction history, and $\mathcal F$ is the regularized Coulomb normal--tangential response used in the rigid update. The weights are normalized because this dynamic backend uses the local patch as a contact-element response object. Full area-measure integration, pressure centers, and average normals are verified separately by the static patch-contact equivalence check in Sec.~\ref{sec:results}. The dense response field introduces a grid-spacing interpolation error and a one-time preprocessing cost, but an online query is constant time per response sample. This preprocessing cost is excluded from the solver-loop timings reported in Sec.~\ref{sec:results}.
+where $r_i$ is the response point, $v_i$ is the relative velocity, $\mathcal H_i$ is the local friction history, and $\mathcal F$ is the regularized Coulomb normal--tangential response used in the rigid update. The normalization in Eq.~\eqref{eq:normalized_response_weights} is deliberate: changing the number of response samples should not change the total contact stiffness or damping assigned to the same rigid contact element. The raw weights $A_i$ retain the local patch measure and can be used for geometric area diagnostics,
+\begin{equation}
+    \int_{\Omega_c} h(x)\,\dd A \approx \sum_{i=1}^{Q} A_i h_i ,
+    \label{eq:area_measure_quadrature}
+\end{equation}
+whereas Eq.~\eqref{eq:response_quadrature} uses $w_i$ to distribute one contact-element response and its persistent friction histories over the local patch. Thus the dynamic validation backend does not interpret $A_i$ as finite-element nodal areas or as a resolved pressure distribution. Full area-measure integration, pressure centers, and average normals are verified separately by the static patch-contact equivalence check in Sec.~\ref{sec:results}. In the C++ surface-contact validation runs, a second-order patch rule is used: one central response sample and three peripheral samples are evaluated in the tangent plane, their raw weights are summed into $A_c$, and the resulting four normalized weights enter Eq.~\eqref{eq:response_quadrature}. The dense response field introduces a grid-spacing interpolation error and a one-time preprocessing cost, but an online query is constant time per response sample. This preprocessing cost is excluded from the solver-loop timings reported in Sec.~\ref{sec:results}.
 
 \begin{proposition}[Cubic signed-gap consistency]
 \label{prop:tricubic_consistency}
@@ -786,7 +796,49 @@ The dynamic backend comparison isolates the contact-geometry module while keepin
 \label{fig:model_ball_joint}
 \end{figure}
 
-The four scenes cover common rigid contact mechanisms in which friction is strongly coupled to contact-normal quality: rolling elements in raceways, cam--roller follower contact, ball or cylindrical heads in guide slots, and ball-and-socket pendulum contact. The contact point crosses multiple surface cells in each scene, so a facet-based contact-geometry module changes the normal and tangential basis as a function of mesh topology rather than only physical geometry. The reproducibility package stores the exact step counts, timestep, friction coefficient, contact radius, detector distance, stiffness, and mesh resolution for each generated artifact.
+The four scenes cover common rigid contact mechanisms in which friction is strongly coupled to contact-normal quality: rolling elements in raceways, cam--roller follower contact, ball or cylindrical heads in guide slots, and ball-and-socket pendulum contact. The contact point crosses multiple surface cells in each scene, so a facet-based contact-geometry module changes the normal and tangential basis as a function of mesh topology rather than only physical geometry. Tables~\ref{tab:backend_reproducibility_parameters} and \ref{tab:validation_reproducibility_parameters} list the executable parameters needed to reproduce the dynamic backend comparison and the external-validation runs. The same values are stored with the generated artifacts in the reproducibility package.
+
+\begin{table}[t]
+\centering
+\caption{Parameters for reproducing the dynamic backend comparison. All values are in SI units, and each row uses the same rigid update for Linear-triangle BVH, PN-triangle BVH, and \calg{}.}
+\label{tab:backend_reproducibility_parameters}
+{\setlength{\tabcolsep}{3pt}
+\renewcommand{\arraystretch}{1.12}
+\begin{tabular}{p{0.18\linewidth}p{0.35\linewidth}p{0.40\linewidth}}
+\toprule
+Model & Geometry and initial state & Time, friction, and contact parameters \\
+\midrule
+Bearing raceway & Sphere radius $0.075$ m, mass $0.65$ kg; analytic annular raceway with coarse backend mesh $n=7$; initial velocity $(0.62,-0.08,0)$ m/s. & $T=0.8$ s, 801 frames, $\Delta t=1.0\times10^{-3}$ s; $\mu=0.36$, $\hat d=0.065$ m, $k_n=2550$ N/m, $c_n=36$ N s/m, $k_t=165$ N/m, $c_t=0.6$ N s/m. \\
+\addlinespace
+Cam--roller follower & Roller radius $0.085$ m, mass $0.80$ kg; analytic cam-like lifted track with coarse backend mesh $n=7$; initial velocity $(0.70,0.18,0)$ m/s. & $T=0.8$ s, 801 frames, $\Delta t=1.0\times10^{-3}$ s; $\mu=0.40$, $\hat d=0.070$ m, $k_n=2800$ N/m, $c_n=42$ N s/m, $k_t=185$ N/m, $c_t=0.7$ N s/m. \\
+\addlinespace
+Guide slot & Ball-head radius $0.090$ m, mass $0.75$ kg; analytic wavy guide slot with coarse backend mesh $n=5$; initial velocity $(0.78,0.04,0)$ m/s. & $T=0.8$ s, 801 frames, $\Delta t=1.0\times10^{-3}$ s; $\mu=0.46$, $\hat d=0.070$ m, $k_n=2400$ N/m, $c_n=38$ N s/m, $k_t=180$ N/m, $c_t=0.7$ N s/m. \\
+\addlinespace
+Ball-and-socket pendulum & Contact sphere radius $0.105$ m, mass $0.85$ kg; analytic socket cap with coarse backend mesh $n=6$; initial velocity $(0.58,0.34,-0.16)$ m/s. & $T=0.8$ s, 801 frames, $\Delta t=1.0\times10^{-3}$ s; $\mu=0.44$, $\hat d=0.075$ m, $k_n=3000$ N/m, $c_n=44$ N s/m, $k_t=195$ N/m, $c_t=0.65$ N s/m. \\
+\bottomrule
+\end{tabular}
+}
+\end{table}
+
+\begin{table}[t]
+\centering
+\caption{Parameters for reproducing the C++ \calg{} external-validation runs compared with Chrono and Recurdyn. All values are in SI units.}
+\label{tab:validation_reproducibility_parameters}
+{\setlength{\tabcolsep}{3pt}
+\renewcommand{\arraystretch}{1.12}
+\begin{tabular}{p{0.18\linewidth}p{0.35\linewidth}p{0.40\linewidth}}
+\toprule
+Model & Geometry and initial state & Time, friction, and contact parameters \\
+\midrule
+Guide slot & Sphere radius $0.090$ m, mass $0.75$ kg; initial positive gap $2.0\times10^{-3}$ m; initial speed $0.58$ m/s along the guide. & $T=3.0$ s, 6000 steps, $\Delta t=5.0\times10^{-4}$ s; $\mu=0.40$, detector band $0.018$ m, $k_n=8.0\times10^4$ N/m, $c_n=520$ N s/m, release tolerance $5.0\times10^{-4}$ m; response patch radius $0.0035$ m, $Q=4$. \\
+\addlinespace
+Ball-and-socket pendulum & Socket inner radius $0.42$ m, outer radius $0.50$ m, opening polar angle $0.42$ rad; ball radius $0.34$ m; rod radius $0.035$ m, rod length $0.82$ m, payload radius $0.115$ m. & $T=5.0$ s, 25000 steps, $\Delta t=2.0\times10^{-4}$ s; $\mu=0.35$, detector band $0.012$ m, $k_n=2.0\times10^5$ N/m, $c_n=650$ N s/m, release tolerance $1.2\times10^{-3}$ m; response patch radius $0.0040$ m, $Q=4$. \\
+\addlinespace
+Bearing raceway & Track radius $1.0$ m, groove radius $0.161$ m, preload $2.0\times10^{-4}$ m, ball radius $0.1612$ m; inner ring angular speed $0.036$ rad/s; ball speed $0.015$ m/s. & $T=5.0$ s, 10000 steps, $\Delta t=5.0\times10^{-4}$ s; $\mu=0.08$, detector band $0.010$ m, $k_n=700$ N/m, $c_n=28$ N s/m; response patch radius $0.0040$ m, $Q=4$; SDF grid $181\times181\times81$. \\
+\bottomrule
+\end{tabular}
+}
+\end{table}
 
 \FloatBarrier
 
