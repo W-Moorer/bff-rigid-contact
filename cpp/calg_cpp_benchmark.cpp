@@ -14,6 +14,7 @@
 #include <map>
 #include <memory>
 #include <numeric>
+#include <set>
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
@@ -30,6 +31,8 @@ constexpr double EPS = 1.0e-12;
 constexpr double PI = 3.141592653589793238462643383279502884;
 static double g_guide_target_gap = 0.0;
 static double g_guide_mu = 0.40;
+static int g_snapshot_step = -1;
+static std::string g_snapshot_dir;
 
 static double clamp(double v, double lo, double hi) { return std::min(hi, std::max(lo, v)); }
 
@@ -550,6 +553,274 @@ struct ContactSampleCpp {
     double area_weight = 1.0;
     double response_weight = 1.0;
 };
+
+struct DetectorCandidatePair {
+    int terrain_face = -1;
+    int body_face = -1;
+    ClosestPair linear;
+    CurvedResult curved;
+    bool linear_passed = false;
+    bool contact = false;
+};
+
+struct DetectorSnapshotData {
+    std::vector<Primitive> terrain_primitives;
+    std::vector<Primitive> body_primitives;
+    std::vector<DetectorCandidatePair> candidate_pairs;
+    std::vector<ContactSampleCpp> contacts;
+    DetectionStats stats;
+};
+
+static DetectorSnapshotData collect_detector_snapshot_data(const Mesh& terrain_mesh, const Mesh& body_mesh, double d_hat) {
+    DetectorSnapshotData out;
+    out.terrain_primitives = build_primitives(terrain_mesh, d_hat);
+    out.body_primitives = build_primitives(body_mesh, d_hat);
+    for (const auto& a : out.terrain_primitives) {
+        for (const auto& b : out.body_primitives) {
+            if (!a.aabb.intersects(b.aabb)) continue;
+            out.stats.candidate_pairs++;
+            DetectorCandidatePair pair;
+            pair.terrain_face = a.face_index;
+            pair.body_face = b.face_index;
+            pair.linear = triangle_triangle_closest(a.v, b.v);
+            const double eps_pair = a.error_bound + b.error_bound;
+            pair.linear_passed = pair.linear.distance <= d_hat + eps_pair;
+            if (pair.linear_passed) {
+                pair.curved = solve_curved_pair(a, b, d_hat);
+                pair.contact = pair.curved.valid && pair.curved.contact;
+                if (pair.contact) {
+                    out.contacts.push_back({pair.curved.point_a, pair.curved.point_b, pair.curved.normal, pair.curved.gap});
+                }
+            }
+            out.candidate_pairs.push_back(pair);
+        }
+    }
+    out.stats.contacts = static_cast<int>(out.contacts.size());
+    return out;
+}
+
+static std::string safe_stem(std::string s) {
+    for (char& c : s) {
+        const bool ok = (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '_' || c == '-';
+        if (!ok) c = '_';
+    }
+    return s;
+}
+
+struct DetectorVtpBuilder {
+    std::vector<Vec3> points;
+    std::vector<std::array<int, 3>> polys;
+    std::vector<std::array<int, 2>> lines;
+    std::vector<int> poly_parts;
+    std::vector<int> line_parts;
+    std::vector<int> poly_pair_ids;
+    std::vector<int> line_pair_ids;
+
+    int add_point(const Vec3& p) {
+        points.push_back(p);
+        return static_cast<int>(points.size()) - 1;
+    }
+
+    void add_triangle(const Vec3& a, const Vec3& b, const Vec3& c, int part, int pair_id = -1) {
+        int ia = add_point(a);
+        int ib = add_point(b);
+        int ic = add_point(c);
+        polys.push_back({ia, ib, ic});
+        poly_parts.push_back(part);
+        poly_pair_ids.push_back(pair_id);
+    }
+
+    void add_line(const Vec3& a, const Vec3& b, int part, int pair_id = -1) {
+        int ia = add_point(a);
+        int ib = add_point(b);
+        lines.push_back({ia, ib});
+        line_parts.push_back(part);
+        line_pair_ids.push_back(pair_id);
+    }
+};
+
+static void add_mesh_to_snapshot(DetectorVtpBuilder& b,
+                                 const Mesh& mesh,
+                                 const std::set<int>& candidate_faces,
+                                 int regular_part,
+                                 int candidate_part) {
+    for (int fi = 0; fi < static_cast<int>(mesh.faces.size()); ++fi) {
+        auto f = mesh.faces[fi];
+        const int part = candidate_faces.count(fi) ? candidate_part : regular_part;
+        b.add_triangle(mesh.vertices[f[0]], mesh.vertices[f[1]], mesh.vertices[f[2]], part);
+    }
+}
+
+static void add_aabb_to_snapshot(DetectorVtpBuilder& b, const AABB& box, int part) {
+    std::array<Vec3, 8> c = {
+        Vec3(box.lo.x(), box.lo.y(), box.lo.z()),
+        Vec3(box.hi.x(), box.lo.y(), box.lo.z()),
+        Vec3(box.hi.x(), box.hi.y(), box.lo.z()),
+        Vec3(box.lo.x(), box.hi.y(), box.lo.z()),
+        Vec3(box.lo.x(), box.lo.y(), box.hi.z()),
+        Vec3(box.hi.x(), box.lo.y(), box.hi.z()),
+        Vec3(box.hi.x(), box.hi.y(), box.hi.z()),
+        Vec3(box.lo.x(), box.hi.y(), box.hi.z()),
+    };
+    constexpr std::array<std::array<int, 2>, 12> edges = {
+        std::array<int, 2>{0, 1}, std::array<int, 2>{1, 2}, std::array<int, 2>{2, 3}, std::array<int, 2>{3, 0},
+        std::array<int, 2>{4, 5}, std::array<int, 2>{5, 6}, std::array<int, 2>{6, 7}, std::array<int, 2>{7, 4},
+        std::array<int, 2>{0, 4}, std::array<int, 2>{1, 5}, std::array<int, 2>{2, 6}, std::array<int, 2>{3, 7},
+    };
+    for (const auto& e : edges) b.add_line(c[e[0]], c[e[1]], part);
+}
+
+static void write_int_array(std::ofstream& f, const std::vector<int>& values) {
+    for (size_t i = 0; i < values.size(); ++i) {
+        if (i) f << ' ';
+        f << values[i];
+    }
+}
+
+static void write_point_array(std::ofstream& f, const std::vector<Vec3>& values) {
+    f << std::setprecision(17);
+    for (size_t i = 0; i < values.size(); ++i) {
+        if (i) f << ' ';
+        f << values[i].x() << ' ' << values[i].y() << ' ' << values[i].z();
+    }
+}
+
+static void write_detector_snapshot_vtp(const std::filesystem::path& path,
+                                        const DetectorVtpBuilder& b,
+                                        int step,
+                                        double time,
+                                        int candidate_pairs,
+                                        int contacts) {
+    std::filesystem::create_directories(path.parent_path());
+    std::vector<int> line_conn;
+    std::vector<int> line_offsets;
+    line_conn.reserve(b.lines.size() * 2);
+    line_offsets.reserve(b.lines.size());
+    int off = 0;
+    for (const auto& line : b.lines) {
+        line_conn.push_back(line[0]);
+        line_conn.push_back(line[1]);
+        off += 2;
+        line_offsets.push_back(off);
+    }
+    std::vector<int> poly_conn;
+    std::vector<int> poly_offsets;
+    poly_conn.reserve(b.polys.size() * 3);
+    poly_offsets.reserve(b.polys.size());
+    off = 0;
+    for (const auto& poly : b.polys) {
+        poly_conn.push_back(poly[0]);
+        poly_conn.push_back(poly[1]);
+        poly_conn.push_back(poly[2]);
+        off += 3;
+        poly_offsets.push_back(off);
+    }
+    std::vector<int> part_ids = b.line_parts;
+    part_ids.insert(part_ids.end(), b.poly_parts.begin(), b.poly_parts.end());
+    std::vector<int> pair_ids = b.line_pair_ids;
+    pair_ids.insert(pair_ids.end(), b.poly_pair_ids.begin(), b.poly_pair_ids.end());
+
+    std::ofstream f(path.string());
+    f << std::setprecision(17);
+    f << "<?xml version=\"1.0\"?>\n";
+    f << "<VTKFile type=\"PolyData\" version=\"0.1\" byte_order=\"LittleEndian\">\n";
+    f << "  <PolyData>\n";
+    f << "    <Piece NumberOfPoints=\"" << b.points.size() << "\" NumberOfVerts=\"0\" NumberOfLines=\"" << b.lines.size()
+      << "\" NumberOfStrips=\"0\" NumberOfPolys=\"" << b.polys.size() << "\">\n";
+    f << "      <FieldData>\n";
+    f << "        <DataArray type=\"Int32\" Name=\"step\" NumberOfTuples=\"1\" format=\"ascii\">" << step << "</DataArray>\n";
+    f << "        <DataArray type=\"Float64\" Name=\"time\" NumberOfTuples=\"1\" format=\"ascii\">" << time << "</DataArray>\n";
+    f << "        <DataArray type=\"Int32\" Name=\"candidate_pairs\" NumberOfTuples=\"1\" format=\"ascii\">" << candidate_pairs
+      << "</DataArray>\n";
+    f << "        <DataArray type=\"Int32\" Name=\"contacts\" NumberOfTuples=\"1\" format=\"ascii\">" << contacts
+      << "</DataArray>\n";
+    f << "      </FieldData>\n";
+    f << "      <CellData Scalars=\"part_id\">\n";
+    f << "        <DataArray type=\"Int32\" Name=\"part_id\" format=\"ascii\">";
+    write_int_array(f, part_ids);
+    f << "</DataArray>\n";
+    f << "        <DataArray type=\"Int32\" Name=\"candidate_pair\" format=\"ascii\">";
+    write_int_array(f, pair_ids);
+    f << "</DataArray>\n";
+    f << "      </CellData>\n";
+    f << "      <Points>\n";
+    f << "        <DataArray type=\"Float64\" NumberOfComponents=\"3\" format=\"ascii\">";
+    write_point_array(f, b.points);
+    f << "</DataArray>\n";
+    f << "      </Points>\n";
+    f << "      <Lines>\n";
+    f << "        <DataArray type=\"Int32\" Name=\"connectivity\" format=\"ascii\">";
+    write_int_array(f, line_conn);
+    f << "</DataArray>\n";
+    f << "        <DataArray type=\"Int32\" Name=\"offsets\" format=\"ascii\">";
+    write_int_array(f, line_offsets);
+    f << "</DataArray>\n";
+    f << "      </Lines>\n";
+    f << "      <Polys>\n";
+    f << "        <DataArray type=\"Int32\" Name=\"connectivity\" format=\"ascii\">";
+    write_int_array(f, poly_conn);
+    f << "</DataArray>\n";
+    f << "        <DataArray type=\"Int32\" Name=\"offsets\" format=\"ascii\">";
+    write_int_array(f, poly_offsets);
+    f << "</DataArray>\n";
+    f << "      </Polys>\n";
+    f << "    </Piece>\n";
+    f << "  </PolyData>\n";
+    f << "</VTKFile>\n";
+}
+
+static void export_detector_snapshot(const std::string& case_name,
+                                     const std::string& pair_id,
+                                     int step,
+                                     double time,
+                                     const Mesh& terrain_mesh,
+                                     const Mesh& body_mesh,
+                                     double d_hat,
+                                     const std::filesystem::path& out_dir) {
+    DetectorSnapshotData data = collect_detector_snapshot_data(terrain_mesh, body_mesh, d_hat);
+    std::set<int> terrain_candidate_faces;
+    std::set<int> body_candidate_faces;
+    for (const auto& pair : data.candidate_pairs) {
+        terrain_candidate_faces.insert(pair.terrain_face);
+        body_candidate_faces.insert(pair.body_face);
+    }
+
+    DetectorVtpBuilder builder;
+    add_mesh_to_snapshot(builder, terrain_mesh, terrain_candidate_faces, 1, 3);
+    add_mesh_to_snapshot(builder, body_mesh, body_candidate_faces, 2, 4);
+    for (int fi : terrain_candidate_faces) {
+        if (fi >= 0 && fi < static_cast<int>(data.terrain_primitives.size())) {
+            add_aabb_to_snapshot(builder, data.terrain_primitives[fi].aabb, 5);
+        }
+    }
+    for (int fi : body_candidate_faces) {
+        if (fi >= 0 && fi < static_cast<int>(data.body_primitives.size())) {
+            add_aabb_to_snapshot(builder, data.body_primitives[fi].aabb, 6);
+        }
+    }
+    for (int i = 0; i < static_cast<int>(data.candidate_pairs.size()); ++i) {
+        const DetectorCandidatePair& pair = data.candidate_pairs[i];
+        builder.add_line(pair.linear.a, pair.linear.b, 7, i);
+        if (pair.contact) builder.add_line(pair.curved.point_a, pair.curved.point_b, 8, i);
+    }
+    if (!data.contacts.empty()) {
+        ContactSampleCpp selected = *std::min_element(data.contacts.begin(), data.contacts.end(), [](const auto& a, const auto& b) {
+            return a.gap < b.gap;
+        });
+        Vec3 p = selected.point_a;
+        builder.add_line(p, p + 0.08 * normalize(selected.normal), 9, 0);
+    }
+
+    const std::string stem = safe_stem(case_name + "_step" + std::to_string(step) + "_" + pair_id + "_detector_snapshot");
+    const std::filesystem::path vtp_path = out_dir / (stem + ".vtp");
+    write_detector_snapshot_vtp(vtp_path, builder, step, time, data.stats.candidate_pairs, data.stats.contacts);
+
+    std::ofstream summary((out_dir / (stem + ".csv")).string());
+    summary << "case,pair_id,step,time,d_hat,terrain_faces,body_faces,candidate_pairs,contacts,vtp\n";
+    summary << case_name << ',' << pair_id << ',' << step << ',' << std::setprecision(17) << time << ',' << d_hat << ','
+            << terrain_mesh.faces.size() << ',' << body_mesh.faces.size() << ',' << data.stats.candidate_pairs << ','
+            << data.stats.contacts << ',' << vtp_path.filename().string() << '\n';
+}
 
 struct SdfSampleCpp {
     double phi = 0.0;
@@ -1578,6 +1849,20 @@ static BenchResult run_contact_scene(ContactScene& scene, int steps, const std::
             const int stride = std::max(1, pair.detector_stride);
             const bool cached_active = detector_active_cache[pair.id];
             const bool run_detector = (step % stride == 0) || !cached_active;
+            if (step == g_snapshot_step && !g_snapshot_dir.empty()) {
+                const RigidConfiguration body_config = make_configuration(body.position, body.rotation);
+                const double search_radius = std::max(0.0, body_geometry.bounding_radius());
+                Mesh terrain_mesh = terrain.local_patch(body_config, search_radius, pair.normal_hint, pair.detection_d_hat);
+                Mesh body_mesh = body_geometry.local_patch(body_config, search_radius, pair.normal_hint, pair.detection_d_hat);
+                export_detector_snapshot(scene.source,
+                                         pair.id,
+                                         step,
+                                         step * scene.dt,
+                                         terrain_mesh,
+                                         body_mesh,
+                                         pair.detection_d_hat,
+                                         std::filesystem::path(g_snapshot_dir));
+            }
             ContactPatchCpp patch =
                 query_surface_contact_patch(terrain,
                                             body_geometry,
@@ -2252,6 +2537,27 @@ static MeshDetectorSample finite_socket_mesh_detector_sample(const Vec3& ball_ce
     return out;
 }
 
+static void export_finite_socket_mesh_detector_snapshot(const Vec3& ball_center,
+                                                        int step,
+                                                        double time,
+                                                        double d_hat,
+                                                        double patch_radius,
+                                                        int socket_resolution,
+                                                        int sphere_resolution,
+                                                        const std::filesystem::path& out_dir) {
+    SocketSample seed = finite_socket_contact_sample(ball_center);
+    Mesh socket_mesh = inner_socket_patch(seed.normal, patch_radius, socket_resolution);
+    Mesh ball_mesh = sphere_patch(ball_center, BALL_R, seed.normal, patch_radius, sphere_resolution, "deep_ball_joint_sphere_mesh");
+    export_detector_snapshot("deep_ball_joint_pendulum_mesh_cpp",
+                             "finite_socket_inner",
+                             step,
+                             time,
+                             socket_mesh,
+                             ball_mesh,
+                             d_hat,
+                             out_dir);
+}
+
 struct PendulumTraceWriter {
     std::ofstream file;
     std::string source;
@@ -2424,6 +2730,16 @@ static BenchResult run_deep_ball_joint_pendulum_mesh_detector(int steps, const s
     auto t0 = std::chrono::steady_clock::now();
     for (int step = 0; step < steps; ++step) {
         Vec3 ball_center = body.position + body.rotation * data.ball_offset_body;
+        if (step == g_snapshot_step && !g_snapshot_dir.empty()) {
+            export_finite_socket_mesh_detector_snapshot(ball_center,
+                                                        step,
+                                                        step * DT,
+                                                        DETECTION_D_HAT,
+                                                        PATCH_RADIUS,
+                                                        SOCKET_RESOLUTION,
+                                                        SPHERE_RESOLUTION,
+                                                        std::filesystem::path(g_snapshot_dir));
+        }
         MeshDetectorSample detected =
             finite_socket_mesh_detector_sample(ball_center, DETECTION_D_HAT, PATCH_RADIUS, SOCKET_RESOLUTION, SPHERE_RESOLUTION);
         // The mesh detector supplies candidate/contact work; dense tricubic SDF refinement gives the signed gap and force normal.
@@ -2690,6 +3006,10 @@ int main(int argc, char** argv) {
             g_guide_target_gap = std::atof(argv[++i]);
         } else if (arg == "--guide-mu" && i + 1 < argc) {
             g_guide_mu = std::atof(argv[++i]);
+        } else if (arg == "--snapshot-step" && i + 1 < argc) {
+            g_snapshot_step = std::atoi(argv[++i]);
+        } else if (arg == "--snapshot-dir" && i + 1 < argc) {
+            g_snapshot_dir = argv[++i];
         } else if (arg == "all" || arg == "all_mesh" || arg == "guide" || arg == "guide_slot" || arg == "socket" ||
                    arg == "spherical_socket" || arg == "ball_joint" || arg == "deep_ball_joint_pendulum" ||
                    arg == "ball_joint_mesh" || arg == "deep_ball_joint_pendulum_mesh" || arg == "bearing" ||

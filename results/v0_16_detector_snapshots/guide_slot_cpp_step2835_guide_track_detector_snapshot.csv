@@ -1,0 +1,2 @@
+case,pair_id,step,time,d_hat,terrain_faces,body_faces,candidate_pairs,contacts,vtp
+guide_slot_cpp,guide_track,2835,1.4175,0.017999999999999999,18,2,36,20,guide_slot_cpp_step2835_guide_track_detector_snapshot.vtp
