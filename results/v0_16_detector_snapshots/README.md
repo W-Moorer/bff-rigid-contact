@@ -17,19 +17,23 @@ Each prefix is split into independent VTP files:
 
 | Suffix | Content | `part_id` values |
 |---|---|---|
-| `_terrain_patch.vtp` | fixed/terrain local detector mesh | 1: regular triangle; 3: AABB-candidate triangle |
-| `_body_patch.vtp` | moving-body local detector mesh | 2: regular triangle; 4: AABB-candidate triangle |
+| `_terrain_patch.vtp` | fixed/terrain local detector mesh | 1: regular triangle; 3: AABB-candidate triangle; 10: detector-accepted triangle |
+| `_body_patch.vtp` | moving-body local detector mesh | 2: regular triangle; 4: AABB-candidate triangle; 11: detector-accepted triangle |
 | `_terrain_aabb.vtp` | inflated AABB line boxes for candidate fixed/terrain triangles | 5 |
 | `_body_aabb.vtp` | inflated AABB line boxes for candidate moving-body triangles | 6 |
+| `_closest_segments.vtp` | initial closest-point segments for all AABB candidate pairs | 7 |
+| `_accepted_closest_segments.vtp` | initial closest-point segments for detector-accepted pairs | 7 |
+| `_contact_segments.vtp` | curved-graph closest segments after local solve | 8 |
+| `_representative_normal.vtp` | one representative detector normal | 9 |
 
 The companion `_index.csv` files record the case, pair id, selected step, time,
 detector gap radius, local face counts, AABB candidate-pair count, graph-contact
-count, and the four split VTP filenames. These exports are intended for
-mechanism visualization and should not be interpreted as additional dynamics
-results.
+count, detector-accepted face counts, and the split VTP filenames. The
+detector-accepted counts mean pairs inside the CALG detector radius after the
+curved graph solve. They are not the final signed-gap force-active contact area,
+which is evaluated later by the SDF response field.
 
-The previous combined debug lines are intentionally omitted here. The old red
-line was the accepted curved-graph contact segment, gray lines were initial
-closest segments, and the green line was the representative detector normal.
-Those are useful for debugging but are not included in the review snapshots so
-that the patch and AABB layers can be overlaid cleanly in ParaView.
+The Python review figures in `paper/figures/detector_snapshots` include separate
+`*_closest_normal.*` files. They draw only the patch VTP layers, the gray initial
+closest-point segments, and the green representative normal. The AABB overlay
+figures remain separate.

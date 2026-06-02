@@ -21,14 +21,16 @@ PART_STYLE = {
     2: ("#7fb6d6", 0.28, 0.22, "moving patch"),
     3: ("#f2a93b", 0.82, 0.62, "candidate terrain"),
     4: ("#111111", 0.58, 0.62, "candidate body"),
+    10: ("#cc6f2d", 0.88, 0.72, "accepted terrain"),
+    11: ("#355f8c", 0.88, 0.72, "accepted body"),
 }
 
 LINE_STYLE = {
     5: ("#d07a00", 0.70, 0.55),  # terrain AABB
     6: ("#111111", 0.70, 0.55),  # body AABB
-    7: ("#525866", 0.45, 0.42),  # initial closest segment
+    7: ("#525866", 0.62, 0.48),  # initial closest segment
     8: ("#c43c39", 0.90, 0.80),  # graph contact segment
-    9: ("#1f8f4d", 1.35, 0.95),  # representative normal
+    9: ("#1f8f4d", 1.95, 0.98),  # representative normal
 }
 
 
@@ -122,8 +124,16 @@ def _view_for(stem: str) -> tuple[float, float]:
     return 25, -55
 
 
-def draw_snapshot(ax, datasets: list[dict]) -> None:
-    pts = np.vstack([data["points"] for data in datasets if len(data["points"])])
+def draw_snapshot(
+    ax,
+    datasets: list[dict],
+    surface_parts: tuple[int, ...] = (1, 2, 3, 4, 10, 11),
+    line_parts_to_draw: tuple[int, ...] = (5, 6),
+) -> None:
+    nonempty_points = [data["points"] for data in datasets if len(data["points"])]
+    if not nonempty_points:
+        raise ValueError("cannot draw an empty snapshot")
+    pts = np.vstack(nonempty_points)
 
     for data in datasets:
         dpts = data["points"]
@@ -132,7 +142,7 @@ def draw_snapshot(ax, datasets: list[dict]) -> None:
         poly_parts = data["poly_parts"]
         line_parts = data["line_parts"]
 
-        for part in (1, 2, 3, 4):
+        for part in surface_parts:
             faces = [dpts[poly] for poly, pid in zip(polys, poly_parts) if int(pid) == part]
             if not faces:
                 continue
@@ -140,7 +150,7 @@ def draw_snapshot(ax, datasets: list[dict]) -> None:
             coll = Poly3DCollection(faces, facecolor=color, edgecolor=color, linewidth=linewidth, alpha=alpha)
             ax.add_collection3d(coll)
 
-        for part in (5, 6):
+        for part in line_parts_to_draw:
             segs = [dpts[line] for line, pid in zip(lines, line_parts) if int(pid) == part]
             if not segs:
                 continue
@@ -160,13 +170,43 @@ def group_paths(prefix: Path) -> list[Path]:
     ]
 
 
+def closest_normal_paths(prefix: Path, accepted_only: bool) -> list[Path]:
+    closest_suffix = "_accepted_closest_segments.vtp" if accepted_only else "_closest_segments.vtp"
+    return [
+        prefix.with_name(prefix.name + "_terrain_patch.vtp"),
+        prefix.with_name(prefix.name + "_body_patch.vtp"),
+        prefix.with_name(prefix.name + closest_suffix),
+        prefix.with_name(prefix.name + "_representative_normal.vtp"),
+    ]
+
+
 def save_one(prefix: Path, out_dir: Path) -> list[Path]:
     datasets = [read_vtp(path) for path in group_paths(prefix)]
     fig = plt.figure(figsize=(3.10, 2.62), constrained_layout=True)
     ax = fig.add_subplot(111, projection="3d")
-    draw_snapshot(ax, datasets)
+    draw_snapshot(ax, datasets, line_parts_to_draw=(5, 6))
     out_dir.mkdir(parents=True, exist_ok=True)
     stem = prefix.name + "_overlay"
+    outputs = []
+    for suffix, kwargs in {
+        ".png": {"dpi": 600},
+        ".pdf": {},
+        ".svg": {},
+    }.items():
+        out = out_dir / f"{stem}{suffix}"
+        fig.savefig(out, transparent=False, bbox_inches="tight", pad_inches=0.01, **kwargs)
+        outputs.append(out)
+    plt.close(fig)
+    return outputs
+
+
+def save_closest_normal(prefix: Path, out_dir: Path, accepted_only: bool) -> list[Path]:
+    datasets = [read_vtp(path) for path in closest_normal_paths(prefix, accepted_only)]
+    fig = plt.figure(figsize=(3.10, 2.62), constrained_layout=True)
+    ax = fig.add_subplot(111, projection="3d")
+    draw_snapshot(ax, datasets, line_parts_to_draw=(7, 9))
+    out_dir.mkdir(parents=True, exist_ok=True)
+    stem = prefix.name + ("_accepted_closest_normal" if accepted_only else "_closest_normal")
     outputs = []
     for suffix, kwargs in {
         ".png": {"dpi": 600},
@@ -184,7 +224,7 @@ def save_overview(prefixes: list[Path], out_dir: Path) -> list[Path]:
     fig = plt.figure(figsize=(7.20, 5.10), constrained_layout=True)
     for i, prefix in enumerate(prefixes, 1):
         ax = fig.add_subplot(2, 2, i, projection="3d")
-        draw_snapshot(ax, [read_vtp(path) for path in group_paths(prefix)])
+        draw_snapshot(ax, [read_vtp(path) for path in group_paths(prefix)], line_parts_to_draw=(5, 6))
     outputs = []
     for suffix, kwargs in {
         ".png": {"dpi": 600},
@@ -192,6 +232,29 @@ def save_overview(prefixes: list[Path], out_dir: Path) -> list[Path]:
         ".svg": {},
     }.items():
         out = out_dir / f"04_1_detector_snapshot_overview{suffix}"
+        fig.savefig(out, transparent=False, bbox_inches="tight", pad_inches=0.02, **kwargs)
+        outputs.append(out)
+    plt.close(fig)
+    return outputs
+
+
+def save_closest_normal_overview(prefixes: list[Path], out_dir: Path, accepted_only: bool) -> list[Path]:
+    fig = plt.figure(figsize=(7.20, 5.10), constrained_layout=True)
+    for i, prefix in enumerate(prefixes, 1):
+        ax = fig.add_subplot(2, 2, i, projection="3d")
+        draw_snapshot(
+            ax,
+            [read_vtp(path) for path in closest_normal_paths(prefix, accepted_only)],
+            line_parts_to_draw=(7, 9),
+        )
+    outputs = []
+    stem = "04_1_detector_snapshot_accepted_closest_normal_overview" if accepted_only else "04_1_detector_snapshot_closest_normal_overview"
+    for suffix, kwargs in {
+        ".png": {"dpi": 600},
+        ".pdf": {},
+        ".svg": {},
+    }.items():
+        out = out_dir / f"{stem}{suffix}"
         fig.savefig(out, transparent=False, bbox_inches="tight", pad_inches=0.02, **kwargs)
         outputs.append(out)
     plt.close(fig)
@@ -211,12 +274,16 @@ def main() -> int:
     outputs: list[Path] = []
     for prefix in prefixes:
         outputs.extend(save_one(prefix, args.out_dir))
+        outputs.extend(save_closest_normal(prefix, args.out_dir, accepted_only=False))
+        outputs.extend(save_closest_normal(prefix, args.out_dir, accepted_only=True))
     overview_paths: list[Path] = []
     for token in ("guide_slot", "ball_joint", "bearing_inner", "bearing_outer"):
         match = next((p for p in prefixes if token in p.name), None)
         if match is not None:
             overview_paths.append(match)
     outputs.extend(save_overview(overview_paths, args.out_dir))
+    outputs.extend(save_closest_normal_overview(overview_paths, args.out_dir, accepted_only=False))
+    outputs.extend(save_closest_normal_overview(overview_paths, args.out_dir, accepted_only=True))
     print("\n".join(str(p) for p in outputs))
     return 0
 
