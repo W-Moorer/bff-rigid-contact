@@ -122,41 +122,51 @@ def _view_for(stem: str) -> tuple[float, float]:
     return 25, -55
 
 
-def draw_snapshot(ax, data: dict) -> None:
-    pts = data["points"]
-    polys = data["polys"]
-    lines = data["lines"]
-    poly_parts = data["poly_parts"]
-    line_parts = data["line_parts"]
+def draw_snapshot(ax, datasets: list[dict]) -> None:
+    pts = np.vstack([data["points"] for data in datasets if len(data["points"])])
 
-    for part in (1, 2, 3, 4):
-        faces = [pts[poly] for poly, pid in zip(polys, poly_parts) if int(pid) == part]
-        if not faces:
-            continue
-        color, alpha, linewidth, _ = PART_STYLE[part]
-        coll = Poly3DCollection(faces, facecolor=color, edgecolor=color, linewidth=linewidth, alpha=alpha)
-        ax.add_collection3d(coll)
+    for data in datasets:
+        dpts = data["points"]
+        polys = data["polys"]
+        lines = data["lines"]
+        poly_parts = data["poly_parts"]
+        line_parts = data["line_parts"]
 
-    for part in (5, 6, 7, 8, 9):
-        segs = [pts[line] for line, pid in zip(lines, line_parts) if int(pid) == part]
-        if not segs:
-            continue
-        color, linewidth, alpha = LINE_STYLE[part]
-        ax.add_collection3d(Line3DCollection(segs, colors=color, linewidths=linewidth, alpha=alpha))
+        for part in (1, 2, 3, 4):
+            faces = [dpts[poly] for poly, pid in zip(polys, poly_parts) if int(pid) == part]
+            if not faces:
+                continue
+            color, alpha, linewidth, _ = PART_STYLE[part]
+            coll = Poly3DCollection(faces, facecolor=color, edgecolor=color, linewidth=linewidth, alpha=alpha)
+            ax.add_collection3d(coll)
+
+        for part in (5, 6):
+            segs = [dpts[line] for line, pid in zip(lines, line_parts) if int(pid) == part]
+            if not segs:
+                continue
+            color, linewidth, alpha = LINE_STYLE[part]
+            ax.add_collection3d(Line3DCollection(segs, colors=color, linewidths=linewidth, alpha=alpha))
 
     _axis_equal(ax, pts)
-    elev, azim = _view_for(data["path"].stem)
+    elev, azim = _view_for(datasets[0]["path"].stem)
     ax.view_init(elev=elev, azim=azim)
     ax.set_axis_off()
 
 
-def save_one(path: Path, out_dir: Path) -> list[Path]:
-    data = read_vtp(path)
+def group_paths(prefix: Path) -> list[Path]:
+    return [
+        prefix.with_name(prefix.name + suffix)
+        for suffix in ("_terrain_patch.vtp", "_body_patch.vtp", "_terrain_aabb.vtp", "_body_aabb.vtp")
+    ]
+
+
+def save_one(prefix: Path, out_dir: Path) -> list[Path]:
+    datasets = [read_vtp(path) for path in group_paths(prefix)]
     fig = plt.figure(figsize=(3.10, 2.62), constrained_layout=True)
     ax = fig.add_subplot(111, projection="3d")
-    draw_snapshot(ax, data)
+    draw_snapshot(ax, datasets)
     out_dir.mkdir(parents=True, exist_ok=True)
-    stem = path.stem
+    stem = prefix.name + "_overlay"
     outputs = []
     for suffix, kwargs in {
         ".png": {"dpi": 600},
@@ -170,11 +180,11 @@ def save_one(path: Path, out_dir: Path) -> list[Path]:
     return outputs
 
 
-def save_overview(paths: list[Path], out_dir: Path) -> list[Path]:
+def save_overview(prefixes: list[Path], out_dir: Path) -> list[Path]:
     fig = plt.figure(figsize=(7.20, 5.10), constrained_layout=True)
-    for i, path in enumerate(paths, 1):
+    for i, prefix in enumerate(prefixes, 1):
         ax = fig.add_subplot(2, 2, i, projection="3d")
-        draw_snapshot(ax, read_vtp(path))
+        draw_snapshot(ax, [read_vtp(path) for path in group_paths(prefix)])
     outputs = []
     for suffix, kwargs in {
         ".png": {"dpi": 600},
@@ -194,15 +204,16 @@ def main() -> int:
     parser.add_argument("--out-dir", type=Path, default=DEFAULT_OUT)
     args = parser.parse_args()
     _set_style()
-    paths = sorted(args.in_dir.glob("*_detector_snapshot.vtp"))
-    if not paths:
-        raise SystemExit(f"no detector snapshot VTP files found in {args.in_dir}")
+    terrain_paths = sorted(args.in_dir.glob("*_detector_snapshot_terrain_patch.vtp"))
+    prefixes = [p.with_name(p.name.removesuffix("_terrain_patch.vtp")) for p in terrain_paths]
+    if not prefixes:
+        raise SystemExit(f"no split detector snapshot VTP files found in {args.in_dir}")
     outputs: list[Path] = []
-    for path in paths:
-        outputs.extend(save_one(path, args.out_dir))
+    for prefix in prefixes:
+        outputs.extend(save_one(prefix, args.out_dir))
     overview_paths: list[Path] = []
     for token in ("guide_slot", "ball_joint", "bearing_inner", "bearing_outer"):
-        match = next((p for p in paths if token in p.name), None)
+        match = next((p for p in prefixes if token in p.name), None)
         if match is not None:
             overview_paths.append(match)
     outputs.extend(save_overview(overview_paths, args.out_dir))

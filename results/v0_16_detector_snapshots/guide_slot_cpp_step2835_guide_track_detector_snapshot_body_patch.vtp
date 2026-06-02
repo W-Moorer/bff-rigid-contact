@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<VTKFile type="PolyData" version="0.1" byte_order="LittleEndian">
+  <PolyData>
+    <Piece NumberOfPoints="6" NumberOfVerts="0" NumberOfLines="0" NumberOfStrips="0" NumberOfPolys="2">
+      <FieldData>
+        <DataArray type="Int32" Name="step" NumberOfTuples="1" format="ascii">2835</DataArray>
+        <DataArray type="Float64" Name="time" NumberOfTuples="1" format="ascii">1.4175</DataArray>
+        <DataArray type="Int32" Name="candidate_pairs" NumberOfTuples="1" format="ascii">36</DataArray>
+        <DataArray type="Int32" Name="contacts" NumberOfTuples="1" format="ascii">20</DataArray>
+      </FieldData>
+      <CellData Scalars="part_id">
+        <DataArray type="Int32" Name="part_id" format="ascii">4 4</DataArray>
+        <DataArray type="Int32" Name="candidate_pair" format="ascii">-1 -1</DataArray>
+      </CellData>
+      <Points>
+        <DataArray type="Float64" NumberOfComponents="3" format="ascii">-0.30378336983028642 -0.016049076086369518 -0.087658479273935427 -0.30378336983028642 0.045200658941177183 -0.084409592216466309 -0.24326437658858105 0.044672199020239452 -0.074446786628718647 -0.30378336983028642 -0.016049076086369518 -0.087658479273935427 -0.24326437658858105 0.044672199020239452 -0.074446786628718647 -0.24326437658858105 -0.016577536007307256 -0.077695673686187766</DataArray>
+      </Points>
+      <Lines>
+        <DataArray type="Int32" Name="connectivity" format="ascii"></DataArray>
+        <DataArray type="Int32" Name="offsets" format="ascii"></DataArray>
+      </Lines>
+      <Polys>
+        <DataArray type="Int32" Name="connectivity" format="ascii">0 1 2 3 4 5</DataArray>
+        <DataArray type="Int32" Name="offsets" format="ascii">3 6</DataArray>
+      </Polys>
+    </Piece>
+  </PolyData>
+</VTKFile>

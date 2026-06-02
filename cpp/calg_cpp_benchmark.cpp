@@ -670,6 +670,17 @@ static void add_aabb_to_snapshot(DetectorVtpBuilder& b, const AABB& box, int par
     for (const auto& e : edges) b.add_line(c[e[0]], c[e[1]], part);
 }
 
+static void add_candidate_aabbs_to_snapshot(DetectorVtpBuilder& b,
+                                            const std::vector<Primitive>& primitives,
+                                            const std::set<int>& candidate_faces,
+                                            int part) {
+    for (int fi : candidate_faces) {
+        if (fi >= 0 && fi < static_cast<int>(primitives.size())) {
+            add_aabb_to_snapshot(b, primitives[fi].aabb, part);
+        }
+    }
+}
+
 static void write_int_array(std::ofstream& f, const std::vector<int>& values) {
     for (size_t i = 0; i < values.size(); ++i) {
         if (i) f << ' ';
@@ -785,41 +796,35 @@ static void export_detector_snapshot(const std::string& case_name,
         body_candidate_faces.insert(pair.body_face);
     }
 
-    DetectorVtpBuilder builder;
-    add_mesh_to_snapshot(builder, terrain_mesh, terrain_candidate_faces, 1, 3);
-    add_mesh_to_snapshot(builder, body_mesh, body_candidate_faces, 2, 4);
-    for (int fi : terrain_candidate_faces) {
-        if (fi >= 0 && fi < static_cast<int>(data.terrain_primitives.size())) {
-            add_aabb_to_snapshot(builder, data.terrain_primitives[fi].aabb, 5);
-        }
-    }
-    for (int fi : body_candidate_faces) {
-        if (fi >= 0 && fi < static_cast<int>(data.body_primitives.size())) {
-            add_aabb_to_snapshot(builder, data.body_primitives[fi].aabb, 6);
-        }
-    }
-    for (int i = 0; i < static_cast<int>(data.candidate_pairs.size()); ++i) {
-        const DetectorCandidatePair& pair = data.candidate_pairs[i];
-        builder.add_line(pair.linear.a, pair.linear.b, 7, i);
-        if (pair.contact) builder.add_line(pair.curved.point_a, pair.curved.point_b, 8, i);
-    }
-    if (!data.contacts.empty()) {
-        ContactSampleCpp selected = *std::min_element(data.contacts.begin(), data.contacts.end(), [](const auto& a, const auto& b) {
-            return a.gap < b.gap;
-        });
-        Vec3 p = selected.point_a;
-        builder.add_line(p, p + 0.08 * normalize(selected.normal), 9, 0);
-    }
-
     const std::string stem = safe_stem(case_name + "_step" + std::to_string(step) + "_" + pair_id + "_detector_snapshot");
-    const std::filesystem::path vtp_path = out_dir / (stem + ".vtp");
-    write_detector_snapshot_vtp(vtp_path, builder, step, time, data.stats.candidate_pairs, data.stats.contacts);
+    const std::filesystem::path terrain_patch_path = out_dir / (stem + "_terrain_patch.vtp");
+    const std::filesystem::path body_patch_path = out_dir / (stem + "_body_patch.vtp");
+    const std::filesystem::path terrain_aabb_path = out_dir / (stem + "_terrain_aabb.vtp");
+    const std::filesystem::path body_aabb_path = out_dir / (stem + "_body_aabb.vtp");
 
-    std::ofstream summary((out_dir / (stem + ".csv")).string());
-    summary << "case,pair_id,step,time,d_hat,terrain_faces,body_faces,candidate_pairs,contacts,vtp\n";
+    DetectorVtpBuilder terrain_patch;
+    add_mesh_to_snapshot(terrain_patch, terrain_mesh, terrain_candidate_faces, 1, 3);
+    write_detector_snapshot_vtp(terrain_patch_path, terrain_patch, step, time, data.stats.candidate_pairs, data.stats.contacts);
+
+    DetectorVtpBuilder body_patch;
+    add_mesh_to_snapshot(body_patch, body_mesh, body_candidate_faces, 2, 4);
+    write_detector_snapshot_vtp(body_patch_path, body_patch, step, time, data.stats.candidate_pairs, data.stats.contacts);
+
+    DetectorVtpBuilder terrain_aabb;
+    add_candidate_aabbs_to_snapshot(terrain_aabb, data.terrain_primitives, terrain_candidate_faces, 5);
+    write_detector_snapshot_vtp(terrain_aabb_path, terrain_aabb, step, time, data.stats.candidate_pairs, data.stats.contacts);
+
+    DetectorVtpBuilder body_aabb;
+    add_candidate_aabbs_to_snapshot(body_aabb, data.body_primitives, body_candidate_faces, 6);
+    write_detector_snapshot_vtp(body_aabb_path, body_aabb, step, time, data.stats.candidate_pairs, data.stats.contacts);
+
+    std::ofstream summary((out_dir / (stem + "_index.csv")).string());
+    summary << "case,pair_id,step,time,d_hat,terrain_faces,body_faces,candidate_pairs,contacts,"
+               "terrain_patch_vtp,body_patch_vtp,terrain_aabb_vtp,body_aabb_vtp\n";
     summary << case_name << ',' << pair_id << ',' << step << ',' << std::setprecision(17) << time << ',' << d_hat << ','
             << terrain_mesh.faces.size() << ',' << body_mesh.faces.size() << ',' << data.stats.candidate_pairs << ','
-            << data.stats.contacts << ',' << vtp_path.filename().string() << '\n';
+            << data.stats.contacts << ',' << terrain_patch_path.filename().string() << ',' << body_patch_path.filename().string()
+            << ',' << terrain_aabb_path.filename().string() << ',' << body_aabb_path.filename().string() << '\n';
 }
 
 struct SdfSampleCpp {

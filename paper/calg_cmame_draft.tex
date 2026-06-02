@@ -633,15 +633,6 @@ Mean normal angle (deg) & high-order quadrature & graph quadrature & $<10^{-12}$
 
 Table~\ref{tab:static_patch_contact_equivalence} shows that the \calg{} graph-region quadrature reproduces the analytic patch quantities to roundoff accuracy in this controlled case. The active-band graphability certificate remains well conditioned, with minimum $N_A\cdot n_c=0.973$ and minimum $(-N_B)\cdot n_c=0.973$ over the sampled contact band. This check does not replace dynamic validation; it establishes that the local graph representation can be used as an area-contact object when the active region is integrated rather than collapsed to a representative point.
 
-To make the detector stage auditable in the later engineering scenes, Fig.~\ref{fig:detector_snapshots} shows one exported coarse-detector snapshot from the same C++ backend. The snapshots are ordered as guide slot, ball-and-socket pendulum, bearing inner raceway, and bearing outer raceway. Each panel contains the local fixed and moving surface patches, the triangles that participate in inflated-AABB candidate pairs, the inflated candidate boxes, the initial closest segments, and the accepted curved-graph contact segments. These snapshots visualize the candidate-selection stage only; the final signed gap, normal, and friction response in the reported dynamics are still obtained after the SDF response refinement described in Section~\ref{sec:method}.
-
-\begin{figure}[t]
-\centering
-\includegraphics[width=0.82\linewidth]{figures/detector_snapshots/04_1_detector_snapshot_overview.png}
-\caption{Coarse-detector mesh snapshots exported from the C++ backend. The panels show the local detector meshes and inflated-AABB candidate sets at representative steps in the guide slot, ball-and-socket pendulum, and bearing raceway validation scenes. The VTP source files include cell labels for regular patch triangles, candidate triangles, inflated AABB edges, initial closest segments, accepted graph-contact segments, and the representative detector normal.}
-\label{fig:detector_snapshots}
-\end{figure}
-
 \FloatBarrier
 
 \subsection{Analytic inclined-plane friction controls}

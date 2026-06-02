@@ -1,2 +1,0 @@
-case,pair_id,step,time,d_hat,terrain_faces,body_faces,candidate_pairs,contacts,vtp
-deep_ball_joint_pendulum_mesh_cpp,finite_socket_inner,6184,1.2368000000000001,0.012,18,18,206,148,deep_ball_joint_pendulum_mesh_cpp_step6184_finite_socket_inner_detector_snapshot.vtp
