@@ -113,7 +113,7 @@ The remainder of the paper follows this argument. Section~\ref{sec:related} revi
 \section{Related work}
 \label{sec:related}
 
-This work concerns the geometric backend of rigid-body frictional contact. The relevant literature is therefore organized around how contact solvers obtain gap values, contact normals, tangent frames, and smooth signed responses, rather than around finite element contact enforcement alone. Classical contact mechanics established variational contact and frictional constraints \cite{johnson1985,kikuchi1988}. Computational treatments then systematized penalty, multiplier, and augmented Lagrangian contact enforcement \cite{laursen2002,wriggers2006}. These developments provide the mechanical background, but the present paper focuses on the geometry module that supplies contact data to a rigid-body frictional solver.
+This section positions \calg{}--SDF within contact-geometry mechanisms that supply frictional rigid-body response. The discussion is organized around five lines of work: rigid-body frictional contact models, triangle-based BVH contact, smooth curved contact geometry, signed-distance contact fields, and local contact charts. The emphasis is not on contact enforcement in general, but on how each line supplies the signed gap, normal, tangent frame, and smooth response quantities that enter a friction calculation.
 
 \subsection{Rigid-body frictional contact and multibody dynamics}
 
