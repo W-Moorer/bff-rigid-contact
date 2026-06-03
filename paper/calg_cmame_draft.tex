@@ -74,7 +74,7 @@
 \cortext[cor1]{Corresponding author. E-mail address: \href{mailto:renhui@hit.edu.cn}{renhui@hit.edu.cn}}
 
 \begin{abstract}
-Rigid frictional contact requires a signed gap, contact normal, and tangential frame that vary smoothly as bodies slide or roll. When these quantities are obtained from faceted collision proxies or fixed surface tessellations, contact-point motion across cells can produce nonphysical friction-force spikes and stick--slip chatter. We propose Contact-Aligned Local Graphs with configuration-space signed-distance refinement (CALG-SDF), a contact-geometry backend for smooth rigid frictional contact. CALG constructs a local contact frame for each broad-phase candidate and, when a normal-cone certificate is satisfied, represents the two patches as height graphs over a shared contact plane. The resulting signed gap samples a local configuration-space signed-distance field queried by tensor-product cubic interpolation; the rigid response uses the interpolated gap and gradient normal. Analytic inclined-plane controls first verify the implemented static and kinetic Coulomb response. Four same-scene dynamic benchmarks then compare CALG-SDF with two triangle-based baselines, Linear-triangle bounding-volume hierarchy (BVH) and point-normal triangle (PN-triangle) BVH, under identical rigid-body states and friction parameters. Linear-triangle BVH produces $71.9$--$2.20\times10^3$ times larger contact-normal angle jumps and $37.7$--$108$ times larger friction-force jumps than CALG; PN-triangle BVH produces $40.2$--$826$ times larger normal-angle jumps and $35.8$--$62.6$ times larger friction-force jumps. In three selected engineering scenes, comparisons with the independent multibody solvers Chrono and Recurdyn show trajectory-level agreement in displacement and velocity trends. These results indicate that CALG-SDF improves contact-frame continuity and simulation efficiency in the implemented validation benchmarks.
+Rigid frictional contact requires a signed gap, contact normal, and tangential frame that vary smoothly as bodies slide or roll. When these quantities are obtained from mesh models or mesh-derived proxy models, contact-point motion across cells can produce nonphysical friction-force spikes and stick--slip chatter. We propose Contact-Aligned Local Graphs with configuration-space signed-distance refinement (CALG-SDF), a contact-geometry backend for smooth rigid frictional contact. CALG constructs a local contact frame for each broad-phase candidate and, when a normal-cone certificate is satisfied, represents the two patches as height graphs over a shared contact plane. The resulting signed gap samples a local configuration-space signed-distance field queried by tensor-product cubic interpolation; the rigid response uses the interpolated gap and gradient normal. Analytic inclined-plane controls first verify the implemented static and kinetic Coulomb response. Four same-scene dynamic benchmarks then compare CALG-SDF with two triangle-based baselines, Linear-triangle bounding-volume hierarchy (BVH) and point-normal triangle (PN-triangle) BVH, under identical rigid-body states and friction parameters. Linear-triangle BVH produces $71.9$--$2.20\times10^3$ times larger contact-normal angle jumps and $37.7$--$108$ times larger friction-force jumps than CALG; PN-triangle BVH produces $40.2$--$826$ times larger normal-angle jumps and $35.8$--$62.6$ times larger friction-force jumps. In three selected engineering scenes, comparisons with the independent multibody solvers Chrono and Recurdyn show trajectory-level agreement in displacement and velocity trends. These results indicate that CALG-SDF improves contact-frame continuity and simulation efficiency in the implemented validation benchmarks.
 \end{abstract}
 
 \begin{keyword}
@@ -90,9 +90,9 @@ Rigid frictional contact requires a contact solver to repeatedly provide a signe
 
 Many rigid-contact simulations use mesh models or mesh-derived proxy models for contact detection and mechanical response. A Linear-triangle BVH is efficient and robust for broad use, but its face-based gap and normal are only piecewise smooth. Point-normal triangle (PN-triangle) BVH and fixed tessellations of higher-order surfaces provide smoother local geometry, yet the returned contact frame can still depend on the chosen tessellation and on how the contact point crosses cells. The targeted failure mode is therefore geometric rather than only mechanical: when the active contact point moves across discrete cells, the signed gap, normal, and tangential frame may change for proxy-topological reasons rather than for physical reasons. These geometry-induced frame changes are then passed directly into Coulomb friction, where they can appear as normal-force jumps, friction-force spikes, tangential-speed jitter, stick--slip chatter, and acceleration-level artifacts. Smooth surface representations reduce many artifacts of piecewise $C^0$ contact geometry \cite{du2024smooth}, and high-order contact formulations improve geometric accuracy in elastodynamic contact \cite{ferguson2023highorder}; however, global refinement, global signed-distance fields, or global surface parameterizations increase broad-phase work, memory, or topology management and do not by themselves make the active friction frame a controlled local quantity. The unresolved issue is therefore how to return smooth contact-frame quantities for frictional rigid contact without relying on global mesh refinement or a global surface parameterization.
 
-This paper proposes Contact-Aligned Local Graphs with configuration-space signed-distance refinement (\calg{}--SDF) for this setting. The central idea is to use the active contact frame as the local coordinate system for near-contact geometry. For each broad-phase candidate, \calg{} builds this frame from preliminary closest-point and normal information; when a normal-cone graphability certificate is satisfied, the two local patches are represented as height graphs over a shared contact plane. The signed gap, normal, and tangential basis are then evaluated in this contact-aligned frame, and non-graphable configurations are routed to a generic curved patch-patch evaluation or a conservative fallback. This converts the near-phase query from one governed by fixed tessellation topology into a certified local graph query with an explicit validity boundary.
+This paper proposes Contact-Aligned Local Graphs with configuration-space signed-distance refinement (\calg{}--SDF) for this setting. The central idea is to use the active contact frame as the local coordinate system for near-contact geometry. For each broad-phase candidate, \calg{} builds this frame from preliminary closest-point and normal information; when a normal-cone graphability certificate is satisfied, the two local patches are represented as height graphs over a shared contact plane. The signed gap, normal, and tangential basis are then evaluated in this contact-aligned frame, and non-graphable configurations are routed to a generic curved patch--patch evaluation or a conservative fallback. This converts the near-phase query from one governed by fixed tessellation topology into a certified local graph query with an explicit validity boundary.
 
-After the certified local query is constructed, the same geometric samples are made reusable for repeated rigid-body friction evaluations. In the implemented backend, \calg{} contact samples define a configuration-space signed-distance response field for the rigid contact element, and tensor-product cubic interpolation provides the signed gap and gradient normal during simulation. This SDF layer does not replace the geometric construction; it makes certified local contact samples reusable during repeated response evaluations. The resulting backend treats signed gap, normal, and tangent frame as coupled geometric inputs to friction, reducing the geometric source of force spikes and acceleration artifacts while retaining explicit fallback control.
+After the certified local query is constructed, the same geometric samples are made reusable for repeated rigid-body friction evaluations. \calg{} contact samples define a configuration-space signed-distance response field for the rigid contact element, and tensor-product cubic interpolation provides the signed gap and gradient normal during simulation. This SDF layer does not replace the geometric construction; it makes certified local contact samples reusable during repeated response evaluations. The resulting backend treats signed gap, normal, and tangent frame as coupled geometric inputs to friction, reducing the geometric source of force spikes and acceleration artifacts while retaining explicit fallback control.
 
 We evaluate this mechanism through a sequence of tests that separates friction correctness, geometry-backend behavior, external-solver agreement, and simulation efficiency. Analytic inclined-plane controls verify the implemented static and kinetic Coulomb response. Four same-scene dynamic friction benchmarks then compare \calg{}--SDF with Linear-triangle BVH and PN-triangle BVH under identical rigid-body states and friction parameters. Three selected engineering scenes are also compared with Chrono and Recurdyn to assess trajectory-level agreement in displacement and velocity trends, and the simulation efficiency measurement reports the implemented backend cost. These results support a bounded claim: \calg{}--SDF is a contact-geometry backend for rigid frictional contact that improves contact-frame continuity and simulation efficiency in the tested scenes.
 
@@ -100,12 +100,12 @@ The proposed \calg{}--SDF formulation makes four contributions.
 \begin{enumerate}[leftmargin=*,label=(\roman*)]
     \item \emph{Contact-aligned graph representation of local contact geometry.}
     \par \calg{} constructs a contact-defined local frame in which graphable contact patches are represented as height graphs over a shared contact plane. This representation provides contact-frame signed gaps, normals, and tangent bases that are governed by local smooth geometry rather than by fixed tessellation topology.
-    \item \emph{Configuration-space response reconstruction from local graph samples.}
-    \par Local \calg{} contact samples are converted into a configuration-space signed-distance response field for rigid contact elements, which is queried by tensor-product cubic interpolation during repeated frictional response evaluations. This converts repeated contact-response queries into smooth local field evaluations of signed gap and gradient normal.
+    \item \emph{Smooth signed-gap response for efficient friction simulation.}
+    \par Certified \calg{} samples are reused through a tricubic configuration-space response field, providing smooth signed-gap and normal evaluations during simulation and reducing repeated contact-geometry cost.
     \item \emph{Friction-oriented continuity of contact-frame quantities.}
     \par The formulation treats signed gap, contact normal, and tangential frame as coupled geometric inputs to Coulomb friction. This makes contact-frame continuity a primary design objective and reduces the geometric source of friction-force spikes, tangential-speed jitter, stick--slip chatter, and acceleration-level artifacts.
-    \item \emph{Graphability-certified reduction with explicit validity control.}
-    \par A normal-cone graphability certificate determines when the local height-graph reduction is valid, and non-graphable cases switch to generic curved patch-patch evaluation or conservative fallback. This gives the backend an explicit validity boundary instead of applying a local graph approximation outside its geometric regime.
+    \item \emph{Validity-aware local graph contact with controlled fallback.}
+    \par A normal-cone certificate identifies when the contact-aligned graph representation is valid. Non-graphable, boundary-adjacent, or uncertain configurations are routed to curved patch--patch evaluation or conservative fallback, so smooth contact-frame reconstruction is used only inside its verified geometric regime.
 \end{enumerate}
 
 The remainder of the paper follows this argument. Section~\ref{sec:related} reviews rigid-body frictional contact, faceted triangle-based contact proxies, curved and smooth contact geometry, signed-distance contact fields, and local contact-chart alternatives, with emphasis on where the contact-geometry backend enters frictional response. Section~\ref{sec:method} presents the \calg{} detector, graphability certificate, response-field construction, configuration-space SDF refinement, error estimates, and fallback hierarchy. Section~\ref{sec:results} first verifies the friction law with analytic inclined-plane controls, then isolates the contact-geometry module through same-scene \calg{}--SDF, PN-triangle BVH, and Linear-triangle BVH dynamic comparisons. The same section then reports Chrono--Recurdyn--\calg{} external-validation scenes and simulation efficiency evidence before summarizing the scope and limitations of the current rigid-contact backend.
@@ -125,7 +125,7 @@ Compliant contact models are widely used in multibody solvers because they regul
 
 Most practical contact pipelines separate broad-phase candidate generation from narrow-phase distance or intersection queries. GJK distance queries \cite{gilbert1988}, OBB trees \cite{gottschalk1996}, and V-Clip for polyhedral proximity \cite{mirtich1998} are representative building blocks for rigid collision detection. Deformable and animation-oriented collision pipelines further combine spatial hierarchies, continuous collision detection, and robust contact handling \cite{teschner2005,bridson2002}. Geometrically exact CCD methods reduce missed collisions for moving primitives \cite{brochu2012}, but the contact response is still often evaluated on a faceted or tessellated proxy.
 
-The Linear-triangle BVH baseline studied in this paper belongs to this faceted-proxy family. Its attraction is clear: triangle BVHs are simple, robust, and fast to traverse. Its weakness is also geometric: the contact normal and tangent frame are piecewise constant or piecewise reconstructed from adjacent triangles, so a sliding contact point can experience abrupt frame changes when it crosses element boundaries. PN-triangle BVH is a smoother direct baseline because it reconstructs a curved local proxy from triangle data \cite{vlachos2001pn}, but its contact frame still depends on local cell reconstruction and tessellation. In frictional contact this is not a cosmetic error. The normal defines the tangential projection, the tangent frame defines the friction direction, and both affect force spikes, tangential-speed jitter, and stick--slip chatter.
+The Linear-triangle BVH baseline studied in this paper belongs to this faceted-proxy family. Its attraction is clear: triangle BVHs are simple, robust, and fast to traverse. Its weakness is also geometric: the contact normal and tangent frame are piecewise constant or piecewise reconstructed from adjacent triangles, so a sliding contact point can experience abrupt frame changes when it crosses element boundaries. PN-triangle BVH is a smoother direct baseline because it reconstructs a curved local proxy from triangle data \cite{vlachos2001pn}, but its contact frame still depends on local cell reconstruction and tessellation. In frictional contact this is not a cosmetic error. The normal defines the tangential projection, the tangent frame defines the friction direction, and both affect force spikes, tangential-speed jitter, and stick-slip chatter.
 
 \subsection{Curved and smooth contact geometry}
 
@@ -423,7 +423,7 @@ The rigid contact response is then assembled as a normalized response quadrature
     w_i\,\mathcal F(\tilde\phi_i,\tilde n_i,v_i,\mathcal H_i),
     \label{eq:response_quadrature}
 \end{equation}
-where $r_i$ is the response point, $v_i$ is the relative velocity, $\mathcal H_i$ is the local friction history, and $\mathcal F$ is the regularized Coulomb normal--tangential response used in the rigid update. The normalization in Eq.~\eqref{eq:normalized_response_weights} is deliberate: changing the number of response samples should not change the total contact stiffness or damping assigned to the same rigid contact element. The raw weights $A_i$ retain the local patch measure and can be used for geometric area diagnostics,
+where $r_i$ is the response point, $v_i$ is the relative velocity, $\mathcal H_i$ is the local friction history, and $\mathcal F$ is the regularized Coulomb normal-tangential response used in the rigid update. The normalization in Eq.~\eqref{eq:normalized_response_weights} is deliberate: changing the number of response samples should not change the total contact stiffness or damping assigned to the same rigid contact element. The raw weights $A_i$ retain the local patch measure and can be used for geometric area diagnostics,
 \begin{equation}
     \int_{\Omega_c} h(x)\,\dd A \approx \sum_{i=1}^{Q} A_i h_i ,
     \label{eq:area_measure_quadrature}
@@ -477,10 +477,10 @@ Combining the detector estimate with Proposition~\ref{prop:tricubic_consistency}
     \angle(\tilde n,n)\le C_N h^2+C'_\Delta\Delta^3+\eps_{\nabla,\rm tab},
     \label{eq:combined_calg_sdf_error}
 \end{equation}
-where $\Delta$ is the response-field grid spacing and $\eps_{\rm tab}$, $\eps_{\nabla,\rm tab}$ collect numerical tabulation and finite-precision effects. Equation~\eqref{eq:combined_calg_sdf_error} is the accuracy statement for the \calg{}--SDF pipeline: the local graph detector controls geometric sampling error, while tensor-product cubic interpolation controls online response-field error. The estimate applies only on regular smooth cells where the curved-jet bounds are valid, the graphability certificate or certified fallback supplies reliable samples, and the response query remains inside its valid interpolation band. Sharp features, open-boundary active sets, and emergency fallback cells are covered by the conservative fallback logic rather than by this high-order estimate.
+where $\Delta$ is the response-field grid spacing and $\eps_{\rm tab}$, $\eps_{\nabla,\rm tab}$ collect numerical tabulation and finite-precision effects. Equation~\eqref{eq:combined_calg_sdf_error} is the accuracy statement for the \calg{}-SDF pipeline: the local graph detector controls geometric sampling error, while tensor-product cubic interpolation controls online response-field error. The estimate applies only on regular smooth cells where the curved-jet bounds are valid, the graphability certificate or certified fallback supplies reliable samples, and the response query remains inside its valid interpolation band. Sharp features, open-boundary active sets, and emergency fallback cells are covered by the conservative fallback logic rather than by this high-order estimate.
 
 \begin{algorithm}[t]
-\caption{Preprocessing for \calg{}--SDF}
+\caption{Preprocessing for \calg{}-SDF}
 \label{alg:preprocess}
 \begin{algorithmic}[1]
 \Require Surface provider $A$, rigid contact element provider $B$, activation distance $\hat d$, response band $\Omega_\Delta\subset \mathrm{se}(3)$ if a rigid response field is requested
@@ -579,7 +579,7 @@ where $C_{\rm sample}$ is the average cost of a certified \calg{} sample at a gr
 \section{Numerical results}
 \label{sec:results}
 
-This section reports the executable evidence for the proposed rigid frictional contact-geometry backend. The numerical sequence follows the logic of the paper. First, a static patch-contact equivalence check verifies that the local graph representation recovers area-level contact quantities over an active patch. Second, analytic inclined-plane controls verify that the friction update reproduces Coulomb sticking, sliding, and threshold behavior. Third, four engineering scenes compare \calg{}--SDF directly with Linear-triangle BVH and PN-triangle BVH under the same rigid-body update, so that any force or velocity jump is attributable to the contact-geometry module. Fourth, three selected engineering scenes are reproduced against Chrono and Recurdyn to evaluate trajectory-level agreement in displacement and velocity trends with independent dynamics solvers. Finally, native C++ measurements quantify the simulation efficiency of the implemented \calg{}--SDF backend.
+This section reports the executable evidence for the proposed rigid frictional contact-geometry backend. The numerical sequence follows the logic of the paper. First, a static patch-contact equivalence check verifies that the local graph representation recovers area-level contact quantities over an active patch. Second, analytic inclined-plane controls verify that the friction update reproduces Coulomb sticking, sliding, and threshold behavior. Third, four engineering scenes compare \calg{}-SDF directly with Linear-triangle BVH and PN-triangle BVH under the same rigid-body update, so that any force or velocity jump is attributable to the contact-geometry module. Fourth, three selected engineering scenes are reproduced against Chrono and Recurdyn to evaluate trajectory-level agreement in displacement and velocity trends with independent dynamics solvers. Finally, native C++ measurements quantify the simulation efficiency of the implemented \calg{}-SDF backend.
 
 \subsection{Static patch-contact equivalence check}
 
@@ -659,7 +659,7 @@ These controls do not test geometric accuracy because the plane normal is exact 
 \centering
 \includegraphics[width=\linewidth]{figures/calg_cmame_used/CALG_Model_friction_3.png}
 \end{minipage}
-\caption{Model configuration for the analytic inclined-plane controls. The three views show the $30^\circ$ release case and the two static-friction threshold cases with identical block--plane geometry. The threshold cases change the slope angle from $49^\circ$ to $50^\circ$ while keeping $\mu_s=\tan(49.5^\circ)$.}
+\caption{Model configuration for the analytic inclined-plane controls. The three views show the $30^\circ$ release case and the two static-friction threshold cases with identical block-plane geometry. The threshold cases change the slope angle from $49^\circ$ to $50^\circ$ while keeping $\mu_s=\tan(49.5^\circ)$.}
 \label{fig:inclined_friction_models}
 \end{figure}
 
@@ -702,14 +702,14 @@ Threshold 50 deg & 50.0 & (1.171, 0.950) & -0.132 & slip & 1.524 & 0.762 \\
 
 \subsection{Engineering scenes and compared geometry modules}
 
-The dynamic backend comparison isolates the contact-geometry module while keeping the rigid-body update fixed. Linear-triangle BVH uses the piecewise-linear triangle mesh and face normals. PN-triangle BVH evaluates a fixed-tessellation PN-triangle approximation constructed from the same input geometry. \calg{}--SDF uses the contact-aligned local graph detector, certified fallback hierarchy, and configuration-space signed-distance response layer to return the contact point, signed gap, contact normal, and tangential frame used by the same regularized Coulomb update.
+The dynamic backend comparison isolates the contact-geometry module while keeping the rigid-body update fixed. Linear-triangle BVH uses the piecewise-linear triangle mesh and face normals. PN-triangle BVH evaluates a fixed-tessellation PN-triangle approximation constructed from the same input geometry. \calg{}-SDF uses the contact-aligned local graph detector, certified fallback hierarchy, and configuration-space signed-distance response layer to return the contact point, signed gap, contact normal, and tangential frame used by the same regularized Coulomb update.
 
 \FloatBarrier
 
 \begin{figure}[t]
 \centering
 \includegraphics[width=\linewidth]{figures/calg_cmame_used/01_mechanism_story.png}
-\caption{Mechanism-level comparison between facet-based contact-geometry modules and \calg{}--SDF. Linear-triangle BVH and fixed-tessellation PN-triangle BVH inherit cell-crossing changes in the contact normal or tangent frame, which can enter the regularized Coulomb response as force spikes. \calg{} instead certifies a contact-aligned local height graph and returns a smooth normal and tangent frame, producing a smoother friction response in the same rigid-body update.}
+\caption{Mechanism-level comparison between facet-based contact-geometry modules and \calg{}-SDF. Linear-triangle BVH and fixed-tessellation PN-triangle BVH inherit cell-crossing changes in the contact normal or tangent frame, which can enter the regularized Coulomb response as force spikes. \calg{} instead certifies a contact-aligned local height graph and returns a smooth normal and tangent frame, producing a smoother friction response in the same rigid-body update.}
 \label{fig:mechanism_story}
 \end{figure}
 
@@ -741,7 +741,7 @@ The dynamic backend comparison isolates the contact-geometry module while keepin
 \centering
 \includegraphics[width=\linewidth]{figures/calg_cmame_used/CALG_Model_cam_2.png}
 \end{minipage}
-\caption{Cam--roller follower model configuration used for the contact-geometry comparison. The two views show the non-circular cam profile and roller follower geometry that produces sliding and rolling contact over a faceted collision representation.}
+\caption{Cam-roller follower model configuration used for the contact-geometry comparison. The two views show the non-circular cam profile and roller follower geometry that produces sliding and rolling contact over a faceted collision representation.}
 \label{fig:model_cam}
 \end{figure}
 
@@ -781,15 +781,15 @@ The dynamic backend comparison isolates the contact-geometry module while keepin
 \label{fig:model_ball_joint}
 \end{figure}
 
-The four scenes cover common rigid contact mechanisms in which friction is strongly coupled to contact-normal quality: rolling elements in raceways, cam--roller follower contact, ball or cylindrical heads in guide slots, and ball-and-socket pendulum contact. The contact point crosses multiple surface cells in each scene, so a facet-based contact-geometry module changes the normal and tangential basis as a function of mesh topology rather than only physical geometry. The executable parameters are stated in the relevant comparison and validation paragraphs below, and the same values are stored with the generated artifacts in the reproducibility package.
+The four scenes cover common rigid contact mechanisms in which friction is strongly coupled to contact-normal quality: rolling elements in raceways, cam-roller follower contact, ball or cylindrical heads in guide slots, and ball-and-socket pendulum contact. The contact point crosses multiple surface cells in each scene, so a facet-based contact-geometry module changes the normal and tangential basis as a function of mesh topology rather than only physical geometry. The executable parameters are stated in the relevant comparison and validation paragraphs below, and the same values are stored with the generated artifacts in the reproducibility package.
 
 \FloatBarrier
 
 \subsection{Dynamic friction comparison against Linear-triangle BVH and PN-triangle BVH}
 
-The main dynamic comparison runs the same rigid-body friction update with the three contact-geometry modules. All four dynamic backend comparison scenes are run for $0.8$ s with 801 stored frames and timestep $\Delta t=1.0\times10^{-3}$ s. The scene-specific rigid-body and contact parameters are fixed across Linear-triangle BVH, PN-triangle BVH, and \calg{}. The bearing raceway uses a sphere of radius $0.075$ m and mass $0.65$ kg over a coarse backend mesh with $n=7$, initial velocity $(0.62,-0.08,0)$ m/s, $\mu=0.36$, detector distance $\hat d=0.065$ m, $k_n/c_n=2550/36$, and $k_t/c_t=165/0.6$. The cam--roller follower uses radius $0.085$ m, mass $0.80$ kg, mesh $n=7$, initial velocity $(0.70,0.18,0)$ m/s, $\mu=0.40$, $\hat d=0.070$ m, $k_n/c_n=2800/42$, and $k_t/c_t=185/0.7$. The guide slot uses radius $0.090$ m, mass $0.75$ kg, mesh $n=5$, initial velocity $(0.78,0.04,0)$ m/s, $\mu=0.46$, $\hat d=0.070$ m, $k_n/c_n=2400/38$, and $k_t/c_t=180/0.7$. The ball-and-socket pendulum comparison uses contact-sphere radius $0.105$ m, mass $0.85$ kg, mesh $n=6$, initial velocity $(0.58,0.34,-0.16)$ m/s, $\mu=0.44$, $\hat d=0.075$ m, $k_n/c_n=3000/44$, and $k_t/c_t=195/0.65$; stiffnesses are in N/m and damping coefficients are in N s/m.
+The main dynamic comparison runs the same rigid-body friction update with the three contact-geometry modules. All four dynamic backend comparison scenes are run for $0.8$ s with 801 stored frames and timestep $\Delta t=1.0\times10^{-3}$ s. The scene-specific rigid-body and contact parameters are fixed across Linear-triangle BVH, PN-triangle BVH, and \calg{}. The bearing raceway uses a sphere of radius $0.075$ m and mass $0.65$ kg over a coarse backend mesh with $n=7$, initial velocity $(0.62,-0.08,0)$ m/s, $\mu=0.36$, detector distance $\hat d=0.065$ m, $k_n/c_n=2550/36$, and $k_t/c_t=165/0.6$. The cam-roller follower uses radius $0.085$ m, mass $0.80$ kg, mesh $n=7$, initial velocity $(0.70,0.18,0)$ m/s, $\mu=0.40$, $\hat d=0.070$ m, $k_n/c_n=2800/42$, and $k_t/c_t=185/0.7$. The guide slot uses radius $0.090$ m, mass $0.75$ kg, mesh $n=5$, initial velocity $(0.78,0.04,0)$ m/s, $\mu=0.46$, $\hat d=0.070$ m, $k_n/c_n=2400/38$, and $k_t/c_t=180/0.7$. The ball-and-socket pendulum comparison uses contact-sphere radius $0.105$ m, mass $0.85$ kg, mesh $n=6$, initial velocity $(0.58,0.34,-0.16)$ m/s, $\mu=0.44$, $\hat d=0.075$ m, $k_n/c_n=3000/44$, and $k_t/c_t=195/0.65$; stiffnesses are in N/m and damping coefficients are in N s/m.
 
-The reported quantities are the maximum consecutive contact-normal angle jump, maximum normal-force jump, maximum friction-force jump, tangential-speed jitter, and stick--slip switch count. Table~\ref{tab:dynamic_backend_ratios} reports ratios of the baseline value over the \calg{} value; values above one mean that the baseline produces a larger jump or jitter in the same scene. The stick--slip switch metric is a count ratio and is interpreted only as a discrete chatter indicator, not as a continuous error norm.
+The reported quantities are the maximum consecutive contact-normal angle jump, maximum normal-force jump, maximum friction-force jump, tangential-speed jitter, and stick-slip switch count. Table~\ref{tab:dynamic_backend_ratios} reports ratios of the baseline value over the \calg{} value; values above one mean that the baseline produces a larger jump or jitter in the same scene. The stick-slip switch metric is a count ratio and is interpreted only as a discrete chatter indicator, not as a continuous error norm.
 
 \begin{table}[t]
 \centering
@@ -804,31 +804,31 @@ Bearing raceway & $\Delta n$ & $2.20\times10^3$ & 826 \\
 & $\Delta F_n$ & $1.50\times10^3$ & 636 \\
 & $\Delta F_t$ & 50.7 & 62.6 \\
 & $v_t$ jitter & $2.20\times10^3$ & 301 \\
-& \begin{tabular}[c]{@{}l@{}}stick--slip\\switch ratio\end{tabular} & 1 & 1 \\
+& \begin{tabular}[c]{@{}l@{}}stick-slip\\switch ratio\end{tabular} & 1 & 1 \\
 \midrule
-Cam--roller follower & $\Delta n$ & 71.9 & 40.2 \\
+Cam-roller follower & $\Delta n$ & 71.9 & 40.2 \\
 & $\Delta F_n$ & 44.2 & 24.6 \\
 & $\Delta F_t$ & 37.7 & 35.8 \\
 & $v_t$ jitter & 23.8 & 10.5 \\
-& \begin{tabular}[c]{@{}l@{}}stick--slip\\switch ratio\end{tabular} & 322 & 0 \\
+& \begin{tabular}[c]{@{}l@{}}stick-slip\\switch ratio\end{tabular} & 322 & 0 \\
 \midrule
 Ball-and-socket pendulum & $\Delta n$ & 348 & 83.9 \\
 & $\Delta F_n$ & 183 & 42.8 \\
 & $\Delta F_t$ & 108 & 56.9 \\
 & $v_t$ jitter & 425 & 38.6 \\
-& \begin{tabular}[c]{@{}l@{}}stick--slip\\switch ratio\end{tabular} & 1 & 769 \\
+& \begin{tabular}[c]{@{}l@{}}stick-slip\\switch ratio\end{tabular} & 1 & 769 \\
 \midrule
 Guide slot & $\Delta n$ & $1.08\times10^3$ & 589 \\
 & $\Delta F_n$ & 708 & 377 \\
 & $\Delta F_t$ & 60.8 & 58.6 \\
 & $v_t$ jitter & 569 & 334 \\
-& \begin{tabular}[c]{@{}l@{}}stick--slip\\switch ratio\end{tabular} & 1 & 1 \\
+& \begin{tabular}[c]{@{}l@{}}stick-slip\\switch ratio\end{tabular} & 1 & 1 \\
 \bottomrule
 \end{tabular}
 }
 \end{table}
 
-Figures~\ref{fig:curves_bearing}--\ref{fig:curves_guide} plot the independent contact-geometry comparison time histories for the four engineering scenes. Each figure reports the normal-angle jump, friction-force norm, and tangential-speed jitter from the same locked dynamic artifact used to compute Table~\ref{tab:dynamic_backend_ratios}. In these four figures, the black solid curve denotes \calg{}, the green dashed curve denotes PN-triangle BVH, and the orange dash-dot curve denotes Linear-triangle BVH. The per-scene curves make the mechanism visible: \calg{} keeps the contact-normal angle and tangential-speed jitter smooth, whereas the faceted and fixed-tessellation baselines show repeated jumps that coincide with elevated friction-force variation.
+Figures~\ref{fig:curves_bearing}-\ref{fig:curves_guide} plot the independent contact-geometry comparison time histories for the four engineering scenes. Each figure reports the normal-angle jump, friction-force norm, and tangential-speed jitter from the same locked dynamic artifact used to compute Table~\ref{tab:dynamic_backend_ratios}. In these four figures, the black solid curve denotes \calg{}, the green dashed curve denotes PN-triangle BVH, and the orange dash-dot curve denotes Linear-triangle BVH. The per-scene curves make the mechanism visible: \calg{} keeps the contact-normal angle and tangential-speed jitter smooth, whereas the faceted and fixed-tessellation baselines show repeated jumps that coincide with elevated friction-force variation.
 
 \begin{figure}[t]
 \centering
@@ -862,7 +862,7 @@ Figures~\ref{fig:curves_bearing}--\ref{fig:curves_guide} plot the independent co
 \centering
 \includegraphics[width=\linewidth]{figures/calg_cmame_used/cam_roller_follower_dynamic_backend_curves_tangential_speed_jitter.png}
 \end{minipage}
-\caption{Independent contact-geometry comparison curves for the cam--roller follower case. Linear-triangle BVH and PN-triangle BVH produce larger normal and friction-force variations when the contact point traverses cam cells.}
+\caption{Independent contact-geometry comparison curves for the cam-roller follower case. Linear-triangle BVH and PN-triangle BVH produce larger normal and friction-force variations when the contact point traverses cam cells.}
 \label{fig:curves_cam}
 \end{figure}
 
@@ -904,7 +904,7 @@ Figures~\ref{fig:curves_bearing}--\ref{fig:curves_guide} plot the independent co
 
 \FloatBarrier
 
-The dynamic results support the central mechanism of the method. Linear-triangle BVH consistently generates much larger geometric and force discontinuities: the normal-angle jump ratio ranges from $71.9$ to $2.20\times10^3$, the normal-force jump ratio from $44.2$ to $1.50\times10^3$, the friction-force jump ratio from $37.7$ to $108$, and the tangential-speed jitter ratio from $23.8$ to $2.20\times10^3$. PN-triangle BVH improves over Linear-triangle BVH in several scenes, but it remains tied to a tessellated approximation and still produces $40.2$--$826$ times larger normal-angle jumps and $35.8$--$62.6$ times larger friction-force jumps than \calg{}. The large stick--slip switch ratios for Linear-triangle BVH in the cam--roller follower case and for PN-triangle BVH in the ball-and-socket pendulum case show that smoother geometry affects not only the gap value but also the discrete friction state.
+The dynamic results support the central mechanism of the method. Linear-triangle BVH consistently generates much larger geometric and force discontinuities: the normal-angle jump ratio ranges from $71.9$ to $2.20\times10^3$, the normal-force jump ratio from $44.2$ to $1.50\times10^3$, the friction-force jump ratio from $37.7$ to $108$, and the tangential-speed jitter ratio from $23.8$ to $2.20\times10^3$. PN-triangle BVH improves over Linear-triangle BVH in several scenes, but it remains tied to a tessellated approximation and still produces $40.2$-$826$ times larger normal-angle jumps and $35.8$-$62.6$ times larger friction-force jumps than \calg{}. The large stick-slip switch ratios for Linear-triangle BVH in the cam-roller follower case and for PN-triangle BVH in the ball-and-socket pendulum case show that smoother geometry affects not only the gap value but also the discrete friction state.
 
 \subsection{External validation against Chrono and Recurdyn}
 
@@ -912,7 +912,7 @@ The same-scene backend comparison isolates the geometric input to the friction r
 
 In all trajectory-validation figures, the black solid curve denotes \calg{}, the blue dashed curve denotes Chrono, and the orange dash-dot curve denotes Recurdyn; sparse open markers are used only to separate nearly overlapping traces. The plotted directions are the three Cartesian ball coordinates, and displacements are relative to each solver's initial ball coordinate.
 
-The guide slot case tests confined sliding under wall contact, so the expected response is sustained sliding along the slot while the side wall confines transverse motion. The \calg{} C++ run uses a sphere of radius $0.090$ m and mass $0.75$ kg, initial positive gap $2.0\times10^{-3}$ m, initial speed $0.58$ m/s along the guide, $T=3.0$ s, 6000 steps, $\Delta t=5.0\times10^{-4}$ s, $\mu=0.40$, detector band $0.018$ m, $k_n/c_n=8.0\times10^4/520$, release tolerance $5.0\times10^{-4}$ m, response patch radius $0.0035$ m, and $Q=4$ normalized response samples. Figures~\ref{fig:guide_slot_displacement}--\ref{fig:guide_slot_acceleration} show that the three solvers produce the same sliding direction, comparable transverse confinement, and bounded acceleration after visualization smoothing. This visual agreement in the dominant displacement and velocity trends is the intended validation target for the selected slot model. The limitation is that acceleration is a diagnostic channel rather than a strict pointwise validation target: \calg{}, Chrono, and Recurdyn export or reconstruct acceleration through different contact-force and envelope definitions.
+The guide slot case tests confined sliding under wall contact, so the expected response is sustained sliding along the slot while the side wall confines transverse motion. The \calg{} C++ run uses a sphere of radius $0.090$ m and mass $0.75$ kg, initial positive gap $2.0\times10^{-3}$ m, initial speed $0.58$ m/s along the guide, $T=3.0$ s, 6000 steps, $\Delta t=5.0\times10^{-4}$ s, $\mu=0.40$, detector band $0.018$ m, $k_n/c_n=8.0\times10^4/520$, release tolerance $5.0\times10^{-4}$ m, response patch radius $0.0035$ m, and $Q=4$ normalized response samples. Figures~\ref{fig:guide_slot_displacement}-\ref{fig:guide_slot_acceleration} show that the three solvers produce the same sliding direction, comparable transverse confinement, and bounded acceleration after visualization smoothing. This visual agreement in the dominant displacement and velocity trends is the intended validation target for the selected slot model. The limitation is that acceleration is a diagnostic channel rather than a strict pointwise validation target: \calg{}, Chrono, and Recurdyn export or reconstruct acceleration through different contact-force and envelope definitions.
 
 \begin{figure}[t]
 \centering
@@ -969,7 +969,7 @@ The guide slot case tests confined sliding under wall contact, so the expected r
 \end{figure}
 \FloatBarrier
 
-The ball-and-socket pendulum case tests gravity-driven swing under deep socket confinement, so the expected response is pendular motion with socket-limited contact. The model uses a socket with inner radius $0.42$ m, outer radius $0.50$ m, and opening polar angle $0.42$ rad; the moving assembly contains a ball of radius $0.34$ m, a rod of radius $0.035$ m and length $0.82$ m, and a distal payload of radius $0.115$ m. The \calg{} C++ run uses $T=5.0$ s, 25000 steps, $\Delta t=2.0\times10^{-4}$ s, $\mu=0.35$, detector band $0.012$ m, $k_n/c_n=2.0\times10^5/650$, release tolerance $1.2\times10^{-3}$ m, response patch radius $0.0040$ m, and $Q=4$ normalized response samples. Figures~\ref{fig:ball_joint_displacement}--\ref{fig:ball_joint_acceleration} compare the same 5 s window after matching the Recurdyn moving-body mass distribution to the rod-plus-cylinder assembly used by Chrono and \calg{}. The first vertical pendulum peak occurs at $1.1438$ s in Chrono, $1.1304$ s in \calg{}, and $1.1252$ s in Recurdyn, with peak vertical displacements of $0.1255$, $0.1330$, and $0.1383$ m, respectively. These comparable peak timings and amplitudes support the physical reasonableness of the \calg{} trajectory. The remaining discrepancy is concentrated in re-contact transients and raw acceleration, where the three solvers use different contact regularizations and contact-envelope definitions.
+The ball-and-socket pendulum case tests gravity-driven swing under deep socket confinement, so the expected response is pendular motion with socket-limited contact. The model uses a socket with inner radius $0.42$ m, outer radius $0.50$ m, and opening polar angle $0.42$ rad; the moving assembly contains a ball of radius $0.34$ m, a rod of radius $0.035$ m and length $0.82$ m, and a distal payload of radius $0.115$ m. The \calg{} C++ run uses $T=5.0$ s, 25000 steps, $\Delta t=2.0\times10^{-4}$ s, $\mu=0.35$, detector band $0.012$ m, $k_n/c_n=2.0\times10^5/650$, release tolerance $1.2\times10^{-3}$ m, response patch radius $0.0040$ m, and $Q=4$ normalized response samples. Figures~\ref{fig:ball_joint_displacement}-\ref{fig:ball_joint_acceleration} compare the same 5 s window after matching the Recurdyn moving-body mass distribution to the rod-plus-cylinder assembly used by Chrono and \calg{}. The first vertical pendulum peak occurs at $1.1438$ s in Chrono, $1.1304$ s in \calg{}, and $1.1252$ s in Recurdyn, with peak vertical displacements of $0.1255$, $0.1330$, and $0.1383$ m, respectively. These comparable peak timings and amplitudes support the physical reasonableness of the \calg{} trajectory. The remaining discrepancy is concentrated in re-contact transients and raw acceleration, where the three solvers use different contact regularizations and contact-envelope definitions.
 
 \begin{figure}[t]
 \centering
@@ -1026,7 +1026,7 @@ The ball-and-socket pendulum case tests gravity-driven swing under deep socket c
 \end{figure}
 \FloatBarrier
 
-The bearing raceway case tests raceway-driven in-plane rolling/sliding, with the axial $z$ direction retained as a small diagnostic channel. The model uses track radius $1.0$ m, groove radius $0.161$ m, preload $2.0\times10^{-4}$ m, ball radius $0.1612$ m, inner-ring angular speed $0.036$ rad/s, and initial ball speed $0.015$ m/s. The \calg{} C++ run uses $T=5.0$ s, 10000 steps, $\Delta t=5.0\times10^{-4}$ s, $\mu=0.08$, detector band $0.010$ m, $k_n/c_n=700/28$, response patch radius $0.0040$ m, $Q=4$ normalized response samples, and a dense SDF grid of $181\times181\times81$. Figures~\ref{fig:bearing_displacement}--\ref{fig:bearing_acceleration} show that the dominant $x$ and $y$ displacement and velocity curves follow the imposed raceway motion over 5 s in all three solvers. The small axial response is retained to expose contact-envelope differences rather than to define the main motion. The Recurdyn contact stiffness is raised to $1.0\times10^8$ with damping $1.5\times10^4$ to reduce vertical over-penetration, but raw contact force and post-processed gap remain envelope-dependent and are not used as strict pointwise validation targets.
+The bearing raceway case tests raceway-driven in-plane rolling/sliding, with the axial $z$ direction retained as a small diagnostic channel. The model uses track radius $1.0$ m, groove radius $0.161$ m, preload $2.0\times10^{-4}$ m, ball radius $0.1612$ m, inner-ring angular speed $0.036$ rad/s, and initial ball speed $0.015$ m/s. The \calg{} C++ run uses $T=5.0$ s, 10000 steps, $\Delta t=5.0\times10^{-4}$ s, $\mu=0.08$, detector band $0.010$ m, $k_n/c_n=700/28$, response patch radius $0.0040$ m, $Q=4$ normalized response samples, and a dense SDF grid of $181\times181\times81$. Figures~\ref{fig:bearing_displacement}-\ref{fig:bearing_acceleration} show that the dominant $x$ and $y$ displacement and velocity curves follow the imposed raceway motion over 5 s in all three solvers. The small axial response is retained to expose contact-envelope differences rather than to define the main motion. The Recurdyn contact stiffness is raised to $1.0\times10^8$ with damping $1.5\times10^4$ to reduce vertical over-penetration, but raw contact force and post-processed gap remain envelope-dependent and are not used as strict pointwise validation targets.
 
 \begin{figure}[t]
 \centering
@@ -1083,7 +1083,7 @@ The bearing raceway case tests raceway-driven in-plane rolling/sliding, with the
 \end{figure}
 \FloatBarrier
 
-Together, the three external-validation scenes show that the same \calg{}--SDF contact samples can drive consistent rigid-motion trends in selected engineering settings while preserving the smoother contact-normal and friction-response behavior established in the direct backend comparison.
+Together, the three external-validation scenes show that the same \calg{}-SDF contact samples can drive consistent rigid-motion trends in selected engineering settings while preserving the smoother contact-normal and friction-response behavior established in the direct backend comparison.
 
 \begin{table}[t]
 \centering
@@ -1152,14 +1152,14 @@ Figure~\ref{fig:cpp_efficiency} visualizes the same simulation efficiency data. 
 
 \subsection{Scope of the current evidence}
 
-The current evidence supports a specific claim: for smooth engineering contact, the \calg{}--SDF pipeline provides smoother signed gaps, normals, and tangential frames for rigid frictional response than fixed faceted or fixed-tessellation contact-geometry modules. The executable results in this paper use rigid-body contact samples, detector-driven candidate selection, configuration-space SDF signed refinement in the C++ validation backend, and regularized Coulomb friction. This distinction is important for interpreting the method as a contact-geometry backend rather than as an engine-wide replacement for established multibody dynamics engines.
+The current evidence supports a specific claim: for smooth engineering contact, the \calg{}-SDF pipeline provides smoother signed gaps, normals, and tangential frames for rigid frictional response than fixed faceted or fixed-tessellation contact-geometry modules. The executable results in this paper use rigid-body contact samples, detector-driven candidate selection, configuration-space SDF signed refinement in the C++ validation backend, and regularized Coulomb friction. This distinction is important for interpreting the method as a contact-geometry backend rather than as an engine-wide replacement for established multibody dynamics engines.
 
 \section{Conclusion}
 \label{sec:conclusion}
 
 This paper addresses frictional contact artifacts caused by discontinuous or tessellation-dependent contact geometry. The key idea is to couple a contact-aligned local graph detector with a configuration-space signed-distance response layer. The local graph supplies the signed gap, contact normal, and tangent frame from the local contact geometry, while the SDF layer provides the smooth signed gap and gradient normal used by the rigid friction law.
 
-The reported results support the method at three levels. Analytic inclined-plane controls verify that the rigid-friction update reproduces static sticking, kinetic sliding, and the expected threshold transition. Dynamic rigid-friction tests then show that Linear-triangle BVH and PN-triangle BVH produce substantially larger normal jumps, normal-force jumps, friction-force jumps, and tangential-speed jitter than \calg{} in the same four engineering scenes. Chrono and Recurdyn comparisons confirm trajectory-level agreement in displacement and velocity trends in three selected engineering scenes. In the C++ simulation efficiency benchmark, the \calg{}--SDF backend achieves higher simulation efficiency than Chrono in all three selected scenes, with the comparison limited by different contact regularizations.
+The reported results support the method at three levels. Analytic inclined-plane controls verify that the rigid-friction update reproduces static sticking, kinetic sliding, and the expected threshold transition. Dynamic rigid-friction tests then show that Linear-triangle BVH and PN-triangle BVH produce substantially larger normal jumps, normal-force jumps, friction-force jumps, and tangential-speed jitter than \calg{} in the same four engineering scenes. Chrono and Recurdyn comparisons confirm trajectory-level agreement in displacement and velocity trends in three selected engineering scenes. In the C++ simulation efficiency benchmark, the \calg{}-SDF backend achieves higher simulation efficiency than Chrono in all three selected scenes, with the comparison limited by different contact regularizations.
 
 The present limitation is scope rather than the central geometric mechanism. The implementation and validation focus on rigid frictional contact over smooth analytic or CAD-like patches, with a configuration-space SDF used as the signed-gap response layer in the final C++ backend. Sparse or adaptive response-field storage and production-grade multiphysics integration remain future work.
 
@@ -1196,118 +1196,118 @@ T. A. Laursen, \emph{Computational Contact and Impact Mechanics: Fundamentals of
 P. Wriggers, \emph{Computational Contact Mechanics}, 2nd ed., Springer, Berlin, 2006. \doi{10.1007/978-3-540-32609-0}.
 
 \bibitem{sauer2012}
-R. A. Sauer and L. De Lorenzis, A computational contact formulation based on surface potentials, \emph{Computer Methods in Applied Mechanics and Engineering} 253 (2013) 369--395. \doi{10.1016/j.cma.2012.09.002}.
+R. A. Sauer and L. De Lorenzis, A computational contact formulation based on surface potentials, \emph{Computer Methods in Applied Mechanics and Engineering} 253 (2013) 369-395. \doi{10.1016/j.cma.2012.09.002}.
 
 \bibitem{li2020ipc}
 M. Li, Z. Ferguson, T. Schneider, T. Langlois, D. Zorin, D. Panozzo, C. Jiang, and D. M. Kaufman, Incremental Potential Contact: Intersection- and inversion-free, large-deformation dynamics, \emph{ACM Transactions on Graphics} 39(4) (2020), Article 49. \doi{10.1145/3386569.3392425}.
 
 \bibitem{huang2025gcp}
-Z. Huang, M. Paik, Z. Ferguson, D. Panozzo, and D. Zorin, Geometric Contact Potential, \emph{ACM Transactions on Graphics} 44(4) (2025) 1--24. \doi{10.1145/3731142}.
+Z. Huang, M. Paik, Z. Ferguson, D. Panozzo, and D. Zorin, Geometric Contact Potential, \emph{ACM Transactions on Graphics} 44(4) (2025) 1-24. \doi{10.1145/3731142}.
 
 \bibitem{du2024smooth}
 Y. Du, Y. Li, S. Coros, and B. Thomaszewski, Robust and artefact-free deformable contact with smooth surface representations, \emph{Computer Graphics Forum} 43(8) (2024) e15187. \doi{10.1111/cgf.15187}.
 
 \bibitem{ferguson2023highorder}
-Z. Ferguson, P. Jain, D. Zorin, T. Schneider, and D. Panozzo, High-Order Incremental Potential Contact for elastodynamic simulation on curved meshes, \emph{ACM SIGGRAPH Conference Proceedings} (2023) 1--11. \doi{10.1145/3588432.3591488}.
+Z. Ferguson, P. Jain, D. Zorin, T. Schneider, and D. Panozzo, High-Order Incremental Potential Contact for elastodynamic simulation on curved meshes, \emph{ACM SIGGRAPH Conference Proceedings} (2023) 1-11. \doi{10.1145/3588432.3591488}.
 
 \bibitem{chen2024tdib}
-X. Chen, C. Yu, X. Ni, M. Chu, B. Wang, and B. Chen, A time-dependent inclusion-based method for continuous collision detection between parametric surfaces, \emph{ACM Transactions on Graphics} 43(6) (2024) 1--11. \doi{10.1145/3687960}.
+X. Chen, C. Yu, X. Ni, M. Chu, B. Wang, and B. Chen, A time-dependent inclusion-based method for continuous collision detection between parametric surfaces, \emph{ACM Transactions on Graphics} 43(6) (2024) 1-11. \doi{10.1145/3687960}.
 
 \bibitem{chen2025ogc}
-A. H. Chen, J. Hsu, Z. Liu, M. Macklin, Y. Yang, and C. Yuksel, Offset Geometric Contact, \emph{ACM Transactions on Graphics} 44(4) (2025) 1--21. \doi{10.1145/3731205}.
+A. H. Chen, J. Hsu, Z. Liu, M. Macklin, Y. Yang, and C. Yuksel, Offset Geometric Contact, \emph{ACM Transactions on Graphics} 44(4) (2025) 1-21. \doi{10.1145/3731205}.
 
 \bibitem{pelletier2025trisdf}
-J. Pelletier-Gu\'{e}nette, A. Mercier-Aubin, and S. Andrews, Real-Time Triangle-SDF Continuous Collision Detection, \emph{Proceedings of the ACM on Computer Graphics and Interactive Techniques} 8(4) (2025) 1--22. \doi{10.1145/3747862}.
+J. Pelletier-Gu\'{e}nette, A. Mercier-Aubin, and S. Andrews, Real-Time Triangle-SDF Continuous Collision Detection, \emph{Proceedings of the ACM on Computer Graphics and Interactive Techniques} 8(4) (2025) 1-22. \doi{10.1145/3747862}.
 
 \bibitem{stewart1996}
-D. E. Stewart and J. C. Trinkle, An implicit time-stepping scheme for rigid body dynamics with inelastic collisions and Coulomb friction, \emph{International Journal for Numerical Methods in Engineering} 39(15) (1996) 2673--2691. \doi{10.1002/(SICI)1097-0207(19960815)39:15<2673::AID-NME972>3.0.CO;2-I}.
+D. E. Stewart and J. C. Trinkle, An implicit time-stepping scheme for rigid body dynamics with inelastic collisions and Coulomb friction, \emph{International Journal for Numerical Methods in Engineering} 39(15) (1996) 2673-2691. \doi{10.1002/(SICI)1097-0207(19960815)39:15<2673::AID-NME972>3.0.CO;2-I}.
 
 \bibitem{anitescu1997}
-M. Anitescu and F. A. Potra, Formulating dynamic multi-rigid-body contact problems with friction as solvable linear complementarity problems, \emph{Nonlinear Dynamics} 14(3) (1997) 231--247. \doi{10.1023/A:1008292328909}.
+M. Anitescu and F. A. Potra, Formulating dynamic multi-rigid-body contact problems with friction as solvable linear complementarity problems, \emph{Nonlinear Dynamics} 14(3) (1997) 231-247. \doi{10.1023/A:1008292328909}.
 
 \bibitem{jean1999}
-M. Jean, The non-smooth contact dynamics method, \emph{Computer Methods in Applied Mechanics and Engineering} 177(3--4) (1999) 235--257. \doi{10.1016/S0045-7825(98)00383-1}.
+M. Jean, The non-smooth contact dynamics method, \emph{Computer Methods in Applied Mechanics and Engineering} 177(3-4) (1999) 235-257. \doi{10.1016/S0045-7825(98)00383-1}.
 
 \bibitem{acary2008}
 V. Acary and B. Brogliato, \emph{Numerical Methods for Nonsmooth Dynamical Systems: Applications in Mechanics and Electronics}, Springer, Berlin, 2008. \doi{10.1007/978-3-540-75392-6}.
 
 \bibitem{gavrea2008}
-B. I. Gavrea, M. Anitescu, and F. A. Potra, Convergence of a class of semi-implicit time-stepping schemes for nonsmooth rigid multibody dynamics, \emph{SIAM Journal on Optimization} 19(2) (2008) 969--1001. \doi{10.1137/060675745}.
+B. I. Gavrea, M. Anitescu, and F. A. Potra, Convergence of a class of semi-implicit time-stepping schemes for nonsmooth rigid multibody dynamics, \emph{SIAM Journal on Optimization} 19(2) (2008) 969-1001. \doi{10.1137/060675745}.
 
 \bibitem{anitescu2010}
-M. Anitescu and A. Tasora, An iterative approach for cone complementarity problems for nonsmooth dynamics, \emph{Computational Optimization and Applications} 47(2) (2010) 207--235. \doi{10.1007/s10589-008-9223-4}.
+M. Anitescu and A. Tasora, An iterative approach for cone complementarity problems for nonsmooth dynamics, \emph{Computational Optimization and Applications} 47(2) (2010) 207-235. \doi{10.1007/s10589-008-9223-4}.
 
 \bibitem{tasora2011}
-A. Tasora and M. Anitescu, A matrix-free cone complementarity approach for solving large-scale, nonsmooth, rigid body dynamics, \emph{Computer Methods in Applied Mechanics and Engineering} 200(5--8) (2011) 439--453. \doi{10.1016/j.cma.2010.06.030}.
+A. Tasora and M. Anitescu, A matrix-free cone complementarity approach for solving large-scale, nonsmooth, rigid body dynamics, \emph{Computer Methods in Applied Mechanics and Engineering} 200(5-8) (2011) 439-453. \doi{10.1016/j.cma.2010.06.030}.
 
 \bibitem{chakraborty2014}
-N. Chakraborty, S. Berard, S. Akella, and J. C. Trinkle, A geometrically implicit time-stepping method for multibody systems with intermittent contact, \emph{The International Journal of Robotics Research} 33(3) (2014) 426--445. \doi{10.1177/0278364913501210}.
+N. Chakraborty, S. Berard, S. Akella, and J. C. Trinkle, A geometrically implicit time-stepping method for multibody systems with intermittent contact, \emph{The International Journal of Robotics Research} 33(3) (2014) 426-445. \doi{10.1177/0278364913501210}.
 
 \bibitem{machado2012}
-M. Machado, P. Moreira, P. Flores, and H. M. Lankarani, Compliant contact force models in multibody dynamics: Evolution of the Hertz contact theory, \emph{Mechanism and Machine Theory} 53 (2012) 99--121. \doi{10.1016/j.mechmachtheory.2012.02.010}.
+M. Machado, P. Moreira, P. Flores, and H. M. Lankarani, Compliant contact force models in multibody dynamics: Evolution of the Hertz contact theory, \emph{Mechanism and Machine Theory} 53 (2012) 99-121. \doi{10.1016/j.mechmachtheory.2012.02.010}.
 
 \bibitem{flores2021}
-P. Flores, Contact mechanics for dynamical systems: a comprehensive review, \emph{Multibody System Dynamics} 54(2) (2022) 127--177. \doi{10.1007/s11044-021-09803-y}.
+P. Flores, Contact mechanics for dynamical systems: a comprehensive review, \emph{Multibody System Dynamics} 54(2) (2022) 127-177. \doi{10.1007/s11044-021-09803-y}.
 
 \bibitem{corral2021}
-E. Corral, R. Gismeros Moreno, M. J. G\'{o}mez Garc\'{i}a, and C. Castej\'{o}n, Nonlinear phenomena of contact in multibody systems dynamics: a review, \emph{Nonlinear Dynamics} 104(2) (2021) 1269--1295. \doi{10.1007/s11071-021-06344-z}.
+E. Corral, R. Gismeros Moreno, M. J. G\'{o}mez Garc\'{i}a, and C. Castej\'{o}n, Nonlinear phenomena of contact in multibody systems dynamics: a review, \emph{Nonlinear Dynamics} 104(2) (2021) 1269-1295. \doi{10.1007/s11071-021-06344-z}.
 
 \bibitem{tasora2016}
-A. Tasora, R. Serban, H. Mazhar, A. Pazouki, D. Melanz, J. Fleischmann, M. Taylor, H. Sugiyama, and D. Negrut, Chrono: An open source multi-physics dynamics engine, in: \emph{High Performance Computing in Science and Engineering}, Lecture Notes in Computer Science, Springer, Cham, 2016, pp. 19--49. \doi{10.1007/978-3-319-40361-8_2}.
+A. Tasora, R. Serban, H. Mazhar, A. Pazouki, D. Melanz, J. Fleischmann, M. Taylor, H. Sugiyama, and D. Negrut, Chrono: An open source multi-physics dynamics engine, in: \emph{High Performance Computing in Science and Engineering}, Lecture Notes in Computer Science, Springer, Cham, 2016, pp. 19-49. \doi{10.1007/978-3-319-40361-8_2}.
 
 \bibitem{gilbert1988}
-E. G. Gilbert, D. W. Johnson, and S. S. Keerthi, A fast procedure for computing the distance between complex objects in three-dimensional space, \emph{IEEE Journal on Robotics and Automation} 4(2) (1988) 193--203. \doi{10.1109/56.2083}.
+E. G. Gilbert, D. W. Johnson, and S. S. Keerthi, A fast procedure for computing the distance between complex objects in three-dimensional space, \emph{IEEE Journal on Robotics and Automation} 4(2) (1988) 193-203. \doi{10.1109/56.2083}.
 
 \bibitem{gottschalk1996}
-S. Gottschalk, M. C. Lin, and D. Manocha, OBBTree: A hierarchical structure for rapid interference detection, in: \emph{Proceedings of the 23rd Annual Conference on Computer Graphics and Interactive Techniques}, 1996, pp. 171--180. \doi{10.1145/237170.237244}.
+S. Gottschalk, M. C. Lin, and D. Manocha, OBBTree: A hierarchical structure for rapid interference detection, in: \emph{Proceedings of the 23rd Annual Conference on Computer Graphics and Interactive Techniques}, 1996, pp. 171-180. \doi{10.1145/237170.237244}.
 
 \bibitem{mirtich1998}
-B. Mirtich, V-Clip: fast and robust polyhedral collision detection, \emph{ACM Transactions on Graphics} 17(3) (1998) 177--208. \doi{10.1145/285857.285860}.
+B. Mirtich, V-Clip: fast and robust polyhedral collision detection, \emph{ACM Transactions on Graphics} 17(3) (1998) 177-208. \doi{10.1145/285857.285860}.
 
 \bibitem{teschner2005}
-M. Teschner, S. Kimmerle, B. Heidelberger, G. Zachmann, L. Raghupathi, A. Fuhrmann, M.-P. Cani, F. Faure, N. Magnenat-Thalmann, W. Strasser, and P. Volino, Collision detection for deformable objects, \emph{Computer Graphics Forum} 24(1) (2005) 61--81. \doi{10.1111/j.1467-8659.2005.00829.x}.
+M. Teschner, S. Kimmerle, B. Heidelberger, G. Zachmann, L. Raghupathi, A. Fuhrmann, M.-P. Cani, F. Faure, N. Magnenat-Thalmann, W. Strasser, and P. Volino, Collision detection for deformable objects, \emph{Computer Graphics Forum} 24(1) (2005) 61-81. \doi{10.1111/j.1467-8659.2005.00829.x}.
 
 \bibitem{bridson2002}
-R. Bridson, R. Fedkiw, and J. Anderson, Robust treatment of collisions, contact and friction for cloth animation, \emph{ACM Transactions on Graphics} 21(3) (2002) 594--603. \doi{10.1145/566654.566623}.
+R. Bridson, R. Fedkiw, and J. Anderson, Robust treatment of collisions, contact and friction for cloth animation, \emph{ACM Transactions on Graphics} 21(3) (2002) 594-603. \doi{10.1145/566654.566623}.
 
 \bibitem{brochu2012}
-T. Brochu, E. Edwards, and R. Bridson, Efficient geometrically exact continuous collision detection, \emph{ACM Transactions on Graphics} 31(4) (2012) 1--7. \doi{10.1145/2185520.2185592}.
+T. Brochu, E. Edwards, and R. Bridson, Efficient geometrically exact continuous collision detection, \emph{ACM Transactions on Graphics} 31(4) (2012) 1-7. \doi{10.1145/2185520.2185592}.
 
 \bibitem{lu2011}
-J. Lu, Isogeometric contact analysis: geometric basis and formulation for frictionless contact, \emph{Computer Methods in Applied Mechanics and Engineering} 200(5--8) (2011) 726--741. \doi{10.1016/j.cma.2010.10.001}.
+J. Lu, Isogeometric contact analysis: geometric basis and formulation for frictionless contact, \emph{Computer Methods in Applied Mechanics and Engineering} 200(5-8) (2011) 726-741. \doi{10.1016/j.cma.2010.10.001}.
 
 \bibitem{temizer2011}
-I. Temizer, P. Wriggers, and T. J. R. Hughes, Contact treatment in isogeometric analysis with NURBS, \emph{Computer Methods in Applied Mechanics and Engineering} 200(9--12) (2011) 1100--1112. \doi{10.1016/j.cma.2010.11.020}.
+I. Temizer, P. Wriggers, and T. J. R. Hughes, Contact treatment in isogeometric analysis with NURBS, \emph{Computer Methods in Applied Mechanics and Engineering} 200(9-12) (2011) 1100-1112. \doi{10.1016/j.cma.2010.11.020}.
 
 \bibitem{delorenzis2011}
-L. De Lorenzis, I. Temizer, P. Wriggers, and G. Zavarise, A large deformation frictional contact formulation using NURBS-based isogeometric analysis, \emph{International Journal for Numerical Methods in Engineering} 87(13) (2011) 1278--1300. \doi{10.1002/nme.3159}.
+L. De Lorenzis, I. Temizer, P. Wriggers, and G. Zavarise, A large deformation frictional contact formulation using NURBS-based isogeometric analysis, \emph{International Journal for Numerical Methods in Engineering} 87(13) (2011) 1278-1300. \doi{10.1002/nme.3159}.
 
 \bibitem{delorenzis2014}
-L. De Lorenzis, P. Wriggers, and T. J. R. Hughes, Isogeometric contact: a review, \emph{GAMM-Mitteilungen} 37(1) (2014) 85--123. \doi{10.1002/gamm.201410005}.
+L. De Lorenzis, P. Wriggers, and T. J. R. Hughes, Isogeometric contact: a review, \emph{GAMM-Mitteilungen} 37(1) (2014) 85-123. \doi{10.1002/gamm.201410005}.
 
 \bibitem{osher1988}
-S. Osher and J. A. Sethian, Fronts propagating with curvature-dependent speed: algorithms based on Hamilton-Jacobi formulations, \emph{Journal of Computational Physics} 79(1) (1988) 12--49. \doi{10.1016/0021-9991(88)90002-2}.
+S. Osher and J. A. Sethian, Fronts propagating with curvature-dependent speed: algorithms based on Hamilton-Jacobi formulations, \emph{Journal of Computational Physics} 79(1) (1988) 12-49. \doi{10.1016/0021-9991(88)90002-2}.
 
 \bibitem{curless1996}
-B. Curless and M. Levoy, A volumetric method for building complex models from range images, in: \emph{Proceedings of the 23rd Annual Conference on Computer Graphics and Interactive Techniques}, 1996, pp. 303--312. \doi{10.1145/237170.237269}.
+B. Curless and M. Levoy, A volumetric method for building complex models from range images, in: \emph{Proceedings of the 23rd Annual Conference on Computer Graphics and Interactive Techniques}, 1996, pp. 303-312. \doi{10.1145/237170.237269}.
 
 \bibitem{jones2006}
-M. W. Jones, J. A. B{\ae}rentzen, and M. Sramek, 3D distance fields: a survey of techniques and applications, \emph{IEEE Transactions on Visualization and Computer Graphics} 12(4) (2006) 581--599. \doi{10.1109/TVCG.2006.56}.
+M. W. Jones, J. A. B{\ae}rentzen, and M. Sramek, 3D distance fields: a survey of techniques and applications, \emph{IEEE Transactions on Visualization and Computer Graphics} 12(4) (2006) 581-599. \doi{10.1109/TVCG.2006.56}.
 
 \bibitem{levy2002}
-B. L\'{e}vy, S. Petitjean, N. Ray, and J. Maillot, Least squares conformal maps for automatic texture atlas generation, \emph{ACM Transactions on Graphics} 21(3) (2002) 362--371. \doi{10.1145/566654.566590}.
+B. L\'{e}vy, S. Petitjean, N. Ray, and J. Maillot, Least squares conformal maps for automatic texture atlas generation, \emph{ACM Transactions on Graphics} 21(3) (2002) 362-371. \doi{10.1145/566654.566590}.
 
 \bibitem{sheffer2007}
-A. Sheffer, E. Praun, and K. Rose, Mesh parameterization methods and their applications, \emph{Foundations and Trends in Computer Graphics and Vision} 2(2) (2007) 105--171. \doi{10.1561/0600000011}.
+A. Sheffer, E. Praun, and K. Rose, Mesh parameterization methods and their applications, \emph{Foundations and Trends in Computer Graphics and Vision} 2(2) (2007) 105-171. \doi{10.1561/0600000011}.
 
 \bibitem{floater2003}
-M. S. Floater, Mean value coordinates, \emph{Computer Aided Geometric Design} 20(1) (2003) 19--27. \doi{10.1016/S0167-8396(03)00002-5}.
+M. S. Floater, Mean value coordinates, \emph{Computer Aided Geometric Design} 20(1) (2003) 19-27. \doi{10.1016/S0167-8396(03)00002-5}.
 
 \bibitem{sawhney2018bff}
-R. Sawhney and K. Crane, Boundary First Flattening, \emph{ACM Transactions on Graphics} 37(1) (2018), Article 5, 1--14. \doi{10.1145/3132705}.
+R. Sawhney and K. Crane, Boundary First Flattening, \emph{ACM Transactions on Graphics} 37(1) (2018), Article 5, 1-14. \doi{10.1145/3132705}.
 
 \bibitem{vlachos2001pn}
-A. Vlachos, J. Peters, C. Boyd, and J. L. Mitchell, Curved PN triangles, \emph{Proceedings of the 2001 Symposium on Interactive 3D Graphics} (2001) 159--166. \doi{10.1145/364338.364387}.
+A. Vlachos, J. Peters, C. Boyd, and J. L. Mitchell, Curved PN triangles, \emph{Proceedings of the 2001 Symposium on Interactive 3D Graphics} (2001) 159-166. \doi{10.1145/364338.364387}.
 
 \end{thebibliography}
 
