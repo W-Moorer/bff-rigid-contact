@@ -113,39 +113,33 @@ The remainder of the paper follows this argument. Section~\ref{sec:related} revi
 \section{Related work}
 \label{sec:related}
 
-This section positions \calg{}--SDF within contact-geometry mechanisms that supply frictional rigid-body response. The discussion is organized around five lines of work: rigid-body frictional contact models, triangle-based BVH contact, smooth curved contact geometry, signed-distance contact fields, and local contact charts. The emphasis is not on contact enforcement in general, but on how each line supplies the signed gap, normal, tangent frame, and smooth response quantities that enter a friction calculation.
+This section positions \calg{}--SDF along the same mechanism chain used in the method section: frictional rigid-body response requires geometric inputs, triangle-based backends provide common but discontinuous proxies, smooth curved geometry motivates higher-quality local queries, and signed-gap fields make repeated response evaluations efficient. The emphasis is therefore on how prior work supplies signed gaps, normals, tangent frames, validity decisions, and reusable response quantities.
 
-\subsection{Rigid-body frictional contact and multibody dynamics}
+\subsection{Rigid frictional contact and geometric inputs}
 
-Rigid-body contact with Coulomb friction is commonly advanced through time-stepping complementarity, nonsmooth dynamics, or compliant regularization. Implicit time-stepping and complementarity formulations provide stable updates for inelastic impacts and contact among multiple rigid bodies \cite{stewart1996,anitescu1997}. Nonsmooth contact dynamics and its numerical analysis give another route for unilateral constraints with friction \cite{jean1999,acary2008}. Semi-implicit and geometrically implicit schemes target convergence and intermittent contact \cite{gavrea2008,chakraborty2014}. Cone-complementarity and matrix-free formulations address large rigid-body systems \cite{anitescu2010,tasora2011}.
+Rigid-body contact with Coulomb friction is commonly advanced through complementarity, nonsmooth dynamics, or compliant regularization. Time-stepping complementarity formulations provide stable updates for inelastic impact and multi-contact systems \cite{stewart1996,anitescu1997}, while nonsmooth contact dynamics gives a related variational and numerical framework for unilateral constraints with friction \cite{jean1999,acary2008}. Semi-implicit, cone-complementarity, and matrix-free formulations further address convergence and scalability in nonsmooth rigid multibody systems \cite{gavrea2008,anitescu2010,tasora2011}, and geometrically implicit methods target intermittent contact \cite{chakraborty2014}. Recent studies continue to refine simultaneous frictional impact models, unilateral rigid-body interactions, nonsmooth integration, and compliant force laws \cite{halm2024setvalued,solanillas2024unilateral,luo2024symplectic,chen2024contactforce}. Engineering multibody solvers often use compliant force laws because they regularize impacts into practical force evaluations; reviews by Machado et al. \cite{machado2012}, Flores \cite{flores2021}, and Corral et al. \cite{corral2021} summarize this line. Project Chrono is relevant here as an independent reference implementation for rigid and multiphysics contact simulation \cite{tasora2016}.
 
-Compliant contact models are widely used in multibody solvers because they regularize impact and friction into force laws that are practical for engineering dynamics. Machado et al. review compliant force models derived from Hertz-type contact theory \cite{machado2012}, and recent reviews summarize contact phenomena in dynamical and multibody systems \cite{flores2021,corral2021}. Project Chrono is used here as an independent multibody reference because it provides a documented open-source implementation of rigid and multiphysics contact simulation \cite{tasora2016}. These works primarily address time integration, complementarity, regularization, or solver implementation. They still require a geometric backend that returns reliable gaps, normals, and tangent frames; errors or discontinuities in these quantities enter the friction law directly.
+Recent contact methods have improved robustness by treating non-penetration and friction through optimization or barrier formulations. Incremental Potential Contact (IPC) introduced an intersection- and inversion-free implicit time-stepper for large-deformation dynamics \cite{li2020ipc}; codimensional and medial IPC extend the framework to thin structures and reduced medial representations \cite{li2021codimipc,lan2021medialipc}. Its rigid-body extension models curved rigid trajectories and contact response in reduced coordinates \cite{ferguson2021rigidipc}. Later IPC variants add adhesive contact behaviour and faster barrier optimization \cite{fang2024aipc,huang2024gipc}, while StiffGIPC improves GPU-side scalability for stiff affine-deformable simulations \cite{stiffgipc2025}. These methods address integration, feasibility, or optimization robustness. The present work focuses on a complementary layer: the geometry backend that returns smooth gaps, normals, and tangent frames before the friction law uses them.
 
-\subsection{Faceted collision proxies and triangle-based BVH contact}
+\subsection{Triangle-based contact backends and direct baselines}
 
-Most practical contact pipelines separate broad-phase candidate generation from narrow-phase distance or intersection queries. GJK distance queries \cite{gilbert1988}, OBB trees \cite{gottschalk1996}, and V-Clip for polyhedral proximity \cite{mirtich1998} are representative building blocks for rigid collision detection. Deformable and animation-oriented collision pipelines further combine spatial hierarchies, continuous collision detection, and robust contact handling \cite{teschner2005,bridson2002}. Geometrically exact CCD methods reduce missed collisions for moving primitives \cite{brochu2012}, but the contact response is still often evaluated on a faceted or tessellated proxy.
+Most practical contact pipelines first use broad-phase culling and then perform narrow-phase distance or intersection queries on simple proxies. GJK distance queries \cite{gilbert1988}, OBB trees \cite{gottschalk1996}, and V-Clip polyhedral proximity \cite{mirtich1998} are representative rigid-collision building blocks. Deformable and animation-oriented pipelines combine spatial hierarchies, continuous collision detection, and robust collision response \cite{teschner2005,bridson2002,harmon2008}. Continuous collision detection methods for rigid or deformable surfaces reduce tunnelling and missed impacts \cite{redon2002,brochu2012,pabst2010}, and large-scale CCD benchmarks clarify the tradeoff between correctness, conservatism, and runtime \cite{wang2021ccd}. This proxy-based organization is attractive because it is robust, modular, and efficient; it is also the setting in which triangle BVHs are often used as the contact-geometry backend.
 
-The Linear-triangle BVH baseline studied in this paper belongs to this faceted-proxy family. Its attraction is clear: triangle BVHs are simple, robust, and fast to traverse. Its weakness is also geometric: the contact normal and tangent frame are piecewise constant or piecewise reconstructed from adjacent triangles, so a sliding contact point can experience abrupt frame changes when it crosses element boundaries. PN-triangle BVH is a smoother direct baseline because it reconstructs a curved local proxy from triangle data \cite{vlachos2001pn}, but its contact frame still depends on local cell reconstruction and tessellation. In frictional contact this is not a cosmetic error. The normal defines the tangential projection, the tangent frame defines the friction direction, and both affect force spikes, tangential-speed jitter, and stick--slip chatter.
+The direct baselines in this paper belong to this triangle-backend family. Linear-triangle BVH is simple and fast, but its gap and normal are tied to a faceted surface. A sliding or rolling contact can therefore experience abrupt changes when the active feature crosses triangle boundaries. PN-triangle BVH is a stronger baseline because it reconstructs a curved local proxy from triangle data \cite{vlachos2001pn}, but the returned frame still depends on local cell reconstruction and tessellation. Recent work on high-order fibre contact shows the same mechanism in another setting: low-order contact detection can produce force artifacts when the physical geometry is curved \cite{crespel2024fibres}. This paper evaluates the same geometric failure mode in rigid frictional contact, where the normal defines the tangential projection and directly affects friction-force spikes, tangential-speed jitter, and stick--slip chatter.
 
-\subsection{Curved and smooth contact geometry}
+\subsection{Smooth curved geometry and validity-controlled local queries}
 
-Curved and smooth contact representations address the geometric discontinuity of faceted proxies. PN triangles provide a compact curved surface reconstruction from vertex positions and normals \cite{vlachos2001pn}. Smooth surface representations have recently been shown to reduce tangential force artifacts in deformable contact \cite{du2024smooth}, while high-order IPC improves contact accuracy on curved meshes \cite{ferguson2023highorder}. Isogeometric contact analysis provides another route to smooth geometry by using NURBS-based surfaces for contact treatment \cite{lu2011,temizer2011}. Large-deformation frictional isogeometric contact and review work further clarify how exact or high-order geometry can improve contact discretization \cite{delorenzis2011,delorenzis2014}. These methods demonstrate the value of smooth geometry, but most are designed for deformable or high-order discretizations; the present work uses this geometric motivation in a rigid frictional contact backend.
+Smooth and high-order contact representations reduce the geometric discontinuities introduced by faceted proxies. Smooth implicit surface representations have been shown to reduce tangential force artifacts in deformable contact \cite{du2024smooth}, and high-order IPC improves contact accuracy on curved meshes \cite{ferguson2023highorder}. Isogeometric contact analysis is another established route to smooth contact geometry, especially when CAD-like NURBS surfaces are retained in the discretization \cite{lu2011,temizer2011}. Large-deformation frictional isogeometric formulations and review work further clarify how exact or high-order geometry improves contact discretization \cite{delorenzis2011,delorenzis2014}. These works support the central premise that contact response benefits when the geometric backend is smoother than a raw triangle proxy.
 
-Variational and potential-based contact methods also motivate a smoother geometric interface. IPC embeds non-penetration in a barrier potential for implicitly time-stepped dynamics \cite{li2020ipc}. Surface-potential contact integrates interactions over smooth surfaces rather than relying only on isolated point constraints \cite{sauer2012}, and Geometric Contact Potential formulates contact potentials from continuum smooth or piecewise smooth surfaces \cite{huang2025gcp}. Continuous collision detection between parametric surfaces shows a related need for certified queries on curved geometry \cite{chen2024tdib}. These methods show that contact response benefits when the geometry is smoother than a raw triangle proxy. The distinction of \calg{} is that it targets the local geometry backend itself: broad-phase candidates remain close to the original surface representation, while the narrow phase builds a contact-aligned gap field and frame for frictional rigid dynamics.
+Recent curved-contact formulations also emphasize certification, locality, and smooth continuum contact potentials. Time-dependent inclusion functions enable continuous collision detection between parametric surfaces without first reducing all geometry to low-order primitives \cite{chen2024tdib}. Surface-potential contact and Geometric Contact Potential formulate smooth or continuum contact interactions at the surface level \cite{sauer2012,huang2025gcp}. \calg{} takes a narrower route for rigid friction: it constructs a contact-aligned local graph only after a candidate pair has been generated, uses a normal-cone certificate to decide whether that graph is valid, and routes non-graphable or uncertain cases to curved patch--patch fallback. Thus the contribution is not simply a higher-order surface representation, but a validity-controlled local query that returns the contact frame used by friction.
 
-\subsection{Signed-distance and offset-based contact fields}
+\subsection{Signed-gap response fields for repeated friction simulation}
 
-Signed-distance fields and implicit surfaces provide continuous spatial queries for collision and contact. Level-set methods established signed implicit fronts for geometric evolution \cite{osher1988}, and volumetric reconstruction work popularized distance-like fields for complex scanned geometry \cite{curless1996}. Surveys of three-dimensional distance fields describe their use in geometry processing, visualization, and collision applications \cite{jones2006}. More recent contact work has used volumetric offsets and SDFs to improve contact robustness; Offset Geometric Contact constructs offset shapes with orthogonal contact forces \cite{chen2025ogc}, and Triangle-SDF CCD casts time of impact as a local spatio-temporal optimization \cite{pelletier2025trisdf}.
+Signed-distance fields provide smooth spatial queries for geometry and collision detection. Level-set methods established signed implicit fronts for geometric evolution \cite{osher1988}, volumetric reconstruction popularized distance-like fields for complex geometry \cite{curless1996}, and distance-field surveys summarize their use in geometry processing and collision applications \cite{jones2006}. More recent work has extended SDF-based collision handling to general SDF solids \cite{liu2024generalsdf}, offset geometric contact \cite{chen2025ogc}, and real-time Triangle-SDF continuous collision detection \cite{pelletier2025trisdf}. These methods demonstrate that signed fields can provide smooth and efficient contact-related quantities, but they typically act as collision or contact representations in their own right.
 
-The SDF component in this paper has a narrower role than a full volumetric collision engine. The primary search is still surface based: \calg{} supplies candidate pairs, local graph certificates, fallback decisions, and contact samples. For the rigid validation backend, these outputs are coupled to a local configuration-space signed-distance refinement that updates the response gap and normal. This separation matters for the method claim. CALG determines where the local contact geometry is valid, whereas the signed field provides smooth force-activation and friction-response quantities once a candidate has been identified.
+The signed field in \calg{}--SDF has a more specific role. The primary candidate generation and validity decision remain surface based: the CALG detector supplies candidate pairs, local graph certificates, fallback decisions, and certified contact samples. These samples are then reused through a local configuration-space signed-gap response field, which returns the signed gap and gradient normal by tricubic interpolation during repeated friction simulations. This division aligns the literature with the method pipeline: triangle-style broad-phase efficiency is retained, smooth curved local queries control the contact frame, and the response field reduces repeated contact-geometry cost without replacing the detector.
 
-\subsection{Local contact charts and contact-aligned geometric backends}
-
-Surface parameterization and local charts are central tools for representing surface quantities in geometry processing. Least-squares conformal maps introduced a practical conformal atlas construction for mesh parameterization \cite{levy2002}, and surveys summarize parameterization methods and their applications \cite{sheffer2007}. Mean value coordinates provide smooth interpolation over planar polygons \cite{floater2003}. Boundary First Flattening offers boundary-controlled conformal flattening for disk-topology meshes \cite{sawhney2018bff}. These methods are useful for global or persistent surface coordinates, but global parameterizations require cuts, topology management, chart overlap handling, and seam treatment. They solve surface representation, whereas frictional contact requires a transient chart tied to the active contact frame and response law.
-
-CALG instead constructs local contact-aligned coordinates on demand for each candidate pair. Unlike global or persistent surface charts, the chart is generated from the active contact frame and is used immediately to evaluate the graph gap, normal, tangent basis, and certificate. The normal-cone graphability certificate limits this reduction to regular local contact, while difficult cases fall back to conservative curved-patch queries. The resulting backend supplies smooth signed gaps, normals, tangent frames, and fallback decisions to a rigid-body frictional response model.
-
-Taken together, the prior work shows that rigid frictional dynamics depends strongly on the geometric quantities supplied by collision detection, that faceted proxies can introduce frame discontinuities, and that smooth surfaces or signed-distance fields can reduce such artifacts when they are integrated into the contact pipeline. The remaining gap is a practical backend that keeps the efficiency and candidate-generation simplicity of triangle-based detection while producing smooth contact-frame data suitable for frictional rigid-body dynamics. CALG is designed for this role: it couples local curved-graph contact detection, graphability-aware fallback, and configuration-space signed-gap refinement into a unified geometry backend evaluated in the rigid friction scenarios below.
+Taken together, the prior work shows that rigid frictional dynamics depends strongly on geometric quantities supplied by the contact backend, that triangle-based proxies can introduce frame discontinuities, and that smooth geometry or signed-distance fields can reduce such artifacts when integrated with the response law. The remaining gap is a practical rigid-contact backend that combines efficient candidate generation, validity-aware local curved queries, fallback control, and reusable signed-gap response evaluation. \calg{}--SDF is designed for this role and is evaluated below through friction controls, direct Linear-triangle BVH and PN-triangle BVH comparisons, external solver validation, and simulation efficiency measurements.
 
 \section{Method}
 \label{sec:method}
@@ -1198,8 +1192,35 @@ P. Wriggers, \emph{Computational Contact Mechanics}, 2nd ed., Springer, Berlin, 
 \bibitem{sauer2012}
 R. A. Sauer and L. De Lorenzis, A computational contact formulation based on surface potentials, \emph{Computer Methods in Applied Mechanics and Engineering} 253 (2013) 369-395. \doi{10.1016/j.cma.2012.09.002}.
 
+\bibitem{lu2011}
+J. Lu, Isogeometric contact analysis: geometric basis and formulation for frictionless contact, \emph{Computer Methods in Applied Mechanics and Engineering} 200(5-8) (2011) 726-741. \doi{10.1016/j.cma.2010.10.001}.
+
+\bibitem{temizer2011}
+I. Temizer, P. Wriggers, and T. J. R. Hughes, Contact treatment in isogeometric analysis with NURBS, \emph{Computer Methods in Applied Mechanics and Engineering} 200(9-12) (2011) 1100-1112. \doi{10.1016/j.cma.2010.11.020}.
+
+\bibitem{delorenzis2011}
+L. De Lorenzis, I. Temizer, P. Wriggers, and G. Zavarise, A large deformation frictional contact formulation using NURBS-based isogeometric analysis, \emph{International Journal for Numerical Methods in Engineering} 87(13) (2011) 1278-1300. \doi{10.1002/nme.3159}.
+
 \bibitem{li2020ipc}
 M. Li, Z. Ferguson, T. Schneider, T. Langlois, D. Zorin, D. Panozzo, C. Jiang, and D. M. Kaufman, Incremental Potential Contact: Intersection- and inversion-free, large-deformation dynamics, \emph{ACM Transactions on Graphics} 39(4) (2020), Article 49. \doi{10.1145/3386569.3392425}.
+
+\bibitem{li2021codimipc}
+M. Li, D. M. Kaufman, and C. Jiang, Codimensional incremental potential contact, \emph{ACM Transactions on Graphics} 40(4) (2021) 1-24. \doi{10.1145/3450626.3459767}.
+
+\bibitem{lan2021medialipc}
+L. Lan, Y. Yang, D. M. Kaufman, J. Yao, M. Li, and C. Jiang, Medial IPC: accelerated incremental potential contact with medial elastics, \emph{ACM Transactions on Graphics} 40(4) (2021) 1-16. \doi{10.1145/3450626.3459753}.
+
+\bibitem{ferguson2021rigidipc}
+Z. Ferguson, M. Li, T. Schneider, F. Gil-Ureta, T. Langlois, C. Jiang, D. Zorin, D. M. Kaufman, and D. Panozzo, Intersection-free Rigid Body Dynamics, \emph{ACM Transactions on Graphics} 40(4) (2021), Article 183. \doi{10.1145/3450626.3459802}.
+
+\bibitem{fang2024aipc}
+Y. Fang, M. Li, Y. Cao, X. Li, J. Wolper, Y. Yang, and C. Jiang, Augmented Incremental Potential Contact for sticky interactions, \emph{IEEE Transactions on Visualization and Computer Graphics} 30(8) (2024) 5596-5608. \doi{10.1109/TVCG.2023.3295656}.
+
+\bibitem{huang2024gipc}
+K. Huang, F. M. Chitalu, H. Lin, and T. Komura, GIPC: Fast and stable Gauss-Newton optimization of IPC barrier energy, \emph{ACM Transactions on Graphics} 43(2) (2024), Article 23, 18 pages. \doi{10.1145/3643028}.
+
+\bibitem{stiffgipc2025}
+K. Huang, X. Lu, H. Lin, T. Komura, and M. Li, StiffGIPC: Advancing GPU IPC for Stiff Affine-Deformable Simulation, \emph{ACM Transactions on Graphics} 44(3) (2025) 1-20. \doi{10.1145/3735126}.
 
 \bibitem{huang2025gcp}
 Z. Huang, M. Paik, Z. Ferguson, D. Panozzo, and D. Zorin, Geometric Contact Potential, \emph{ACM Transactions on Graphics} 44(4) (2025) 1-24. \doi{10.1145/3731142}.
@@ -1210,8 +1231,14 @@ Y. Du, Y. Li, S. Coros, and B. Thomaszewski, Robust and artefact-free deformable
 \bibitem{ferguson2023highorder}
 Z. Ferguson, P. Jain, D. Zorin, T. Schneider, and D. Panozzo, High-Order Incremental Potential Contact for elastodynamic simulation on curved meshes, \emph{ACM SIGGRAPH Conference Proceedings} (2023) 1-11. \doi{10.1145/3588432.3591488}.
 
+\bibitem{crespel2024fibres}
+O. Crespel, E. Hohnadel, T. M\'{e}tivet, and F. Bertails-Descoubes, Contact detection between curved fibres: high order makes a difference, \emph{ACM Transactions on Graphics} 43(4) (2024), Article 132, 23 pages. \doi{10.1145/3658191}.
+
 \bibitem{chen2024tdib}
 X. Chen, C. Yu, X. Ni, M. Chu, B. Wang, and B. Chen, A time-dependent inclusion-based method for continuous collision detection between parametric surfaces, \emph{ACM Transactions on Graphics} 43(6) (2024) 1-11. \doi{10.1145/3687960}.
+
+\bibitem{liu2024generalsdf}
+P. Liu, Y. Zhang, H. Wang, M. K. Yip, E. S. Liu, and X. Jin, Real-time collision detection between general SDFs, \emph{Computer Aided Geometric Design} 111 (2024), Article 102305. \doi{10.1016/j.cagd.2024.102305}.
 
 \bibitem{chen2025ogc}
 A. H. Chen, J. Hsu, Z. Liu, M. Macklin, Y. Yang, and C. Yuksel, Offset Geometric Contact, \emph{ACM Transactions on Graphics} 44(4) (2025) 1-21. \doi{10.1145/3731205}.
@@ -1243,6 +1270,18 @@ A. Tasora and M. Anitescu, A matrix-free cone complementarity approach for solvi
 \bibitem{chakraborty2014}
 N. Chakraborty, S. Berard, S. Akella, and J. C. Trinkle, A geometrically implicit time-stepping method for multibody systems with intermittent contact, \emph{The International Journal of Robotics Research} 33(3) (2014) 426-445. \doi{10.1177/0278364913501210}.
 
+\bibitem{halm2024setvalued}
+M. Halm and M. Posa, Set-valued rigid-body dynamics for simultaneous, inelastic, frictional impacts, \emph{The International Journal of Robotics Research} 43(10) (2024) 1594-1628. \doi{10.1177/02783649241236860}.
+
+\bibitem{solanillas2024unilateral}
+D. M. Solanillas Franc\'{e}s and J. K\"{o}vecses, A new formulation for the dynamics of rigid bodies with unilateral interactions, \emph{Mechanism and Machine Theory} 203 (2024), Article 105809. \doi{10.1016/j.mechmachtheory.2024.105809}.
+
+\bibitem{luo2024symplectic}
+J. Luo, X. Xu, X. Liu, and Z. Wu, A nonsmooth modified symplectic integration scheme for frictional contact dynamics of rigid--flexible multibody systems, \emph{Computer Methods in Applied Mechanics and Engineering} 420 (2024), Article 116726. \doi{10.1016/j.cma.2023.116726}.
+
+\bibitem{chen2024contactforce}
+W. Chen, X. Wang, Y. Liu, Y. Han, and Y. He, Modeling and verification of an improved contact force in multibody systems, \emph{Advances in Mechanical Engineering} 16(12) (2024), Article 16878132241307004. \doi{10.1177/16878132241307004}.
+
 \bibitem{machado2012}
 M. Machado, P. Moreira, P. Flores, and H. M. Lankarani, Compliant contact force models in multibody dynamics: Evolution of the Hertz contact theory, \emph{Mechanism and Machine Theory} 53 (2012) 99-121. \doi{10.1016/j.mechmachtheory.2012.02.010}.
 
@@ -1270,17 +1309,20 @@ M. Teschner, S. Kimmerle, B. Heidelberger, G. Zachmann, L. Raghupathi, A. Fuhrma
 \bibitem{bridson2002}
 R. Bridson, R. Fedkiw, and J. Anderson, Robust treatment of collisions, contact and friction for cloth animation, \emph{ACM Transactions on Graphics} 21(3) (2002) 594-603. \doi{10.1145/566654.566623}.
 
+\bibitem{harmon2008}
+D. Harmon, E. Vouga, R. Tamstorf, and E. Grinspun, Robust treatment of simultaneous collisions, in: \emph{ACM SIGGRAPH 2008 Papers}, 2008, Article 23, pp. 1-4. \doi{10.1145/1399504.1360622}.
+
+\bibitem{redon2002}
+S. Redon, A. Kheddar, and S. Coquillart, Fast continuous collision detection between rigid bodies, \emph{Computer Graphics Forum} 21(3) (2002) 279-288. \doi{10.1111/1467-8659.00587}.
+
 \bibitem{brochu2012}
 T. Brochu, E. Edwards, and R. Bridson, Efficient geometrically exact continuous collision detection, \emph{ACM Transactions on Graphics} 31(4) (2012) 1-7. \doi{10.1145/2185520.2185592}.
 
-\bibitem{lu2011}
-J. Lu, Isogeometric contact analysis: geometric basis and formulation for frictionless contact, \emph{Computer Methods in Applied Mechanics and Engineering} 200(5-8) (2011) 726-741. \doi{10.1016/j.cma.2010.10.001}.
+\bibitem{pabst2010}
+S. Pabst, A. Koch, and W. Stra{\ss}er, Fast and scalable CPU/GPU collision detection for rigid and deformable surfaces, \emph{Computer Graphics Forum} 29(5) (2010) 1605-1612. \doi{10.1111/j.1467-8659.2010.01769.x}.
 
-\bibitem{temizer2011}
-I. Temizer, P. Wriggers, and T. J. R. Hughes, Contact treatment in isogeometric analysis with NURBS, \emph{Computer Methods in Applied Mechanics and Engineering} 200(9-12) (2011) 1100-1112. \doi{10.1016/j.cma.2010.11.020}.
-
-\bibitem{delorenzis2011}
-L. De Lorenzis, I. Temizer, P. Wriggers, and G. Zavarise, A large deformation frictional contact formulation using NURBS-based isogeometric analysis, \emph{International Journal for Numerical Methods in Engineering} 87(13) (2011) 1278-1300. \doi{10.1002/nme.3159}.
+\bibitem{wang2021ccd}
+B. Wang, Z. Ferguson, T. Schneider, X. Jiang, M. Attene, and D. Panozzo, A large-scale benchmark and an inclusion-based algorithm for continuous collision detection, \emph{ACM Transactions on Graphics} 40(5) (2021) 1-16. \doi{10.1145/3460775}.
 
 \bibitem{delorenzis2014}
 L. De Lorenzis, P. Wriggers, and T. J. R. Hughes, Isogeometric contact: a review, \emph{GAMM-Mitteilungen} 37(1) (2014) 85-123. \doi{10.1002/gamm.201410005}.
@@ -1293,18 +1335,6 @@ B. Curless and M. Levoy, A volumetric method for building complex models from ra
 
 \bibitem{jones2006}
 M. W. Jones, J. A. B{\ae}rentzen, and M. Sramek, 3D distance fields: a survey of techniques and applications, \emph{IEEE Transactions on Visualization and Computer Graphics} 12(4) (2006) 581-599. \doi{10.1109/TVCG.2006.56}.
-
-\bibitem{levy2002}
-B. L\'{e}vy, S. Petitjean, N. Ray, and J. Maillot, Least squares conformal maps for automatic texture atlas generation, \emph{ACM Transactions on Graphics} 21(3) (2002) 362-371. \doi{10.1145/566654.566590}.
-
-\bibitem{sheffer2007}
-A. Sheffer, E. Praun, and K. Rose, Mesh parameterization methods and their applications, \emph{Foundations and Trends in Computer Graphics and Vision} 2(2) (2007) 105-171. \doi{10.1561/0600000011}.
-
-\bibitem{floater2003}
-M. S. Floater, Mean value coordinates, \emph{Computer Aided Geometric Design} 20(1) (2003) 19-27. \doi{10.1016/S0167-8396(03)00002-5}.
-
-\bibitem{sawhney2018bff}
-R. Sawhney and K. Crane, Boundary First Flattening, \emph{ACM Transactions on Graphics} 37(1) (2018), Article 5, 1-14. \doi{10.1145/3132705}.
 
 \bibitem{vlachos2001pn}
 A. Vlachos, J. Peters, C. Boyd, and J. L. Mitchell, Curved PN triangles, \emph{Proceedings of the 2001 Symposium on Interactive 3D Graphics} (2001) 159-166. \doi{10.1145/364338.364387}.
