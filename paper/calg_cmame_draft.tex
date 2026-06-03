@@ -139,6 +139,8 @@ Signed-distance fields provide smooth spatial queries for geometry and collision
 
 In \calg{}--SDF, the signed field is used as a local response representation rather than as a standalone collision model. The primary candidate generation and validity decision remain surface based: the CALG detector supplies candidate pairs, local graph certificates, fallback decisions, and certified contact samples. These samples are then reused through a local configuration-space signed-gap response field, which returns the signed gap and gradient normal by tricubic interpolation during repeated friction simulations. This separation preserves triangle-style broad-phase efficiency, uses smooth curved local queries to control the contact frame, and reduces repeated contact-geometry cost without replacing the detector.
 
+\subsection{Synthesis}
+
 Taken together, the prior work shows that rigid frictional dynamics depends strongly on geometric quantities supplied by the contact backend, that triangle-based proxies can introduce frame discontinuities, and that smooth geometry or signed-distance fields can reduce such artifacts when integrated with the response law. The remaining gap is a practical rigid-contact backend that combines efficient candidate generation, validity-aware local curved queries, fallback control, and reusable signed-gap response evaluation. \calg{}--SDF is designed for this role and is evaluated below through friction controls, direct Linear-triangle BVH and PN-triangle BVH comparisons, external solver validation, and simulation efficiency measurements.
 
 \section{Method}
